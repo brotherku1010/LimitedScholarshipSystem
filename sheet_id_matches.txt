@@ -1,0 +1,61 @@
+Found 9 matches:
+
+--- MATCH ---
+he Google Spreadsheet, specifically using the ID `1DsGusSd_s6zXyOl3`. I've set the first task as in progress in `task.md`. Let's get this coding start
+
+--- MATCH ---
+表的對應欄位中。
+
+---
+
+### 📊 Google Sheet 欄位表頭規劃
+我們將在試算表 `1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8` 中，為您初始化以下兩個工作表：
+*   **`students` (學員名冊)**：
+    *   `St
+
+--- MATCH ---
+5:   try {
+56:     return SpreadsheetApp.openById(SPREADSHEET_ID);
+57:   } catch (err) {
+58:     throw new Error("無法連接至 Google 試算表，請確認試算表 ID 是否正確且具備共用
+
+--- MATCH ---
+======================
+
+const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
+const PARENT_DRIVE_FOLDER_ID
+
+
+
+--- MATCH ---
+16-企劃書等。
+6.學員的註冊資料可以記錄再google sheet中，目前以新建工作表id為："1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8"。如有需要新增工作表，可自行推送新增，並且新增工作表要先新增標題欄位，方便讀取資料。
+7.GAS我已經新增了一
+
+--- MATCH ---
+====================================
+4: 
+5: const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
+6: const PARENT_DRIVE_FOLDER_ID = '
+
+--- MATCH ---
+========================================
+
+const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
+const PARENT_DRIVE_FOLDER_ID
+
+
+
+--- MATCH ---
+ong-lived)）。
+2.  **寫入資料庫設定**：
+    *   打開您的試算表資料庫 `1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8`。
+    *   切換至 **`settings`** 工作表。
+    *   將 `line_chann
+
+--- MATCH ---
+==================
+4: 
+5: const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
+6: const PARENT_DRIVE_FOLDER_ID = '1SK0UyFssSFDR044v5
+

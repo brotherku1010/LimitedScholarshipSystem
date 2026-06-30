@@ -13,13 +13,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Server-injected LINE details -->
+    <script>
+        window.lineUid = "<?= lineUid ?>";
+        window.lineDisplayName = "<?= lineDisplayName ?>";
+        window.lineAuthorizeUrl = "<?= lineAuthorizeUrl ?>";
+    </script>
 </head>
 
 <body>
 
+    <!-- Full-screen LINE Login Card when not authorized -->
+    <div id="app-login-redirect-card" style="display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+        <div class="modal-content glass" style="max-width: 420px; width: 100%; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.5); padding: 30px; text-align: center; border-radius: var(--border-radius-lg);">
+            <div style="margin-bottom: 20px;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 5rem; color: var(--neon-blue); filter: drop-shadow(0 0 15px rgba(0,187,249,0.4));"></i>
+            </div>
+            <h1 style="font-family: 'Orbitron', 'Noto Sans TC', sans-serif; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: 1px;">古哥獎學金安全驗證系統</h1>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
+                歡迎進入本計畫！系統正在對您的帳號進行 LINE 安全授權校對，請點擊下方按鈕確認驗證。
+            </p>
+            <a id="lnk-line-authorize" href="#" target="_top" class="btn btn-primary btn-full" style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-size: 1.1rem; height: 50px; font-weight: bold; background: linear-gradient(135deg, var(--neon-blue) 0%, #0077b6 100%); border: none; box-shadow: 0 4px 15px rgba(0,187,249,0.3); animation: pulse 1.5s infinite alternate;">
+                <i class="fa-solid fa-circle-check" style="font-size: 1.3rem;"></i> 確認驗證並進入系統
+            </a>
+        </div>
+    </div>
 
     <!-- Main Container -->
-    <div class="app-container">
+    <div class="app-container" id="main-app-container">
 
         <!-- Top Slogan & Budget Indicator -->
         <header class="app-header">
@@ -280,8 +301,8 @@
                         <h4
                             style="color: var(--neon-blue); margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成明細 (RPG Level Up Breakdown)</h4>
-                        <div
-                            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; color: var(--text-secondary);">
+                        <div class="responsive-grid-2"
+                            style="color: var(--text-secondary);">
                             <div>• 基礎底金：<span style="color:#fff;" id="breakdown-base">NT$ 1,500</span></div>
                             <div>• 學分加給：<span style="color:#fff;" id="breakdown-tier">NT$ 0</span></div>
                             <div>• 起點難度係數：<span style="color:#fff;" id="breakdown-coeff">1.00</span></div>
@@ -320,7 +341,7 @@
                     <h3 style="color: var(--gold); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; font-weight: bold;">
                         <i class="fa-solid fa-file-signature"></i> 未來企劃書撰寫規範與評分比重
                     </h3>
-                    <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; color: var(--text-secondary);">
+                    <ul class="responsive-grid-2" style="list-style: none; padding: 0; margin: 0; gap: 10px; color: var(--text-secondary);">
                         <li style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
                             <span>個人自我介紹 (自介)</span>
@@ -329,7 +350,7 @@
                             <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
                             <span>企劃宗旨與初心</span>
                         </li>
-                        <li style="display: flex; align-items: center; gap: 8px; grid-column: span 2;">
+                        <li class="span-2" style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: var(--neon-green); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">20%</span>
                             <span>具體執行方向、近期與長期目標</span>
                         </li>
@@ -439,49 +460,46 @@
 
     <!-- ----------------- MODALS (POPUP DIALOGS) ----------------- -->
 
-    <!-- Modal 1: Identity Login / Registration -->
+    <!-- Modal 1: LINE Identity Registration -->
     <div class="modal" id="modal-login">
         <div class="modal-content glass">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-user-check"></i> 計畫身分驗證登入</h2>
+                <h2><i class="fa-solid fa-user-plus"></i> 首次登入！請完成計畫註冊</h2>
             </div>
             <div class="modal-body">
-                <p class="modal-tip" id="login-modal-tip">請輸入您的真實姓名與生日作為登入身分識別。首次登入者將會提示填寫基本資料完成計畫註冊。</p>
+                <p class="modal-tip" id="login-modal-tip">系統未偵測到您的 LINE 帳號紀錄。請填寫以下中文真實姓名與基本資料，完成後即可綁定您的 LINE 並進入計畫。</p>
 
                 <!-- Primary inputs: Name and Birthday -->
                 <div class="form-group">
-                    <label>中文真實姓名</label>
+                    <label class="required-label">中文真實姓名 (撥款入帳帳戶之戶名)</label>
                     <input type="text" id="login-student-name" placeholder="請輸入姓名，例如: 王小明">
                 </div>
                 <div class="form-group">
-                    <label>生日 (MMDD，4碼數字，例如 0918)</label>
+                    <label class="required-label">生日 (MMDD，4碼數字，例如 0918)</label>
                     <input type="text" id="login-student-birthday" placeholder="例如：9月18日請填 0918" maxlength="4">
                 </div>
 
-                <!-- Registration specific inputs: Hidden by default -->
+                <!-- Registration specific inputs: Displayed by default in LIFF -->
                 <div id="group-register-details"
-                    style="display: none; border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
-                    <p class="text-neon" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;"><i
-                            class="fa-solid fa-user-plus"></i> 首次登入！請填寫基本註冊資料</p>
-
+                    style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
+                    
                     <div class="form-group">
-                        <label>暱稱</label>
+                        <label class="required-label">暱稱</label>
                         <input type="text" id="login-student-nickname" placeholder="例如: 小明">
                     </div>
 
                     <div class="form-group">
-                        <label>學校名稱</label>
+                        <label class="required-label">學校名稱</label>
                         <input type="text" id="login-student-school" placeholder="例如: 國立台灣大學">
                     </div>
 
-                    <div class="form-group-row"
-                        style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <div class="form-group-row-2">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>就讀科系</label>
+                            <label class="required-label">就讀科系</label>
                             <input type="text" id="login-student-department" placeholder="例如: 資訊工程學系">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label>年級</label>
+                            <label class="required-label">年級</label>
                             <select id="login-student-grade"
                                 style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;">
                                 <option value="大一">大一</option>
@@ -498,33 +516,9 @@
 
                 <div class="error-msg" id="login-error-msg"
                     style="display: none; text-align: center; margin-top: 10px;"></div>
-
-                <!-- Testing guide chips -->
-                <div class="demo-invite-codes">
-                    <p class="demo-title">🔑 測試身分對應表 (直接點選載入測試)：</p>
-                    <div class="codes-chips"
-                        style="margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 8px;">
-                        <span
-                            style="font-size:0.75rem; color:var(--text-secondary); display:block; width:100%; margin-bottom:5px;">✅
-                            已註冊身分 (直接驗證登入)：</span>
-                        <code
-                            onclick="document.getElementById('login-student-name').value='王小明'; document.getElementById('login-student-birthday').value='0918'; document.getElementById('group-register-details').style.display='none';">王小明 (0918)</code>
-                        <code
-                            onclick="document.getElementById('login-student-name').value='李小華'; document.getElementById('login-student-birthday').value='0520'; document.getElementById('group-register-details').style.display='none';">李小華 (0520)</code>
-                    </div>
-                    <div class="codes-chips">
-                        <span
-                            style="font-size:0.75rem; color:var(--text-secondary); display:block; width:100%; margin-bottom:5px;">🆕
-                            首次登入身分 (登入後展開註冊資料欄)：</span>
-                        <code
-                            onclick="document.getElementById('login-student-name').value='林大華'; document.getElementById('login-student-birthday').value='0707'; document.getElementById('group-register-details').style.display='block';">林大華 (0707)</code>
-                        <code
-                            onclick="document.getElementById('login-student-name').value='陳大同'; document.getElementById('login-student-birthday').value='1111'; document.getElementById('group-register-details').style.display='block';">陳大同 (1111)</code>
-                    </div>
-                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary btn-full" id="btn-submit-login">驗證登入</button>
+                <button class="btn btn-primary btn-full" id="btn-submit-login">完成註冊並進入計畫</button>
             </div>
         </div>
     </div>
@@ -549,8 +543,8 @@
                     </ol>
                 </div>
                 <div class="form-checkbox">
-                    <input type="checkbox" id="checkbox-consent">
-                    <label for="checkbox-consent">我已閱讀並完全同意上述《個資使用與銷毀切結聲明》，且保證填寫數據之真實性。</label>
+                    <input type="checkbox" id="consent-checkbox">
+                    <label for="consent-checkbox">我已閱讀並完全同意上述《個資使用與銷毀切結聲明》，且保證填寫數據之真實性。</label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -655,8 +649,8 @@
                         <h4
                             style="color: var(--neon-blue); margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成計算明細</h4>
-                        <div
-                            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; color: var(--text-secondary);">
+                        <div class="responsive-grid-2"
+                            style="color: var(--text-secondary);">
                             <div>• 基礎底金：<span style="color:#fff;" id="modal-breakdown-base">NT$ 1,500</span></div>
                             <div>• 學分加給：<span style="color:#fff;" id="modal-breakdown-tier">NT$ 0</span></div>
                             <div>• 起點難度係數：<span style="color:#fff;" id="modal-breakdown-coeff">1.00</span></div>
@@ -786,7 +780,6 @@
         <div class="loading-spinner"></div>
         <p>上傳中，成績單圖檔防護加密傳輸...</p>
     </div>
-
     <!-- Script imports -->
     <script src="/static/js/app.js"></script>
 </body>

@@ -21,7 +21,8 @@ git remote add origin https://github.com/brotherku1010/LimitedScholarshipSystem.
 git branch -M main
 if %errorlevel% neq 0 goto :error
 
-echo [3/5] Adding all files to git staging...
+echo [3/5] Clearing git cache and adding files (respecting .gitignore)...
+git rm -r --cached . >nul 2>nul
 git add .
 if %errorlevel% neq 0 goto :error
 

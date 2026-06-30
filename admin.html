@@ -6,9 +6,8 @@
     <title>【古哥獎學金】管理端後台 - 雙螢幕無痕銷毀系統</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Apps Script Inlined Style Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Custom Style Sheet -->
     <style>
 /* ==========================================================================
    【古哥獎學金】管理端後台 - 樣式系統 (Admin CSS Stylesheet)
@@ -904,7 +903,7 @@ body {
             </div>
         </div>
         <div class="header-actions">
-            <a href="/" target="_blank" class="btn-back-home"><i class="fa-solid fa-circle-chevron-left"></i> 前往學生端前台 (另開視窗)</a>
+            <a href="/" class="btn-back-home"><i class="fa-solid fa-circle-chevron-left"></i> 返回學生端前台</a>
         </div>
     </header>
 
@@ -954,9 +953,9 @@ body {
                 <button class="btn btn-reject" id="btn-admin-logout" style="background: rgba(255,0,127,0.15); border: 1px solid var(--neon-pink); color: var(--neon-pink); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--neon-pink)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,0,127,0.15)'; this.style.color='var(--neon-pink)';">
                     <i class="fa-solid fa-right-from-bracket"></i> 登出後台
                 </button>
-                <button class="btn btn-export" id="btn-export-csv" style="border: none; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                <a href="/api/admin/export" class="btn btn-export" id="btn-export-csv">
                     <i class="fa-solid fa-file-excel"></i> 匯出華南網銀撥款名冊 (CSV)
-                </button>
+                </a>
             </div>
         </section>
 
@@ -972,7 +971,6 @@ body {
                                 <th>申請時間</th>
                                 <th>就讀校系</th>
                                 <th>姓名</th>
-                                <th>學年度</th>
                                 <th>方案類型</th>
                                 <th>門檻/項目</th>
                                 <th>核定金額</th>
@@ -981,235 +979,256 @@ body {
                         </thead>
                         <tbody id="case-list-tbody">
                             <!-- JS dynamic insertion -->
+                            <tr>
+                                <td colspan="7" class="text-center">正在載入名冊資料...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Right Pane: Split Audit Panel (Case detail & original file preview) -->
-            <div class="pane-audit" id="audit-pane" style="display: none;">
-                
-                <!-- Tab Headers (Audit info vs. original attachment preview) -->
-                <div class="audit-tabs">
-                    <div class="tab active"><i class="fa-solid fa-file-invoice-dollar"></i> 審查表單欄位</div>
-                    <div class="tab-right-preview"><i class="fa-solid fa-magnifying-glass-chart"></i> 原始檔案核對</div>
-                </div>
-
-                <div class="audit-split-grid">
-                    
-                    <!-- Detail forms fields column -->
-                    <div class="audit-details-col">
-                        <div class="details-section">
-                            <h3><i class="fa-solid fa-info-circle"></i> 案件基本資料</h3>
-                            
-                            <div class="meta-row">
-                                <span>申請序號：</span>
-                                <strong id="detail-id">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>真實姓名：</span>
-                                <strong id="detail-name">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>就讀校系：</span>
-                                <strong id="detail-school-dept">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>申報學年度：</span>
-                                <strong id="detail-academic-year">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>核定獎助金額：</span>
-                                <strong class="text-gold" id="detail-amount">NT$ 0</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>申請提交時間：</span>
-                                <strong id="detail-created">--</strong>
-                            </div>
-                        </div>
-
-                        <!-- Scheme specific parameter fields -->
-                        <div class="details-section" id="details-type-challenge" style="display: none;">
-                            <h3><i class="fa-solid fa-shield-halved"></i> 方案一：成績挑戰細節</h3>
-                            <div class="meta-row">
-                                <span>挑戰防線分數：</span>
-                                <strong class="text-neon" id="detail-challenge-target">0.00 分</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>當期實際分數：</span>
-                                <strong id="detail-challenge-gpa">0.00 分</strong>
-                            </div>
-                        </div>
-
-                        <div class="details-section" id="details-type-progress" style="display: none;">
-                            <h3><i class="fa-solid fa-chart-line-up"></i> 方案二：學期進步獎細節</h3>
-                            <div class="meta-row">
-                                <span>前一學期成績：</span>
-                                <strong id="detail-progress-prev">0.00 分</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>當期學期成績：</span>
-                                <strong class="text-neon" id="detail-progress-curr">0.00 分</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>當期修習學分：</span>
-                                <strong id="detail-progress-credits">0 學分</strong>
-                            </div>
-                            
-                            <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                                <i class="fa-solid fa-university"></i> 收款銀行與匯款資訊 (PII)
-                            </h3>
-                            <div class="meta-row">
-                                <span>收款銀行代碼：</span>
-                                <strong id="detail-bank-code">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>收款人銀行帳號：</span>
-                                <strong id="detail-bank-account" class="font-tech">--</strong>
-                            </div>
-                        </div>
-
-                        <div class="details-section" id="details-type-blueprint" style="display: none;">
-                            <h3><i class="fa-solid fa-rocket"></i> 方案三：未來藍圖圓夢細節</h3>
-                            <div class="meta-row">
-                                <span>專案圓夢主題：</span>
-                                <strong id="detail-blueprint-name">--</strong>
-                            </div>
-                            <div class="meta-row">
-                                <span>預定執行時程：</span>
-                                <strong id="detail-blueprint-month">--</strong>
-                            </div>
-                        </div>
-
-                        <!-- Action controls section -->
-                        <div class="details-section actions-section">
-                            <h3><i class="fa-solid fa-shield-halved"></i> 審查核定動作</h3>
-                            
-                            <!-- Action alert status feedback -->
-                            <div class="status-tip" id="case-status-msg" style="display: none;"></div>
-
-                            <div class="action-btn-row">
-                                <button class="btn btn-primary" id="btn-approve-case"><i class="fa-solid fa-circle-check"></i> 核准撥款</button>
-                                <button class="btn btn-reject-secondary" id="btn-reject-case"><i class="fa-solid fa-circle-xmark"></i> 拒絕申請</button>
-                            </div>
-                            
-                            <!-- Shredder Action: Destroy sensitive banking details physically -->
-                            <button class="btn btn-reject btn-full btn-destroy-shred" id="btn-destroy-case" style="margin-top: 15px;" disabled>
-                                <i class="fa-solid fa-dumpster-fire"></i> 已撥款，執行一鍵個資物理銷毀
-                            </button>
-                        </div>
+            <!-- Right Pane: Double Screen Contrast Auditor -->
+            <div class="pane-auditor" id="auditor-pane" style="display: none;">
+                <div class="auditor-card">
+                    <div class="auditor-header">
+                        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> 雙螢幕審對視窗</h3>
+                        <span class="case-id-badge" id="audit-case-id">CASE-ID</span>
                     </div>
 
-                    <!-- Right Pane: File Preview Column -->
-                    <div class="audit-preview-col">
-                        <div class="preview-header">
-                            <span><i class="fa-solid fa-paperclip"></i> 申報憑證/成績單原圖</span>
-                        </div>
-                        <div class="preview-body">
-                            <!-- Show file or PDF container -->
-                            <div id="preview-file-container"></div>
+                    <div class="auditor-split">
+                        
+                        <!-- Audit Fields Panel (Left/Top) -->
+                        <div class="audit-details">
+                            <h4 class="section-title"><i class="fa-solid fa-list-check"></i> 學生申報數據</h4>
                             
-                            <!-- Placeholder when no case is selected or file is destroyed -->
-                            <div class="preview-placeholder" id="preview-no-file">
-                                <i class="fa-solid fa-file-circle-check"></i>
-                                <p>點擊左側列表項目，即可在此預覽學生成績單或企劃書。</p>
+                            <div class="detail-group">
+                                <span class="d-label">申請方案</span>
+                                <strong class="d-value text-neon-blue" id="audit-type">--</strong>
+                            </div>
+                            <div class="detail-group-row">
+                                <div class="detail-group">
+                                    <span class="d-label">真實姓名</span>
+                                    <strong class="d-value" id="audit-name">--</strong>
+                                </div>
+                                <div class="detail-group">
+                                    <span class="d-label">就讀年級</span>
+                                    <strong class="d-value text-neon-blue" id="audit-grade">--</strong>
+                                </div>
+                            </div>
+                            <div class="detail-group" style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 10px;">
+                                <span class="d-label">就讀學校與科系</span>
+                                <strong class="d-value" id="audit-school-dept">--</strong>
+                            </div>
+                            
+                            <div class="detail-group-row" id="row-gpas">
+                                <div class="detail-group" id="group-prev-gpa" style="display: none;">
+                                    <span class="d-label">上學期平均</span>
+                                    <strong class="d-value" id="audit-prev-gpa">--</strong>
+                                </div>
+                                <div class="detail-group" id="group-gpa">
+                                    <span class="d-label" id="label-gpa">當學期平均</span>
+                                    <strong class="d-value text-neon-green" id="audit-gpa">--</strong>
+                                </div>
+                                <div class="detail-group" id="group-target">
+                                    <span class="d-label">挑戰防線</span>
+                                    <strong class="d-value text-gold" id="audit-target">--</strong>
+                                </div>
+                            </div>
+
+                            <div class="detail-group" id="group-project" style="display: none;">
+                                <span class="d-label">企劃案名稱</span>
+                                <strong class="d-value" id="audit-project-name">--</strong>
+                                <span class="d-label mt-1">執行月份</span>
+                                <strong class="d-value" id="audit-project-month">--</strong>
+                            </div>
+
+                            <!-- Financial remittance detail -->
+                            <div class="remittance-box" id="remittance-box-PII">
+                                <h4><i class="fa-solid fa-money-check-dollar"></i> 匯款指定金流</h4>
+                                <div class="remit-row">
+                                    <span class="r-label">華南網銀代號：</span>
+                                    <strong class="r-value" id="audit-bank-code">--</strong>
+                                </div>
+                                <div class="remit-row">
+                                    <span class="r-label">收款銀行帳號：</span>
+                                    <strong class="r-value highlight-account" id="audit-bank-account">--</strong>
+                                </div>
+                                <div class="remit-row font-large">
+                                    <span class="r-label">核定發放金額：</span>
+                                    <strong class="r-value text-gold" id="audit-amount">NT$ --</strong>
+                                </div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div class="auditor-actions-zone">
+                                <div class="audit-status-actions" id="actions-pending-group">
+                                    <button class="btn btn-approve" id="btn-approve-case">
+                                        <i class="fa-solid fa-check"></i> 核准申請
+                                    </button>
+                                    <button class="btn btn-reject" id="btn-reject-case">
+                                        <i class="fa-solid fa-xmark"></i> 拒絕
+                                    </button>
+                                </div>
+                                
+                                <div class="audit-destroy-action" id="actions-approved-group" style="display: none;">
+                                    <div class="approved-alert-banner">
+                                        <i class="fa-solid fa-circle-check"></i> 此案件已審核通過。請在華南網銀批次轉帳後，點擊下方銷毀個資。
+                                    </div>
+                                    <button class="btn btn-destroy btn-full" id="btn-destroy-case">
+                                        <i class="fa-solid fa-skull-crossbones"></i> 已撥款，一鍵個資銷毀結案
+                                    </button>
+                                </div>
+
+                                <div class="audit-destroyed-banner" id="actions-destroyed-banner" style="display: none;">
+                                    <i class="fa-solid fa-shield-halved"></i> 該案已撥款結案。所有成績單圖檔、銀行代碼與帳號個資已物理銷毀！
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Image Viewer Panel (Right/Bottom) -->
+                        <div class="audit-document">
+                            <h4 class="section-title"><i class="fa-solid fa-file-image"></i> 成績單/企劃書證明文件 (雙螢幕比對區)</h4>
+                            <div class="document-viewer-container" id="document-viewer">
+                                <img src="/static/uploads/mock_report.svg" alt="成績單證明文件" class="audit-img" id="audit-document-img">
+                                <iframe src="" class="audit-iframe" id="audit-document-pdf" style="display: none;"></iframe>
                             </div>
                         </div>
+
                     </div>
-
                 </div>
+            </div>
 
+            <!-- Placeholder Auditor State -->
+            <div class="pane-auditor-placeholder" id="auditor-placeholder">
+                <div class="ph-content">
+                    <i class="fa-solid fa-circle-chevron-left ph-icon"></i>
+                    <h3>雙螢幕比對視窗</h3>
+                    <p>請點選左側名冊中的任何申請案，即可在此處載入學生填報數據與成績單原圖進行即時比對。</p>
+                </div>
             </div>
 
         </div>
 
     </div>
 
-    <!-- Alert / Toast Popup for Messages -->
-    <div class="toast" id="toast-message">
-        <i class="fa-solid fa-circle-info toast-icon" id="toast-icon"></i>
-        <div class="toast-body" id="toast-body-text">提示訊息</div>
+    <!-- Modal: Data Destruction Log Output -->
+    <div class="modal" id="modal-destroy-log">
+        <div class="modal-content glass dark-log">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-terminal"></i> 隱私資料物理抹除終端日誌</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-destroy-log').classList.remove('show')">&times;</button>
+            </div>
+            <div class="modal-body console-body">
+                <div class="console-screen">
+                    <p class="console-line text-green">> Initializing secure PII wipe sequence...</p>
+                    <p class="console-line">> Resolving physical paths for student files...</p>
+                    <p class="console-line text-red" id="log-file-delete">> Deleting: challenge_8293923.png - OK (Deleted)</p>
+                    <p class="console-line">> Wiping database transaction row data...</p>
+                    <p class="console-line">> Set columns [bank_code, bank_account, file_path] = NULL - SUCCESS</p>
+                    <p class="console-line">> Anonymizing student name...</p>
+                    <p class="console-line text-green" id="log-name-wipe">>王小明 ➔ 王*明</p>
+                    <p class="console-line">> Generating cryptographically signed privacy receipt...</p>
+                    <p class="console-line text-neon-blue">> Dispatching GDPR compliant confirmation Email...</p>
+                    <div class="email-mock-box">
+                        <span class="em-title">✉ 模擬郵件伺服器記錄 (已寄出)：</span>
+                        <p class="em-meta"><strong>收件人:</strong> student_registered_email@example.com</p>
+                        <p class="em-meta"><strong>主旨:</strong> 【古哥獎學金】已撥款暨個人隱私資料銷毀通知</p>
+                        <p class="em-body" id="log-email-body">...</p>
+                    </div>
+                    <p class="console-line text-green">> OK. Shredding complete. Connection closed.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-full" onclick="document.getElementById('modal-destroy-log').classList.remove('show')">確認結案</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal: Settings Parameters -->
+    <!-- Modal: Scholarship Parameters Settings -->
     <div class="modal" id="modal-settings">
-        <div class="modal-content glass">
+        <div class="modal-content glass" style="max-width: 550px;">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-gears text-gold"></i> 獎學金金額與加成參數設定</h2>
-                <button class="modal-close" onclick="closeModal('modal-settings')">&times;</button>
+                <h2><i class="fa-solid fa-gears"></i> 獎金參數設定</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-settings').classList.remove('show')">&times;</button>
             </div>
             <form id="form-settings">
-                <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                        在此調整計畫各方案之基礎獎金與加成權重。修改後將即時同步於學生端前台試算器與後端申請稽核中。
+                    </p>
                     
-                    <!-- Progress parameters -->
-                    <div class="form-section-title">方案二：學期進步獎加成係數</div>
-                    <div class="form-row-2">
-                        <div class="form-group">
-                            <label>基礎底金 (NT$)</label>
-                            <input type="number" id="set-progress-base" required min="0">
+                    <h3 style="color: var(--neon-blue); font-size: 0.95rem; margin-bottom: 12px;"><i class="fa-solid fa-arrow-up-right-dots"></i> 方案二：學期進步獎參數</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>基礎底金 (元)</label>
+                            <input type="number" id="settings-progress-base" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
                         </div>
-                        <div class="form-group">
-                            <label>點數折現率 (NT$ / 點)</label>
-                            <input type="number" id="set-progress-rate" required min="0">
-                        </div>
-                    </div>
-
-                    <!-- Challenge amounts -->
-                    <div class="form-section-title" style="margin-top: 20px;">方案一：成績挑戰階梯獎金 (LV 1 - LV 8)</div>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                        <div class="form-group">
-                            <label>LV 1 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-1" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 2 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-2" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 3 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-3" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 4 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-4" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 5 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-5" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 6 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-6" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 7 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-7" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>LV 8 獎金 (NT$)</label>
-                            <input type="number" id="set-ladder-8" required min="0">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>點數折現係數 (元 / 點)</label>
+                            <input type="number" id="settings-progress-rate" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
                         </div>
                     </div>
-
-                    <!-- Blueprint parameters -->
-                    <div class="form-section-title" style="margin-top: 20px;">方案三：未來藍圖圓夢專案額度</div>
-                    <div class="form-group">
-                        <label>最高專案圓夢基金 (NT$)</label>
-                        <input type="number" id="set-blueprint-limit" required min="0">
+                    
+                    <h3 style="color: var(--gold); font-size: 0.95rem; margin-bottom: 12px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;"><i class="fa-solid fa-shield-halved"></i> 方案一：成績挑戰階梯獎金</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 1 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-1" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 2 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-2" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 3 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-3" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 4 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-4" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 5 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-5" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 6 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-6" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 7 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-7" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 8 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-8" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
                     </div>
-
+                    
+                    <h3 style="color: var(--neon-red); font-size: 0.95rem; margin-bottom: 12px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;"><i class="fa-solid fa-rocket"></i> 方案三：未來藍圖計畫上限</h3>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>專案圓夢基金最高額度 (元)</label>
+                        <input type="number" id="settings-blueprint" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-glow-gold btn-full">
-                        <i class="fa-solid fa-save"></i> 儲存獎金設定
-                    </button>
+                    <button type="submit" class="btn btn-approve btn-full" style="background: var(--neon-blue); border-color: var(--neon-blue); color: #000; font-weight: bold;"><i class="fa-solid fa-floppy-disk"></i> 儲存獎金設定參數</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Apps Script Inlined Javascripts -->
+    <!-- Alert / Toast Popup for Messages -->
+    <div class="toast" id="toast-message">
+        <i class="fa-solid fa-circle-info toast-icon" id="toast-icon"></i>
+        <div class="toast-body" id="toast-body-text">提示訊息內容</div>
+    </div>
+
+    <!-- Admin Logic JavaScript -->
     <script>
+
+
 
 /* ==========================================================================
    【古哥獎學金】後台審查系統 - 互動邏輯 (Apps Script Admin JS)
@@ -1657,6 +1676,8 @@ function showToast(text, iconClass = "fa-circle-info") {
         }, 4000);
     }
 }
+
+
 
 
 </script>

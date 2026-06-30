@@ -1594,4 +1594,35 @@ body {
     .modal-content {
         max-height: 95vh;
     }
+    
+    .responsive-grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .responsive-grid-2 .span-2 {
+        grid-column: span 1 !important;
+    }
+    
+    .form-group-row-2 {
+        grid-template-columns: 1fr !important;
+        margin-bottom: 10px;
+    }
+}
+
+/* Responsive Grid Helpers (Desktop Defaults) */
+.responsive-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.responsive-grid-2 .span-2 {
+    grid-column: span 2;
+}
+
+.form-group-row-2 {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
 }

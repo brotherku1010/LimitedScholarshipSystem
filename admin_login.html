@@ -7,7 +7,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome Icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     
     <style>
         :root {
@@ -270,25 +270,31 @@
             
             errorDiv.style.display = 'none';
             
-            google.script.run
-                .withSuccessHandler(function(response) {
-                    if (response.success) {
-                        showToast("密碼驗證成功，正在載入審核控制台...", "fa-circle-check");
-                        setTimeout(() => {
-                            // Apps Script redirection with active token
-                            window.location.href = google.script.host.origin + "?page=admin&token=" + response.token;
-                        }, 1000);
-                    } else {
-                        errorDiv.innerText = response.message || "密碼錯誤，登入失敗！";
-                        errorDiv.style.display = 'block';
-                        showToast("登入失敗，拒絕連線！", "fa-triangle-exclamation");
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    errorDiv.innerText = "連線失敗，請檢查系統權限與 API 開啟狀態！";
+            fetch('/api/admin/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(response => {
+                if (response.status === 200 && response.body.success) {
+                    showToast("密碼驗證成功，正在載入審核控制台...", "fa-circle-check");
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    errorDiv.innerText = response.body.message || "密碼錯誤，登入失敗！";
                     errorDiv.style.display = 'block';
-                })
-                .adminLogin(password);
+                    showToast("登入失敗，拒絕連線！", "fa-triangle-exclamation");
+                }
+            })
+            .catch(err => {
+                console.error("Login connection error:", err);
+                errorDiv.innerText = "連線失敗，請檢查伺服器狀態！";
+                errorDiv.style.display = 'block';
+            });
         });
 
         // Toast Helper

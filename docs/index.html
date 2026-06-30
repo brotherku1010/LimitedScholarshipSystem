@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古哥獎學金審查系統 - 安全通道</title>
+    <!-- FontAwesome for Premium Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Outfit & Noto Sans TC font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-glass: rgba(30, 41, 59, 0.7);
+            --neon-blue: #00bbf9;
+            --neon-blue-glow: rgba(0, 187, 249, 0.3);
+            --gold: #f59e0b;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            color: #fff;
+        }
+
+        /* Shift the iframe up by 46px to hide the Google warning header banner! */
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: -46px; /* Offset the exact height of the GAS banner */
+            left: 0;
+            width: 100%;
+            height: calc(100% + 46px); /* Compensate the offset height */
+            border: none;
+        }
+
+        /* Beautiful Configuration setup instruction screen */
+        .setup-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        .setup-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .setup-icon {
+            font-size: 4rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px var(--neon-blue-glow));
+            animation: pulse 2s infinite alternate;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #fff 30%, var(--neon-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0 0 25px 0;
+        }
+
+        .step-list {
+            text-align: left;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-num {
+            background: var(--neon-blue);
+            color: #0f172a;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+
+        .code-box {
+            font-family: monospace;
+            background: #020617;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--gold);
+            word-break: break-all;
+            margin-top: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--neon-blue-glow)); }
+            100% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(0, 187, 249, 0.6)); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Iframe Wrapper for Google Apps Script Web App -->
+    <div class="iframe-wrapper" id="app-wrapper" style="display: none;">
+        <iframe id="gas-iframe" src="" allow="camera; microphone; geolocation;"></iframe>
+    </div>
+
+    <!-- 2. Setup Guide Screen (Shown only when unconfigured) -->
+    <div class="setup-container" id="setup-guide">
+        <div class="setup-card">
+            <div class="setup-icon">
+                <i class="fa-solid fa-code-branch"></i>
+            </div>
+            <h1>GitHub Pages 安全轉介設定</h1>
+            <p>本頁面將協助您過濾 Google Apps Script 頂部的警示橫幅，以呈現 100% 純淨的獎學金系統介面。</p>
+            
+            <div class="step-list">
+                <div class="step-item">
+                    <span class="step-num">1</span>
+                    <div>
+                        取得您的 <strong>Google Apps Script 網頁應用程式網址</strong>。
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">2</span>
+                    <div>
+                        打開本機的 <code>docs/index.html</code> 檔案，在第 155 行將 <code>DEFAULT_GAS_URL</code> 修改為您的網址。
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">3</span>
+                    <div>
+                        或者，您現在可以直接在瀏覽器網址列後方加入 <code>?gas=</code> 參數進行動態轉接測試：
+                        <div class="code-box" id="test-link">載入中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ⚙️ 設定區：請將您的 GAS 網頁應用程式網址填入下方雙引號中
+        // ==========================================
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyFaYuaKf_P816lNT2xwmqN2N6fuzILWjr9n1JwtziFygk54Ktx5Sd_jAfCwSzQ4pAW/exec"; 
+
+        // 讀取當前 URL 的查詢參數
+        const urlParams = new URLSearchParams(window.location.search);
+        let gasUrl = urlParams.get('gas') || DEFAULT_GAS_URL;
+
+        // 生成動態測試範例連結顯示在畫面上
+        const currentCleanUrl = window.location.origin + window.location.pathname;
+        const testLinkDiv = document.getElementById('test-link');
+        if (testLinkDiv) {
+            testLinkDiv.innerText = currentCleanUrl + "?gas=https://script.google.com/macros/s/您的GAS_ID/exec";
+        }
+
+        // 檢查網址是否已經設定
+        if (gasUrl && gasUrl.trim() !== "" && gasUrl.startsWith("https://")) {
+            // 建立完整的轉介參數，將當前 GitHub 頁面的所有參數（如 ?page=admin 等）傳遞給 iframe 內的 GAS
+            const targetParams = new URLSearchParams();
+            urlParams.forEach((value, key) => {
+                if (key !== 'gas') {
+                    targetParams.append(key, value);
+                }
+            });
+            
+            // 附加 parent_url 參數，讓後端 Code.gs 知道要把 LINE Login 的 redirect_uri 設定為此 GitHub Pages 網址
+            targetParams.append('parent_url', currentCleanUrl);
+            
+            const queryString = targetParams.toString();
+            const delimiter = gasUrl.includes('?') ? '&' : '?';
+            const finalSrc = queryString ? (gasUrl + delimiter + queryString) : gasUrl;
+            
+            // 顯示 Iframe 並載入
+            document.getElementById('app-wrapper').style.display = 'block';
+            document.getElementById('setup-guide').style.display = 'none';
+            document.getElementById('gas-iframe').src = finalSrc;
+        } else {
+            // 未設定，顯示設定指引面板
+            document.getElementById('app-wrapper').style.display = 'none';
+            document.getElementById('setup-guide').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

@@ -5,6 +5,10 @@
 const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
 const PARENT_DRIVE_FOLDER_ID = '1SK0UyFssSFDR044v5Th-ZkbvagqdNsIo';
 
+// --- LINE Login Configurations ---
+const LINE_CHANNEL_ID = '2010560500';
+const LINE_CHANNEL_SECRET = '77a41dd44223451bac61802baa2f6246'; // ⚠️ 已填入您在 LINE Developers 取得的頻道金鑰 (Channel Secret)
+
 // --- Web Routing (GET Entrance) ---
 function doGet(e) {
   var page = e.parameter.page || 'index';
@@ -37,10 +41,58 @@ function doGet(e) {
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
   
-  // Default: Student Main Landing Page
-  return HtmlService.createTemplateFromFile('index')
-      .evaluate()
-      .setTitle('古哥獎學金 - 成績挑戰計畫')
+  // Default: Student Main Landing Page with Server-Side LINE Login OAuth flow
+  const gasUrl = ScriptApp.getService().getUrl();
+  const parentUrl = e.parameter.parent_url ? decodeURIComponent(e.parameter.parent_url) : "";
+  const redirectUri = parentUrl || gasUrl;
+  const code = e.parameter.code;
+  
+  let lineUid = "";
+  let lineDisplayName = "";
+  
+  if (code) {
+    // Exchange code for token
+    try {
+      const tokenUrl = 'https://api.line.me/oauth2/v2.1/token';
+      const payload = {
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri,
+        client_id: LINE_CHANNEL_ID,
+        client_secret: LINE_CHANNEL_SECRET
+      };
+      
+      const options = {
+        method: 'post',
+        contentType: 'application/x-www-form-urlencoded',
+        payload: payload,
+        muteHttpExceptions: true
+      };
+      
+      const response = UrlFetchApp.fetch(tokenUrl, options);
+      const resData = JSON.parse(response.getContentText());
+      
+      if (resData.id_token) {
+        const payloadPart = resData.id_token.split('.')[1];
+        const decodedPayload = Utilities.newBlob(Utilities.base64DecodeWebSafe(payloadPart)).getDataAsString();
+        const payloadJson = JSON.parse(decodedPayload);
+        lineUid = payloadJson.sub;
+        lineDisplayName = payloadJson.name || "";
+      }
+    } catch (err) {
+      Logger.log("OAuth token exchange failed: " + err.toString());
+    }
+  }
+  const authorizeUrl = "https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=" + LINE_CHANNEL_ID + "&redirect_uri=" + encodeURIComponent(redirectUri) + "&state=login&scope=profile%20openid";
+  
+  // Serve student main landing page and inject LINE details
+  var template = HtmlService.createTemplateFromFile('index');
+  template.lineUid = lineUid || "";
+  template.lineDisplayName = lineDisplayName || "";
+  template.lineAuthorizeUrl = authorizeUrl;
+  
+  return template.evaluate()
+      .setTitle('\u53e4\u54e5\u734e\u5b78\u91d1 - \u6210\u7e3e\u6311\u6230\u8a08\u756b')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -66,8 +118,12 @@ function initSheets() {
   let studentSheet = ss.getSheetByName('students');
   if (!studentSheet) {
     studentSheet = ss.insertSheet('students');
-    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID']);
-    studentSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#b7e1cd');
+    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID', 'ConsentSigned']);
+    studentSheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#b7e1cd');
+  } else {
+    if (studentSheet.getLastColumn() < 10 || studentSheet.getRange(1, 10).getValue().toString().trim() !== "ConsentSigned") {
+      studentSheet.getRange(1, 10).setValue("ConsentSigned").setFontWeight('bold').setBackground('#b7e1cd');
+    }
   }
   
   // 2. Check or Create 'applications'
@@ -125,7 +181,7 @@ function getSafeSettings(ss) {
   return {
     progress_base: parseInt(dict['progress_base'] || '1500'),
     progress_conversion_rate: parseInt(dict['progress_conversion_rate'] || '50'),
-    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').split(',').map(Number),
+    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').toString().split(',').map(Number),
     blueprint_amount: parseInt(dict['blueprint_amount'] || '30000')
   };
 }
@@ -188,28 +244,214 @@ function findRows(sheet, colIndex, value) {
 
 // --- Student API Logic ---
 
-// 1. Student Login
+// Helper to normalize birthday strings, preventing leading-zero truncation issues from Google Sheets
+function normalizeBirthday(b) {
+  if (b === null || b === undefined) return "";
+  let s = b.toString().trim();
+  // If it's a 3-digit number, pad with a leading zero (e.g. "918" -> "0918")
+  if (s.length === 3 && !isNaN(s)) {
+    s = "0" + s;
+  }
+  // Strip off single quote prefix if present
+  if (s.indexOf("'") === 0) {
+    s = s.substring(1);
+  }
+  return s;
+}
+
+// --- Student LIFF APIs ---
+
+// 1.0. Student LIFF Login (Verification by LINE UID)
+function studentLiffLogin(lineUid) {
+  initSheets();
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const appSheet = ss.getSheetByName('applications');
+  
+  if (!lineUid) {
+    return { success: false, message: '缺少 LINE UID，請從 LINE App 內開啟此網頁！' };
+  }
+  
+  const data = studentSheet.getDataRange().getValues();
+  let student = null;
+  for (let i = 1; i < data.length; i++) {
+    const sheetLineUid = data[i][7] ? data[i][7].toString().trim() : "";
+    if (sheetLineUid === lineUid.trim()) {
+      student = {
+        uid: data[i][0] ? data[i][0].toString() : "",
+        name: data[i][1] ? data[i][1].toString() : "",
+        birthday: data[i][2] ? normalizeBirthday(data[i][2]) : "",
+        nickname: data[i][3] ? data[i][3].toString() : "",
+        school: data[i][4] ? data[i][4].toString() : "",
+        department: data[i][5] ? data[i][5].toString() : "",
+        grade: data[i][6] ? data[i][6].toString() : "",
+        lineUid: data[i][7] ? data[i][7].toString() : "",
+        folderId: data[i][8] ? data[i][8].toString() : "",
+        consentSigned: data[i][9] ? data[i][9].toString().trim() === "true" : false
+      };
+      break;
+    }
+  }
+  
+  if (!student) {
+    return {
+      success: false,
+      code: 'NOT_REGISTERED',
+      message: '尚未註冊本系統計畫。'
+    };
+  }
+  
+  // Get unlocked levels and attempts count
+  const appData = appSheet.getDataRange().getValues();
+  const unlockedChallenges = [];
+  let attempts = 0;
+  for (let i = 1; i < appData.length; i++) {
+    if (appData[i][3] === student.uid) {
+      if (appData[i][1] === 'challenge') {
+        const details = JSON.parse(appData[i][7]);
+        if (appData[i][2] === 'approved') {
+          unlockedChallenges.push(parseInt(details.level));
+        }
+        attempts++;
+      }
+    }
+  }
+  
+  const settings = getSafeSettings(ss);
+  
+  return {
+    success: true,
+    uid: student.uid,
+    name: student.name,
+    birthday: student.birthday,
+    nickname: student.nickname,
+    school: student.school,
+    department: student.department,
+    grade: student.grade,
+    consent_signed: student.consentSigned,
+    unlocked_challenges: unlockedChallenges,
+    attempts: attempts,
+    settings: settings
+  };
+}
+
+// 1.1. Student LIFF Register (Binds LINE UID)
+function studentLiffRegister(regData, lineUid) {
+  initSheets();
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  
+  const name = regData.name.trim();
+  const birthday = regData.birthday.trim();
+  const inputBirthday = normalizeBirthday(birthday);
+  
+  if (!lineUid) {
+    return { success: false, message: '註冊失敗：缺少 LINE UID，請從 LINE App 內開啟此網頁！' };
+  }
+  
+  // Verify duplication
+  const rows = studentSheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    const sheetName = rows[i][1] ? rows[i][1].toString().trim() : "";
+    const sheetBirthday = rows[i][2] ? normalizeBirthday(rows[i][2]) : "";
+    const sheetLineUid = rows[i][7] ? rows[i][7].toString().trim() : "";
+    
+    if (sheetName === name && sheetBirthday === inputBirthday) {
+      return { success: false, message: '此真實姓名與生日組合已在系統中存在！' };
+    }
+    if (sheetLineUid === lineUid) {
+      return { success: false, message: '您的 LINE 帳號已綁定過其他學生身分！' };
+    }
+  }
+  
+  // Generate random UID
+  let studentUid = 'U';
+  for (let k = 0; k < 8; k++) {
+    studentUid += Math.floor(Math.random() * 10).toString();
+  }
+  
+  // Create Google Drive Folder
+  let studentFolderId = "error_drive_access";
+  try {
+    const parentFolder = DriveApp.getFolderById(PARENT_DRIVE_FOLDER_ID);
+    const subFolder = parentFolder.createFolder(name);
+    studentFolderId = subFolder.getId();
+  } catch (err) {
+    // Fallback: If folder creation fails, write a mock folder value so execution does not crash
+    studentFolderId = "error_drive_access";
+  }
+  
+  // Append new student record
+  studentSheet.appendRow([
+    studentUid,
+    name,
+    "'" + inputBirthday,
+    regData.nickname.trim(),
+    regData.school.trim(),
+    regData.department.trim(),
+    regData.grade.trim(),
+    lineUid,
+    studentFolderId
+  ]);
+  
+  // Send welcome push notification
+  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${regData.school.trim()} ${regData.department.trim()} (${regData.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
+  sendLinePushNotification(lineUid, welcomeMsg);
+  
+  return {
+    success: true,
+    message: '註冊資料成功建立！歡迎加入古哥成績挑戰計畫！'
+  };
+}
+
+// 1.1.5. Student Sign Consent (Writes to J column in Sheet)
+function studentSignConsent(lineUid) {
+  initSheets();
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  
+  if (!lineUid) return { success: false, message: "缺少 LINE UID！" };
+  
+  const data = studentSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const sheetLineUid = data[i][7] ? data[i][7].toString().trim() : "";
+    if (sheetLineUid === lineUid.trim()) {
+      // Update J column (column 10) to "true"
+      studentSheet.getRange(i + 1, 10).setValue("true");
+      return { success: true, message: "同意狀態已同步至雲端資料庫！" };
+    }
+  }
+  return { success: false, message: "找不到學員資料！" };
+}
+
+// 1.2. Student Login
 function studentLogin(name, birthday) {
   initSheets();
   const ss = getDbSpreadsheet();
   const studentSheet = ss.getSheetByName('students');
   const appSheet = ss.getSheetByName('applications');
   
+  const inputName = name.trim();
+  const inputBirthday = normalizeBirthday(birthday);
+  
   // Find student by name and birthday
   const data = studentSheet.getDataRange().getValues();
   let student = null;
   for (let i = 1; i < data.length; i++) {
-    if (data[i][1].toString().trim() === name.trim() && data[i][2].toString().trim() === birthday.toString().trim()) {
+    const sheetName = data[i][1] ? data[i][1].toString().trim() : "";
+    const sheetBirthday = data[i][2] ? normalizeBirthday(data[i][2]) : "";
+    
+    if (sheetName === inputName && sheetBirthday === inputBirthday) {
       student = {
-        uid: data[i][0],
-        name: data[i][1],
-        birthday: data[i][2],
-        nickname: data[i][3],
-        school: data[i][4],
-        department: data[i][5],
-        grade: data[i][6],
-        lineUid: data[i][7],
-        folderId: data[i][8]
+        uid: data[i][0] ? data[i][0].toString() : "",
+        name: data[i][1] ? data[i][1].toString() : "",
+        birthday: data[i][2] ? normalizeBirthday(data[i][2]) : "", // return normalized birthday
+        nickname: data[i][3] ? data[i][3].toString() : "",
+        school: data[i][4] ? data[i][4].toString() : "",
+        department: data[i][5] ? data[i][5].toString() : "",
+        grade: data[i][6] ? data[i][6].toString() : "",
+        lineUid: data[i][7] ? data[i][7].toString() : "",
+        folderId: data[i][8] ? data[i][8].toString() : ""
       };
       break;
     }
@@ -273,11 +515,14 @@ function studentRegister(data) {
   
   const name = data.name.trim();
   const birthday = data.birthday.trim();
+  const inputBirthday = normalizeBirthday(birthday);
   
   // Verify duplication
   const rows = studentSheet.getDataRange().getValues();
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][1].toString().trim() === name && rows[i][2].toString().trim() === birthday) {
+    const sheetName = rows[i][1] ? rows[i][1].toString().trim() : "";
+    const sheetBirthday = rows[i][2] ? normalizeBirthday(rows[i][2]) : "";
+    if (sheetName === name && sheetBirthday === inputBirthday) {
       return { success: false, message: '此真實姓名與生日組合已存在，請直接點選驗證登入！' };
     }
   }
@@ -299,11 +544,11 @@ function studentRegister(data) {
     studentFolderId = "error_drive_access";
   }
   
-  // Append new student record
+  // Append new student record (with leading single quote to force string type in Sheets)
   studentSheet.appendRow([
     studentUid,
     name,
-    birthday,
+    "'" + birthday, 
     data.nickname.trim(),
     data.school.trim(),
     data.department.trim(),
@@ -355,8 +600,10 @@ function submitChallenge(payload) {
   // Verify student
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
-    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+    const sheetBirthday = normalizeBirthday(r.rowData[2]);
+    if (sheetBirthday === inputBirthday) {
       student = r.rowData;
       break;
     }
@@ -436,8 +683,10 @@ function submitProgress(payload) {
   // Verify student & grade
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
-    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+    const sheetBirthday = normalizeBirthday(r.rowData[2]);
+    if (sheetBirthday === inputBirthday) {
       student = r.rowData;
       break;
     }
@@ -539,8 +788,10 @@ function submitBlueprint(payload) {
   // Verify student
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
-    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+    const sheetBirthday = normalizeBirthday(r.rowData[2]);
+    if (sheetBirthday === inputBirthday) {
       student = r.rowData;
       break;
     }
@@ -989,4 +1240,41 @@ function adminExportApproved(token) {
   }
   
   return csvLines.join('\r\n');
+}
+
+// --- Diagnostic Test Function ---
+function testLogin() {
+  try {
+    Logger.log("=== [START DIAGNOSTIC] Testing studentLogin for 王小明 (0918) ===");
+    const res = studentLogin("王小明", "0918");
+    Logger.log("Result success: " + res.success);
+    Logger.log("Returned Data: " + JSON.stringify(res));
+  } catch (e) {
+    Logger.log("❌ ERROR in studentLogin: " + e.toString());
+    Logger.log("❌ STACK TRACE: " + e.stack);
+  }
+}
+
+// --- Production Utility: Clear All Student/Application Mock Records ---
+function clearDatabaseForProd() {
+  try {
+    const ss = getDbSpreadsheet();
+    const studentSheet = ss.getSheetByName('students');
+    const appSheet = ss.getSheetByName('applications');
+    
+    let studentCleared = 0;
+    let appCleared = 0;
+    
+    if (studentSheet && studentSheet.getLastRow() > 1) {
+      studentCleared = studentSheet.getLastRow() - 1;
+      studentSheet.deleteRows(2, studentCleared);
+    }
+    if (appSheet && appSheet.getLastRow() > 1) {
+      appCleared = appSheet.getLastRow() - 1;
+      appSheet.deleteRows(2, appCleared);
+    }
+    Logger.log(`✅ Cleared database successfully! Removed ${studentCleared} students and ${appCleared} applications.`);
+  } catch (e) {
+    Logger.log(`❌ Failed to clear database: ${e.toString()}`);
+  }
 }

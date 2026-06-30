@@ -1,0 +1,16 @@
+# Ignore portable Node.js binaries and installer
+node-portable/
+node_setup.msi
+
+# Ignore local database and database state files
+*.db
+scholarship.db
+
+# Ignore log files and temporary OS files
+*.log
+$null
+.gemini/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
