@@ -1,0 +1,13 @@
+# 忽略所有檔案
+**/*
+
+# 僅允許上傳 Apps Script 支援的檔案與資訊清單
+!appsscript.json
+!Code.gs
+!index.html
+!style.html
+!javascript.html
+!admin.html
+!admin_style.html
+!admin_javascript.html
+!admin_login.html
