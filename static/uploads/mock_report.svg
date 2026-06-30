@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="100%" height="100%">
+  <rect width="100%" height="100%" fill="#ffffff" stroke="#1b263b" stroke-width="8"/>
+  <!-- Decorative Frame -->
+  <rect x="20" y="20" width="760" height="960" fill="none" stroke="#ffd166" stroke-width="2"/>
+  
+  <!-- Header -->
+  <text x="400" y="100" font-family="'Courier New', monospace" font-size="28" font-weight="bold" fill="#0d1b2a" text-anchor="middle">國立古哥大學 學期成績單</text>
+  <text x="400" y="130" font-family="sans-serif" font-size="14" fill="#666" text-anchor="middle">National Guge University - Official Transcript</text>
+  
+  <!-- Seal/Stamp Graphic -->
+  <circle cx="680" cy="130" r="50" fill="none" stroke="#d62828" stroke-width="3" stroke-dasharray="5,2"/>
+  <text x="680" y="125" font-family="sans-serif" font-size="12" font-weight="bold" fill="#d62828" text-anchor="middle">古哥大學</text>
+  <text x="680" y="142" font-family="sans-serif" font-size="10" font-weight="bold" fill="#d62828" text-anchor="middle">教務處章</text>
+
+  <!-- Student Info -->
+  <line x1="50" y1="180" x2="750" y2="180" stroke="#0d1b2a" stroke-width="2"/>
+  <text x="60" y="210" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1b263b">學生姓名：王小明</text>
+  <text x="320" y="210" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1b263b">學號：N11209043</text>
+  <text x="560" y="210" font-family="sans-serif" font-size="16" font-weight="bold" fill="#1b263b">學系：資訊工程學系</text>
+  <text x="60" y="240" font-family="sans-serif" font-size="16" fill="#1b263b">學年度：114 學年度</text>
+  <text x="320" y="240" font-family="sans-serif" font-size="16" fill="#1b263b">學期：第一學期</text>
+  <line x1="50" y1="260" x2="750" y2="260" stroke="#0d1b2a" stroke-width="2"/>
+
+  <!-- Grades Table -->
+  <text x="60" y="300" font-family="sans-serif" font-size="18" font-weight="bold" fill="#0d1b2a">科目成績明細</text>
+  
+  <rect x="50" y="320" width="700" height="40" fill="#f8f9fa" stroke="#ccc" stroke-width="1"/>
+  <text x="80" y="345" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">課號</text>
+  <text x="180" y="345" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333">科目名稱</text>
+  <text x="450" y="345" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">學分</text>
+  <text x="580" y="345" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">成績</text>
+  <text x="680" y="345" font-family="sans-serif" font-size="14" font-weight="bold" fill="#333" text-anchor="middle">等第</text>
+
+  <!-- Row 1 -->
+  <rect x="50" y="360" width="700" height="50" fill="#fff" stroke="#eee" stroke-width="1"/>
+  <text x="80" y="390" font-family="sans-serif" font-size="14" fill="#555">CS301</text>
+  <text x="180" y="390" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1b263b">演算法 (Algorithms)</text>
+  <text x="450" y="390" font-family="sans-serif" font-size="14" fill="#555" text-anchor="middle">3</text>
+  <text x="580" y="390" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0d1b2a" text-anchor="middle">91</text>
+  <text x="680" y="390" font-family="sans-serif" font-size="14" fill="#0d1b2a" text-anchor="middle">A</text>
+
+  <!-- Row 2 -->
+  <rect x="50" y="410" width="700" height="50" fill="#fcfcfc" stroke="#eee" stroke-width="1"/>
+  <text x="80" y="440" font-family="sans-serif" font-size="14" fill="#555">CS302</text>
+  <text x="180" y="440" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1b263b">計算機網路 (Computer Networks)</text>
+  <text x="450" y="440" font-family="sans-serif" font-size="14" fill="#555" text-anchor="middle">3</text>
+  <text x="580" y="440" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0d1b2a" text-anchor="middle">88</text>
+  <text x="680" y="440" font-family="sans-serif" font-size="14" fill="#0d1b2a" text-anchor="middle">A-</text>
+
+  <!-- Row 3 -->
+  <rect x="50" y="460" width="700" height="50" fill="#fff" stroke="#eee" stroke-width="1"/>
+  <text x="80" y="490" font-family="sans-serif" font-size="14" fill="#555">CS303</text>
+  <text x="180" y="490" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1b263b">軟體工程 (Software Engineering)</text>
+  <text x="450" y="490" font-family="sans-serif" font-size="14" fill="#555" text-anchor="middle">3</text>
+  <text x="580" y="490" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0d1b2a" text-anchor="middle">95</text>
+  <text x="680" y="490" font-family="sans-serif" font-size="14" fill="#0d1b2a" text-anchor="middle">A+</text>
+
+  <!-- Row 4 -->
+  <rect x="50" y="510" width="700" height="50" fill="#fcfcfc" stroke="#eee" stroke-width="1"/>
+  <text x="80" y="540" font-family="sans-serif" font-size="14" fill="#555">CS304</text>
+  <text x="180" y="540" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1b263b">編譯器設計 (Compiler Design)</text>
+  <text x="450" y="540" font-family="sans-serif" font-size="14" fill="#555" text-anchor="middle">3</text>
+  <text x="580" y="540" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0d1b2a" text-anchor="middle">85</text>
+  <text x="680" y="540" font-family="sans-serif" font-size="14" fill="#0d1b2a" text-anchor="middle">B+</text>
+
+  <!-- Row 5 -->
+  <rect x="50" y="560" width="700" height="50" fill="#fff" stroke="#eee" stroke-width="1"/>
+  <text x="80" y="590" font-family="sans-serif" font-size="14" fill="#555">CS305</text>
+  <text x="180" y="590" font-family="sans-serif" font-size="14" font-weight="bold" fill="#1b263b">人工智慧導論 (Intro to AI)</text>
+  <text x="450" y="590" font-family="sans-serif" font-size="14" fill="#555" text-anchor="middle">3</text>
+  <text x="580" y="590" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0d1b2a" text-anchor="middle">87</text>
+  <text x="680" y="590" font-family="sans-serif" font-size="14" fill="#0d1b2a" text-anchor="middle">B+</text>
+
+  <!-- Summary Statistics -->
+  <rect x="50" y="630" width="700" height="80" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="80" y="675" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">實得學分：15 學分</text>
+  <text x="320" y="675" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">當學期總平均：89.20 分</text>
+  <text x="600" y="675" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">操行評等：A</text>
+  
+  <!-- Verification Footnote -->
+  <text x="400" y="760" font-family="sans-serif" font-size="12" fill="#64748b" text-anchor="middle">本成績單由國立古哥大學教務系統自動生成，影本與正本相符。</text>
+  
+  <!-- Verification Barcode (vector representations) -->
+  <rect x="250" y="800" width="300" height="50" fill="#000000"/>
+  <rect x="260" y="805" width="5" height="40" fill="#ffffff"/>
+  <rect x="270" y="805" width="2" height="40" fill="#ffffff"/>
+  <rect x="275" y="805" width="8" height="40" fill="#ffffff"/>
+  <rect x="290" y="805" width="4" height="40" fill="#ffffff"/>
+  <rect x="300" y="805" width="10" height="40" fill="#ffffff"/>
+  <rect x="315" y="805" width="2" height="40" fill="#ffffff"/>
+  <rect x="325" y="805" width="6" height="40" fill="#ffffff"/>
+  <rect x="340" y="805" width="3" height="40" fill="#ffffff"/>
+  <rect x="350" y="805" width="7" height="40" fill="#ffffff"/>
+  <rect x="365" y="805" width="1" height="40" fill="#ffffff"/>
+  <rect x="370" y="805" width="8" height="40" fill="#ffffff"/>
+  <rect x="385" y="805" width="4" height="40" fill="#ffffff"/>
+  <rect x="395" y="805" width="2" height="40" fill="#ffffff"/>
+  <rect x="405" y="805" width="9" height="40" fill="#ffffff"/>
+  <rect x="420" y="805" width="3" height="40" fill="#ffffff"/>
+  <rect x="430" y="805" width="6" height="40" fill="#ffffff"/>
+  <rect x="440" y="805" width="1" height="40" fill="#ffffff"/>
+  <rect x="450" y="805" width="12" height="40" fill="#ffffff"/>
+  <rect x="470" y="805" width="2" height="40" fill="#ffffff"/>
+  <rect x="480" y="805" width="5" height="40" fill="#ffffff"/>
+  <rect x="490" y="805" width="3" height="40" fill="#ffffff"/>
+  <rect x="500" y="805" width="8" height="40" fill="#ffffff"/>
+  <rect x="515" y="805" width="2" height="40" fill="#ffffff"/>
+  <rect x="525" y="805" width="15" height="40" fill="#ffffff"/>
+  
+  <text x="400" y="870" font-family="'Courier New', monospace" font-size="12" fill="#000" text-anchor="middle">*NGU-VERIFY-11209043-89.20*</text>
+  
+  <!-- Stamp Footer -->
+  <line x1="50" y1="910" x2="750" y2="910" stroke="#cbd5e1" stroke-dasharray="4,4"/>
+  <text x="400" y="935" font-family="sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">個資銷毀保證：本文件經系統比對完畢，將於匯款後 7 日內隨同所有申請記錄實體刪除銷毀，不予留存。</text>
+</svg>

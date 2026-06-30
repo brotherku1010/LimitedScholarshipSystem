@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【古哥獎學金】成績挑戰計畫</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+
+    <!-- Main Container -->
+    <div class="app-container">
+
+        <!-- Top Slogan & Budget Indicator -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="badge-new">LIMITED</span>
+                <h1>古哥獎學金</h1>
+                <p class="subtitle">— 突破極限，投資你的未來 —</p>
+            </div>
+
+            <!-- Remaining Budget Progress Indicator -->
+            <div class="budget-panel">
+                <div class="budget-info">
+                    <span class="label"><i class="fa-solid fa-circle-nodes pulse-green"></i> 當期剩餘總預算額度</span>
+                    <span class="value" id="budget-value">NT$ 350,000 / $500,000</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-bar" style="width: 70%;"></div>
+                </div>
+                <div class="budget-tip">額度有限，額滿即止。創辦人保有最終調整與比例發放之權利。</div>
+            </div>
+        </header>
+
+        <!-- Student Login Status Display -->
+        <div class="student-status-bar" id="student-status-bar" style="display: none;">
+            <div class="status-info">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>已登入學生：<strong id="logged-student-name">王小明</strong> 同學</span>
+                <span class="divider">|</span>
+                <span>累計擊破防線：<strong id="logged-student-attempts">0</strong> 次</span>
+            </div>
+            <button class="logout-btn" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
+        </div>
+
+        <!-- Program Tabs Navigation -->
+        <div class="program-tabs" id="program-tabs" style="display: none;">
+            <button class="tab-btn active" data-tab="challenge">
+                <i class="fa-solid fa-shield-halved"></i> 方案一：成績挑戰獎
+            </button>
+            <button class="tab-btn" data-tab="progress">
+                <i class="fa-solid fa-arrow-up-right-dots"></i> 方案二：學期進步獎
+            </button>
+            <button class="tab-btn" data-tab="blueprint">
+                <i class="fa-solid fa-rocket"></i> 方案三：未來藍圖計畫
+            </button>
+        </div>
+
+        <!-- Hero Section: Three Program Cards -->
+        <main class="program-grid">
+
+            <!-- Card 1: Scheme 1 - Grade Challenge Award (主力功能) -->
+            <section class="card program-card active-program" id="card-challenge">
+                <div class="card-header">
+                    <div class="card-title-wrap">
+                        <span class="scheme-label">方案一</span>
+                        <h2>成績挑戰獎</h2>
+                    </div>
+                    <span class="status-badge hot">挑戰中</span>
+                </div>
+
+                <p class="program-desc">挑戰擊破「古哥防線」，每次成功解鎖，獎金將呈指數級飆升！早破關早升級！</p>
+
+                <!-- Scheme 1 Interactive Layout (Double columns on desktop) -->
+                <div class="challenge-arena">
+
+                    <!-- Left: 8 Shields/Locks Grid -->
+                    <div class="shields-column">
+                        <h3><i class="fa-solid fa-shield-halved"></i> 擊破古哥防線 (選擇目標門檻)</h3>
+                        <p class="section-desc">點選你想「挑戰」的學期總平均分數。綠色打勾為已擊破，金色為目前選定挑戰，灰色為尚未解鎖。</p>
+
+                        <div class="shields-grid" id="shields-grid">
+                            <!-- Shield 1 -->
+                            <div class="shield-item" data-target="87.58">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">87.58</span>
+                            </div>
+                            <!-- Shield 2 -->
+                            <div class="shield-item" data-target="88.55">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">88.55</span>
+                            </div>
+                            <!-- Shield 3 -->
+                            <div class="shield-item" data-target="91.63">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">91.63</span>
+                            </div>
+                            <!-- Shield 4 -->
+                            <div class="shield-item" data-target="92.33">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">92.33</span>
+                            </div>
+                            <!-- Shield 5 -->
+                            <div class="shield-item" data-target="93.09">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">93.09</span>
+                            </div>
+                            <!-- Shield 6 -->
+                            <div class="shield-item" data-target="93.20">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">93.20</span>
+                            </div>
+                            <!-- Shield 7 -->
+                            <div class="shield-item" data-target="95.00">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-shield-halved base-shield"></i>
+                                </div>
+                                <span class="shield-score">95.00</span>
+                            </div>
+                            <!-- Shield 8 (Ultimate Defense) -->
+                            <div class="shield-item ultimate" data-target="95.15">
+                                <div class="shield-icon-container">
+                                    <i class="fa-solid fa-lock-open unlocked-icon"></i>
+                                    <i class="fa-solid fa-crown base-shield"></i>
+                                </div>
+                                <span class="shield-score">95.15</span>
+                                <span class="ultimate-label">終極防線</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Reward Ladder (Level Up Progress) -->
+                    <div class="ladder-column">
+                        <h3><i class="fa-solid fa-turn-up"></i> 獎金爬塔階梯</h3>
+                        <p class="section-desc">獎金發放依據為你的「成功申請次數」，不論分數高低，按次累加！</p>
+
+                        <div class="ladder-steps" id="ladder-steps">
+                            <div class="ladder-step" data-level="8">
+                                <div class="level-badge">LV 8</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 8 次解鎖：大學霸終極大賞！</span>
+                                    <span class="level-amount">NT$ 25,000</span>
+                                </div>
+                                <i class="fa-solid fa-crown crown-icon"></i>
+                            </div>
+                            <div class="ladder-step" data-level="7">
+                                <div class="level-badge">LV 7</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 7 次解鎖</span>
+                                    <span class="level-amount">NT$ 20,000</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step" data-level="6">
+                                <div class="level-badge">LV 6</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 6 次解鎖</span>
+                                    <span class="level-amount">NT$ 18,000</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step" data-level="5">
+                                <div class="level-badge">LV 5</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 5 次解鎖</span>
+                                    <span class="level-amount">NT$ 15,000</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step" data-level="4">
+                                <div class="level-badge">LV 4</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 4 次解鎖</span>
+                                    <span class="level-amount">NT$ 12,000</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step" data-level="3">
+                                <div class="level-badge">LV 3</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 3 次解鎖</span>
+                                    <span class="level-amount">NT$ 10,000</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step" data-level="2">
+                                <div class="level-badge">LV 2</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 2 次解鎖</span>
+                                    <span class="level-amount">NT$ 8,500</span>
+                                </div>
+                            </div>
+                            <div class="ladder-step active-step" data-level="1">
+                                <div class="level-badge">LV 1</div>
+                                <div class="level-detail">
+                                    <span class="level-desc">第 1 次解鎖：首戰告捷！</span>
+                                    <span class="level-amount">NT$ 7,000</span>
+                                </div>
+                                <i class="fa-solid fa-circle-chevron-right current-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Submit Button Area for Scheme 1 -->
+                <div class="apply-action-zone">
+                    <button class="btn btn-primary btn-large btn-glow" id="btn-apply-challenge-modal">
+                        <i class="fa-solid fa-paper-plane"></i> 立即送出本次成績挑戰申請
+                    </button>
+                </div>
+            </section>
+
+            <!-- Card 2: Scheme 2 - Term Progress Award (進步獎) -->
+            <section class="card program-card locked" id="card-progress">
+                <div class="card-header">
+                    <div class="card-title-wrap">
+                        <span class="scheme-label">方案二</span>
+                        <h2>學期進步獎</h2>
+                    </div>
+                    <span class="status-badge lock-badge"><i class="fa-solid fa-lock"></i> 鎖定中</span>
+                </div>
+
+                <p class="program-desc">在大一期間為鎖定預告狀態，大二上學期將會正式解鎖。此方案鼓勵挑戰自我極限，突破往期成績！</p>
+
+                <div class="locked-overlay-info">
+                    <div class="lock-icon-big"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <p>🔒 預估解鎖期：大二上學期</p>
+                </div>
+
+                <!-- Calculator Widget -->
+                <div class="calculator-widget">
+                    <h3><i class="fa-solid fa-calculator"></i> 獎金模擬試算器 (大一體驗版)</h3>
+                    <p class="section-desc">試算公式：1500 (底金) + 學分級距加給 + [ (進步分數 × 難度係數 × 學分權重) × 50元 ]</p>
+
+                    <div class="calc-form-grid">
+                        <div class="form-group">
+                            <label>上學期學期總平均</label>
+                            <input type="number" id="calc-prev-gpa" placeholder="例如: 80.50" step="0.01" min="0"
+                                max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>本學期學期總平均</label>
+                            <input type="number" id="calc-curr-gpa" placeholder="例如: 85.20" step="0.01" min="0"
+                                max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>本學期實得學分數</label>
+                            <input type="number" id="calc-credits" placeholder="例如: 20" step="1" min="0" max="30">
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Formula Breakdown Box -->
+                    <div class="formula-breakdown" id="calc-breakdown"
+                        style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
+                        <h4
+                            style="color: var(--neon-blue); margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成明細 (RPG Level Up Breakdown)</h4>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; color: var(--text-secondary);">
+                            <div>• 基礎底金：<span style="color:#fff;" id="breakdown-base">NT$ 1,500</span></div>
+                            <div>• 學分加給：<span style="color:#fff;" id="breakdown-tier">NT$ 0</span></div>
+                            <div>• 起點難度係數：<span style="color:#fff;" id="breakdown-coeff">1.00</span></div>
+                            <div>• 學分負載權重：<span style="color:#fff;" id="breakdown-weight">1.00</span></div>
+                            <div>• 進步點數：<span style="color:var(--neon-green);" id="breakdown-points">0.00 點</span></div>
+                            <div>• 點數折現：<span style="color:var(--gold);" id="breakdown-cash">NT$ 0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="calc-result-box">
+                        <span class="calc-label">預計可得獎金金額</span>
+                        <div class="calc-amount" id="calc-amount-result">NT$ 0</div>
+                    </div>
+                    <div class="apply-action-zone mt-2">
+                        <button class="btn btn-secondary btn-full" id="btn-apply-progress-demo">
+                            <i class="fa-solid fa-arrow-up-right-dots"></i> 體驗上傳申請 (Demo Mode)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card 3: Scheme 3 - Future Blueprint Project (常設隱藏大獎) -->
+            <section class="card program-card active-program" id="card-blueprint">
+                <div class="card-header">
+                    <div class="card-title-wrap">
+                        <span class="scheme-label">方案三</span>
+                        <h2>未來藍圖計畫</h2>
+                    </div>
+                    <span class="status-badge hidden-badge"><i class="fa-solid fa-sparkles"></i> 隱藏大獎</span>
+                </div>
+
+                <p class="program-desc">提交個人學習、購書、研究或競賽的「未來企劃書」，通過後分階段給予最高 NT$ 30,000 的圓夢資金支援！</p>
+
+                <!-- Plan Contents Guidelines Block -->
+                <div class="blueprint-guidelines" style="margin-top: 15px; margin-bottom: 25px; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                    <h3 style="color: var(--gold); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; font-weight: bold;">
+                        <i class="fa-solid fa-file-signature"></i> 未來企劃書撰寫規範與評分比重
+                    </h3>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; color: var(--text-secondary);">
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
+                            <span>個人自我介紹 (自介)</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
+                            <span>企劃宗旨與初心</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px; grid-column: span 2;">
+                            <span style="color: var(--neon-green); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">20%</span>
+                            <span>具體執行方向、近期與長期目標</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
+                            <span>預定執行進度時程</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
+                            <span>預期經費支出明細</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px; grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px; margin-top: 5px;">
+                            <span style="color: var(--gold); font-weight: bold; font-family: monospace; font-size: 1.1rem; width: 45px; display: inline-block;">50%</span>
+                            <span style="color: #fff; font-weight: bold;">人生未來的走向與終極目標</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Crowdfunding style Milestones -->
+                <div class="blueprint-milestone-panel">
+                    <h3><i class="fa-solid fa-diagram-project"></i> 階段性里程碑追蹤流程</h3>
+
+                    <div class="milestone-track-container">
+                        <div class="milestone-line-progress" style="width: 30%;"></div>
+                        <div class="milestone-steps-wrap">
+                            <div class="milestone-node done">
+                                <div class="node-circle"><i class="fa-solid fa-file-invoice"></i></div>
+                                <span class="node-title">階段一：提案通過</span>
+                                <span class="node-percent">撥付 30% 圓夢金</span>
+                            </div>
+                            <div class="milestone-node active">
+                                <div class="node-circle"><i class="fa-solid fa-receipt"></i></div>
+                                <span class="node-title">階段二：中期報告</span>
+                                <span class="node-percent">憑購書/課程發票撥付 40%</span>
+                            </div>
+                            <div class="milestone-node">
+                                <div class="node-circle"><i class="fa-solid fa-images"></i></div>
+                                <span class="node-title">階段三：成果發布</span>
+                                <span class="node-percent">憑成果照撥付最後 30%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apply-action-zone">
+                    <button class="btn btn-glow-gold btn-large btn-full" id="btn-apply-blueprint-modal">
+                        <i class="fa-solid fa-rocket"></i> 上傳圓夢企劃書 ➔ 啟動募資
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Game Rules Section -->
+        <section class="rules-section card">
+            <h2><i class="fa-solid fa-gamepad"></i> 遊戲挑戰規則 (How to Play)</h2>
+            <div class="rules-grid">
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-sword"></i></div>
+                    <div class="rule-text">
+                        <h4>一對一擊破機制</h4>
+                        <p>每學期成績單限申請一次。達標後可自由點選一個古哥防線分數進行挑戰擊破，已被擊破的分數後續不得重複挑戰。</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-chart-line-up"></i></div>
+                    <div class="rule-text">
+                        <h4>獎金按「次」升級</h4>
+                        <p>獎金發放完全依據你的「成功申請累計次數」進行階梯升級，不看當次平均成績高低！早越關早升級！</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-shield-heart"></i></div>
+                    <div class="rule-text">
+                        <h4>中斷不重置進度</h4>
+                        <p>中途學期失常未達標也沒關係！不會扣減次數，下次學期達標後可繼續接力挑戰下一階的獎金。</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <div class="rule-icon"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="rule-text">
+                        <h4>隱私最高防護</h4>
+                        <p>申請僅需核對姓名、成績單與匯款帳號。免填寫身分證字號，所有敏感個資將在撥款完畢結案後 7 日內永久銷毀。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Seal & Disclaimers -->
+        <footer class="app-footer">
+            <div class="seal-container">
+                <div class="trust-seal">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div class="seal-inner">
+                        <span class="seal-text-top">PRIVACY GUARANTEED</span>
+                        <span class="seal-text-main">個資徹底銷毀</span>
+                        <span class="seal-text-bottom">7日無痕切結保證</span>
+                    </div>
+                </div>
+            </div>
+            <p class="footer-disclaimer">※ 本獎學金計畫限特定邀約對象/校系學生申請，採專屬邀請碼機制登入。</p>
+            <p class="footer-disclaimer">※ 每學期設有總發放預算上限，若當期申請超出預算，將依成績排序或按比例核發。創辦人保有最終解釋與調整權利。</p>
+            <p class="copyright">&copy; 2026 古哥挑戰計畫委員會. All Rights Reserved. Powered by Gemini Developer Stack.</p>
+        </footer>
+
+    </div>
+
+    <!-- ----------------- MODALS (POPUP DIALOGS) ----------------- -->
+
+    <!-- Modal 1: Identity Login / Registration -->
+    <div class="modal" id="modal-login">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-check"></i> 計畫身分驗證登入</h2>
+            </div>
+            <div class="modal-body">
+                <p class="modal-tip" id="login-modal-tip">請輸入您的真實姓名與生日作為登入身分識別。首次登入者將會提示填寫基本資料完成計畫註冊。</p>
+
+                <!-- Primary inputs: Name and Birthday -->
+                <div class="form-group">
+                    <label>中文真實姓名</label>
+                    <input type="text" id="login-student-name" placeholder="請輸入姓名，例如: 王小明">
+                </div>
+                <div class="form-group">
+                    <label>生日 (MMDD，4碼數字，例如 0918)</label>
+                    <input type="text" id="login-student-birthday" placeholder="例如：9月18日請填 0918" maxlength="4">
+                </div>
+
+                <!-- Registration specific inputs: Hidden by default -->
+                <div id="group-register-details"
+                    style="display: none; border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
+                    <p class="text-neon" style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;"><i
+                            class="fa-solid fa-user-plus"></i> 首次登入！請填寫基本註冊資料</p>
+
+                    <div class="form-group">
+                        <label>暱稱</label>
+                        <input type="text" id="login-student-nickname" placeholder="例如: 小明">
+                    </div>
+
+                    <div class="form-group">
+                        <label>學校名稱</label>
+                        <input type="text" id="login-student-school" placeholder="例如: 國立台灣大學">
+                    </div>
+
+                    <div class="form-group-row"
+                        style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>就讀科系</label>
+                            <input type="text" id="login-student-department" placeholder="例如: 資訊工程學系">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>年級</label>
+                            <select id="login-student-grade"
+                                style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;">
+                                <option value="大一">大一</option>
+                                <option value="大二">大二</option>
+                                <option value="大三">大三</option>
+                                <option value="大四">大四</option>
+                                <option value="碩一">碩一</option>
+                                <option value="碩二">碩二</option>
+                                <option value="其它">其它</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-msg" id="login-error-msg"
+                    style="display: none; text-align: center; margin-top: 10px;"></div>
+
+                <!-- Testing guide chips -->
+                <div class="demo-invite-codes">
+                    <p class="demo-title">🔑 測試身分對應表 (直接點選載入測試)：</p>
+                    <div class="codes-chips"
+                        style="margin-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 8px;">
+                        <span
+                            style="font-size:0.75rem; color:var(--text-secondary); display:block; width:100%; margin-bottom:5px;">✅
+                            已註冊身分 (直接驗證登入)：</span>
+                        <code
+                            onclick="document.getElementById('login-student-name').value='王小明'; document.getElementById('login-student-birthday').value='0918'; document.getElementById('group-register-details').style.display='none';">王小明 (0918)</code>
+                        <code
+                            onclick="document.getElementById('login-student-name').value='李小華'; document.getElementById('login-student-birthday').value='0520'; document.getElementById('group-register-details').style.display='none';">李小華 (0520)</code>
+                    </div>
+                    <div class="codes-chips">
+                        <span
+                            style="font-size:0.75rem; color:var(--text-secondary); display:block; width:100%; margin-bottom:5px;">🆕
+                            首次登入身分 (登入後展開註冊資料欄)：</span>
+                        <code
+                            onclick="document.getElementById('login-student-name').value='林大華'; document.getElementById('login-student-birthday').value='0707'; document.getElementById('group-register-details').style.display='block';">林大華 (0707)</code>
+                        <code
+                            onclick="document.getElementById('login-student-name').value='陳大同'; document.getElementById('login-student-birthday').value='1111'; document.getElementById('group-register-details').style.display='block';">陳大同 (1111)</code>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-full" id="btn-submit-login">驗證登入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Privacy and Data Destruction Consent -->
+    <div class="modal" id="modal-consent">
+        <div class="modal-content glass">
+            <div class="modal-header text-center">
+                <div class="shield-badge-icon"><i class="fa-solid fa-user-lock"></i></div>
+                <h2>個資使用與銷毀切結聲明</h2>
+            </div>
+            <div class="modal-body">
+                <div class="consent-paper">
+                    <h4>【最高級別隱私保證條款】</h4>
+                    <p>為提供最安心的獎助環境，本系統僅收集必要之資訊，其防護承諾如下：</p>
+                    <ol>
+                        <li><strong>不收集身分證字號</strong>：本系統絕對不會以任何理由向您索取身分證字號或健保卡等敏感身分資訊。</li>
+                        <li><strong>極簡資料收集</strong>：僅收集您指定的「真實姓名 (核對撥款戶名)」、「當期成績單圖檔 (核對成績分數)」與「收款銀行帳戶資訊」。</li>
+                        <li><strong>限時完全銷毀</strong>：所有案件一旦通過審核並撥款結案，系統將於 <strong>7 日內徹底物理刪除</strong>
+                            您上傳的成績單圖檔、銀行代碼與收款帳號。</li>
+                        <li><strong>無痕統計數據</strong>：銷毀後，後台資料庫僅留存去識別化統計紀錄（如：「王*明，第 1 次挑戰，已發放 7000 元」），永久無法復原您的個資與圖檔。</li>
+                    </ol>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="checkbox-consent">
+                    <label for="checkbox-consent">我已閱讀並完全同意上述《個資使用與銷毀切結聲明》，且保證填寫數據之真實性。</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-full" id="btn-submit-consent" disabled>確認同意，進入挑戰</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Scheme 1 (Grade Challenge) Application Form -->
+    <div class="modal" id="modal-apply-challenge">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-shield-halved"></i> 送出成績挑戰申請</h2>
+                <button class="modal-close" onclick="closeModal('modal-apply-challenge')">&times;</button>
+            </div>
+            <form id="form-apply-challenge">
+                <div class="modal-body">
+                    <!-- Target Badge Display -->
+                    <div class="target-summary-badge">
+                        <div class="target-left">
+                            <span>挑戰目標防線</span>
+                            <strong id="form-challenge-target-score">--</strong>
+                        </div>
+                        <div class="target-arrow">➔</div>
+                        <div class="target-right">
+                            <span>解鎖獎金金額</span>
+                            <strong id="form-challenge-target-amount">NT$ --</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">真實姓名 (撥款入帳帳戶之戶名)</label>
+                        <input type="text" name="name" id="challenge-name" required placeholder="請輸入您的真實中文姓名">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">當學期總平均分數 (百分制 GPA)</label>
+                        <input type="number" name="gpa" id="challenge-gpa" required placeholder="例如: 89.25" step="0.01"
+                            min="0" max="100">
+                        <small class="form-help text-neon">當學期平均成績必須大於或等於挑戰防線門檻。</small>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="required-label">收款銀行代碼 (3碼)</label>
+                            <input type="text" name="bank_code" id="challenge-bank-code" required placeholder="例如: 008"
+                                maxlength="3">
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">收款銀行帳號</label>
+                            <input type="text" name="bank_account" id="challenge-bank-account" required
+                                placeholder="請輸入完整收款帳號">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">上傳學期成績單 (拍照或截圖)</label>
+                        <div class="file-upload-drag" id="drag-challenge-file">
+                            <i class="fa-solid fa-cloud-arrow-up drag-icon"></i>
+                            <p>拖曳成績單圖檔至此處，或 <span class="text-neon">點此選擇檔案</span></p>
+                            <small>僅支援 JPG, PNG, PDF, SVG，檔案限 16MB 內</small>
+                            <input type="file" name="file" id="challenge-file" required accept="image/*,.pdf"
+                                style="display: none;">
+                        </div>
+                        <div class="file-preview-name" id="challenge-file-name-display"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-full" id="btn-submit-challenge-application">
+                        <i class="fa-solid fa-circle-check"></i> 確認數據並送出申請
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Scheme 2 (Progress Award) Application Form (Demo Mode) -->
+    <div class="modal" id="modal-apply-progress">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-chart-line-up"></i> 學期進步獎申請 (模擬體驗)</h2>
+                <button class="modal-close" onclick="closeModal('modal-apply-progress')">&times;</button>
+            </div>
+            <form id="form-apply-progress">
+                <div class="modal-body">
+                    <!-- Calculated Badge Display -->
+                    <div class="target-summary-badge progress-theme">
+                        <div class="target-left">
+                            <span>模擬進步幅度</span>
+                            <strong id="form-progress-diff">+0.00 分</strong>
+                        </div>
+                        <div class="target-arrow">➔</div>
+                        <div class="target-right">
+                            <span>試算預計獎金</span>
+                            <strong id="form-progress-amount">NT$ 3,000</strong>
+                        </div>
+                    </div>
+
+                    <!-- Modal Formula Breakdown Box -->
+                    <div class="formula-breakdown" id="modal-calc-breakdown"
+                        style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
+                        <h4
+                            style="color: var(--neon-blue); margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成計算明細</h4>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; color: var(--text-secondary);">
+                            <div>• 基礎底金：<span style="color:#fff;" id="modal-breakdown-base">NT$ 1,500</span></div>
+                            <div>• 學分加給：<span style="color:#fff;" id="modal-breakdown-tier">NT$ 0</span></div>
+                            <div>• 起點難度係數：<span style="color:#fff;" id="modal-breakdown-coeff">1.00</span></div>
+                            <div>• 學分負載權重：<span style="color:#fff;" id="modal-breakdown-weight">1.00</span></div>
+                            <div>• 進步點數：<span style="color:var(--neon-green);" id="modal-breakdown-points">0.00 點</span>
+                            </div>
+                            <div>• 點數折現：<span style="color:var(--gold);" id="modal-breakdown-cash">NT$ 0</span></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">真實姓名</label>
+                        <input type="text" name="name" id="progress-name" required placeholder="請輸入中文姓名">
+                    </div>
+
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label class="required-label">上學期總平均</label>
+                            <input type="number" name="prev_gpa" id="progress-prev-gpa" required placeholder="例如: 80.50"
+                                step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">本學期總平均</label>
+                            <input type="number" name="curr_gpa" id="progress-curr-gpa" required placeholder="例如: 85.20"
+                                step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">本學期學分數</label>
+                            <input type="number" name="credits" id="progress-credits" required placeholder="例如: 20"
+                                step="1" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="required-label">收款銀行代碼 (3碼)</label>
+                            <input type="text" name="bank_code" id="progress-bank-code" required placeholder="例如: 008"
+                                maxlength="3">
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">收款銀行帳號</label>
+                            <input type="text" name="bank_account" id="progress-bank-account" required
+                                placeholder="請輸入完整收款帳號">
+                        </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="required-label">上學期成績單圖檔</label>
+                            <input type="file" name="prev_file" id="progress-prev-file" required accept="image/*,.pdf">
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">本學期成績單圖檔</label>
+                            <input type="file" name="curr_file" id="progress-curr-file" required accept="image/*,.pdf">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-secondary btn-full">
+                        <i class="fa-solid fa-circle-check"></i> 模擬送出進步獎申請 (寫入資料庫)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Scheme 3 (Future Blueprint) Application Form -->
+    <div class="modal" id="modal-apply-blueprint">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-rocket"></i> 提交未來藍圖計畫企劃</h2>
+                <button class="modal-close" onclick="closeModal('modal-apply-blueprint')">&times;</button>
+            </div>
+            <form id="form-apply-blueprint">
+                <div class="modal-body">
+                    <div class="target-summary-badge blueprint-theme">
+                        <div class="target-left">
+                            <span>隱藏圓夢額度</span>
+                            <strong>最高 NT$ 30,000</strong>
+                        </div>
+                        <div class="target-right">
+                            <span>撥款分段機制</span>
+                            <strong>30% ➔ 40% ➔ 30%</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">真實姓名</label>
+                        <input type="text" name="name" id="blueprint-name" required placeholder="請輸入真實姓名">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">企劃案名稱 (專案圓夢主題)</label>
+                        <input type="text" name="project_name" id="blueprint-project-name" required
+                            placeholder="例如: 購置深度學習顯卡與演算法研習計畫">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">預計執行月份</label>
+                        <input type="text" name="project_month" id="blueprint-project-month" required
+                            placeholder="例如: 2026年 7月至 10月">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">上傳企劃書 (PDF 格式或壓縮包)</label>
+                        <input type="file" name="file" id="blueprint-file" required accept=".pdf,.zip,.rar">
+                        <small class="form-help">請包含：專案背景、預期購置書單/課程/硬體、執行時程與預估產出。</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-glow-gold btn-full">
+                        <i class="fa-solid fa-paper-plane"></i> 提交圓夢企劃審查
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Popup for Messages -->
+    <div class="toast" id="toast-message">
+        <i class="fa-solid fa-circle-info toast-icon" id="toast-icon"></i>
+        <div class="toast-body" id="toast-body-text">提示訊息內容</div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>上傳中，成績單圖檔防護加密傳輸...</p>
+    </div>
+
+    <!-- Script imports -->
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【古哥獎學金】管理端後台 - 雙螢幕無痕銷毀系統</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="admin-header">
+        <div class="header-logo">
+            <i class="fa-solid fa-user-shield logo-icon"></i>
+            <div>
+                <h1>古哥獎學金管理後台</h1>
+                <p class="subtitle">雙螢幕快速對照審核與無痕銷毀系統</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/" class="btn-back-home"><i class="fa-solid fa-circle-chevron-left"></i> 返回學生端前台</a>
+        </div>
+    </header>
+
+    <div class="admin-container">
+
+        <!-- Dashboard Stat Cards -->
+        <section class="stats-grid">
+            <div class="stat-card pending">
+                <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div class="stat-info">
+                    <span class="label">待審核案件</span>
+                    <strong class="count" id="stat-pending">0</strong>
+                </div>
+            </div>
+            <div class="stat-card approved">
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-info">
+                    <span class="label">已核准 (待撥款)</span>
+                    <strong class="count" id="stat-approved">0</strong>
+                </div>
+            </div>
+            <div class="stat-card paid">
+                <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <div class="stat-info">
+                    <span class="label">已發放/個資已銷毀</span>
+                    <strong class="count" id="stat-destroyed">0</strong>
+                </div>
+            </div>
+            <div class="stat-card total-amount">
+                <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="stat-info">
+                    <span class="label">已核發累計獎金</span>
+                    <strong class="count" id="stat-total-amount">NT$ 0</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions Toolbar -->
+        <section class="toolbar-section">
+            <div class="toolbar-left">
+                <h2>申請案件審理名冊</h2>
+            </div>
+            <div class="toolbar-right" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="btn-open-settings" style="background: rgba(255,209,102,0.15); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--gold)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,209,102,0.15)'; this.style.color='var(--gold)';">
+                    <i class="fa-solid fa-gears"></i> 獎金設定
+                </button>
+                <button class="btn btn-reject" id="btn-admin-logout" style="background: rgba(255,0,127,0.15); border: 1px solid var(--neon-pink); color: var(--neon-pink); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--neon-pink)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,0,127,0.15)'; this.style.color='var(--neon-pink)';">
+                    <i class="fa-solid fa-right-from-bracket"></i> 登出後台
+                </button>
+                <a href="/api/admin/export" class="btn btn-export" id="btn-export-csv">
+                    <i class="fa-solid fa-file-excel"></i> 匯出華南網銀撥款名冊 (CSV)
+                </a>
+            </div>
+        </section>
+
+        <!-- Dual Split Audit Pane -->
+        <div class="split-pane-wrapper">
+            
+            <!-- Left Pane: Case List Grid -->
+            <div class="pane-list">
+                <div class="table-container">
+                    <table class="admin-table" id="table-cases">
+                        <thead>
+                            <tr>
+                                <th>申請時間</th>
+                                <th>就讀校系</th>
+                                <th>姓名</th>
+                                <th>方案類型</th>
+                                <th>門檻/項目</th>
+                                <th>核定金額</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="case-list-tbody">
+                            <!-- JS dynamic insertion -->
+                            <tr>
+                                <td colspan="7" class="text-center">正在載入名冊資料...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Pane: Double Screen Contrast Auditor -->
+            <div class="pane-auditor" id="auditor-pane" style="display: none;">
+                <div class="auditor-card">
+                    <div class="auditor-header">
+                        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> 雙螢幕審對視窗</h3>
+                        <span class="case-id-badge" id="audit-case-id">CASE-ID</span>
+                    </div>
+
+                    <div class="auditor-split">
+                        
+                        <!-- Audit Fields Panel (Left/Top) -->
+                        <div class="audit-details">
+                            <h4 class="section-title"><i class="fa-solid fa-list-check"></i> 學生申報數據</h4>
+                            
+                            <div class="detail-group">
+                                <span class="d-label">申請方案</span>
+                                <strong class="d-value text-neon-blue" id="audit-type">--</strong>
+                            </div>
+                            <div class="detail-group-row">
+                                <div class="detail-group">
+                                    <span class="d-label">真實姓名</span>
+                                    <strong class="d-value" id="audit-name">--</strong>
+                                </div>
+                                <div class="detail-group">
+                                    <span class="d-label">就讀年級</span>
+                                    <strong class="d-value text-neon-blue" id="audit-grade">--</strong>
+                                </div>
+                            </div>
+                            <div class="detail-group" style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 10px;">
+                                <span class="d-label">就讀學校與科系</span>
+                                <strong class="d-value" id="audit-school-dept">--</strong>
+                            </div>
+                            
+                            <div class="detail-group-row" id="row-gpas">
+                                <div class="detail-group" id="group-prev-gpa" style="display: none;">
+                                    <span class="d-label">上學期平均</span>
+                                    <strong class="d-value" id="audit-prev-gpa">--</strong>
+                                </div>
+                                <div class="detail-group" id="group-gpa">
+                                    <span class="d-label" id="label-gpa">當學期平均</span>
+                                    <strong class="d-value text-neon-green" id="audit-gpa">--</strong>
+                                </div>
+                                <div class="detail-group" id="group-target">
+                                    <span class="d-label">挑戰防線</span>
+                                    <strong class="d-value text-gold" id="audit-target">--</strong>
+                                </div>
+                            </div>
+
+                            <div class="detail-group" id="group-project" style="display: none;">
+                                <span class="d-label">企劃案名稱</span>
+                                <strong class="d-value" id="audit-project-name">--</strong>
+                                <span class="d-label mt-1">執行月份</span>
+                                <strong class="d-value" id="audit-project-month">--</strong>
+                            </div>
+
+                            <!-- Financial remittance detail -->
+                            <div class="remittance-box" id="remittance-box-PII">
+                                <h4><i class="fa-solid fa-money-check-dollar"></i> 匯款指定金流</h4>
+                                <div class="remit-row">
+                                    <span class="r-label">華南網銀代號：</span>
+                                    <strong class="r-value" id="audit-bank-code">--</strong>
+                                </div>
+                                <div class="remit-row">
+                                    <span class="r-label">收款銀行帳號：</span>
+                                    <strong class="r-value highlight-account" id="audit-bank-account">--</strong>
+                                </div>
+                                <div class="remit-row font-large">
+                                    <span class="r-label">核定發放金額：</span>
+                                    <strong class="r-value text-gold" id="audit-amount">NT$ --</strong>
+                                </div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div class="auditor-actions-zone">
+                                <div class="audit-status-actions" id="actions-pending-group">
+                                    <button class="btn btn-approve" id="btn-approve-case">
+                                        <i class="fa-solid fa-check"></i> 核准申請
+                                    </button>
+                                    <button class="btn btn-reject" id="btn-reject-case">
+                                        <i class="fa-solid fa-xmark"></i> 拒絕
+                                    </button>
+                                </div>
+                                
+                                <div class="audit-destroy-action" id="actions-approved-group" style="display: none;">
+                                    <div class="approved-alert-banner">
+                                        <i class="fa-solid fa-circle-check"></i> 此案件已審核通過。請在華南網銀批次轉帳後，點擊下方銷毀個資。
+                                    </div>
+                                    <button class="btn btn-destroy btn-full" id="btn-destroy-case">
+                                        <i class="fa-solid fa-skull-crossbones"></i> 已撥款，一鍵個資銷毀結案
+                                    </button>
+                                </div>
+
+                                <div class="audit-destroyed-banner" id="actions-destroyed-banner" style="display: none;">
+                                    <i class="fa-solid fa-shield-halved"></i> 該案已撥款結案。所有成績單圖檔、銀行代碼與帳號個資已物理銷毀！
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Image Viewer Panel (Right/Bottom) -->
+                        <div class="audit-document">
+                            <h4 class="section-title"><i class="fa-solid fa-file-image"></i> 成績單/企劃書證明文件 (雙螢幕比對區)</h4>
+                            <div class="document-viewer-container" id="document-viewer">
+                                <img src="/static/uploads/mock_report.svg" alt="成績單證明文件" class="audit-img" id="audit-document-img">
+                                <iframe src="" class="audit-iframe" id="audit-document-pdf" style="display: none;"></iframe>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder Auditor State -->
+            <div class="pane-auditor-placeholder" id="auditor-placeholder">
+                <div class="ph-content">
+                    <i class="fa-solid fa-circle-chevron-left ph-icon"></i>
+                    <h3>雙螢幕比對視窗</h3>
+                    <p>請點選左側名冊中的任何申請案，即可在此處載入學生填報數據與成績單原圖進行即時比對。</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Modal: Data Destruction Log Output -->
+    <div class="modal" id="modal-destroy-log">
+        <div class="modal-content glass dark-log">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-terminal"></i> 隱私資料物理抹除終端日誌</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-destroy-log').classList.remove('show')">&times;</button>
+            </div>
+            <div class="modal-body console-body">
+                <div class="console-screen">
+                    <p class="console-line text-green">> Initializing secure PII wipe sequence...</p>
+                    <p class="console-line">> Resolving physical paths for student files...</p>
+                    <p class="console-line text-red" id="log-file-delete">> Deleting: challenge_8293923.png - OK (Deleted)</p>
+                    <p class="console-line">> Wiping database transaction row data...</p>
+                    <p class="console-line">> Set columns [bank_code, bank_account, file_path] = NULL - SUCCESS</p>
+                    <p class="console-line">> Anonymizing student name...</p>
+                    <p class="console-line text-green" id="log-name-wipe">>王小明 ➔ 王*明</p>
+                    <p class="console-line">> Generating cryptographically signed privacy receipt...</p>
+                    <p class="console-line text-neon-blue">> Dispatching GDPR compliant confirmation Email...</p>
+                    <div class="email-mock-box">
+                        <span class="em-title">✉ 模擬郵件伺服器記錄 (已寄出)：</span>
+                        <p class="em-meta"><strong>收件人:</strong> student_registered_email@example.com</p>
+                        <p class="em-meta"><strong>主旨:</strong> 【古哥獎學金】已撥款暨個人隱私資料銷毀通知</p>
+                        <p class="em-body" id="log-email-body">...</p>
+                    </div>
+                    <p class="console-line text-green">> OK. Shredding complete. Connection closed.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-full" onclick="document.getElementById('modal-destroy-log').classList.remove('show')">確認結案</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Scholarship Parameters Settings -->
+    <div class="modal" id="modal-settings">
+        <div class="modal-content glass" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gears"></i> 獎金參數設定</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-settings').classList.remove('show')">&times;</button>
+            </div>
+            <form id="form-settings">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                        在此調整計畫各方案之基礎獎金與加成權重。修改後將即時同步於學生端前台試算器與後端申請稽核中。
+                    </p>
+                    
+                    <h3 style="color: var(--neon-blue); font-size: 0.95rem; margin-bottom: 12px;"><i class="fa-solid fa-arrow-up-right-dots"></i> 方案二：學期進步獎參數</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>基礎底金 (元)</label>
+                            <input type="number" id="settings-progress-base" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>點數折現係數 (元 / 點)</label>
+                            <input type="number" id="settings-progress-rate" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                    </div>
+                    
+                    <h3 style="color: var(--gold); font-size: 0.95rem; margin-bottom: 12px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;"><i class="fa-solid fa-shield-halved"></i> 方案一：成績挑戰階梯獎金</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 1 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-1" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 2 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-2" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 3 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-3" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 4 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-4" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 5 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-5" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 6 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-6" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 7 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-7" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>第 8 次解鎖 (元)</label>
+                            <input type="number" id="settings-challenge-8" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                        </div>
+                    </div>
+                    
+                    <h3 style="color: var(--neon-red); font-size: 0.95rem; margin-bottom: 12px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px;"><i class="fa-solid fa-rocket"></i> 方案三：未來藍圖計畫上限</h3>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>專案圓夢基金最高額度 (元)</label>
+                        <input type="number" id="settings-blueprint" required min="0" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-approve btn-full" style="background: var(--neon-blue); border-color: var(--neon-blue); color: #000; font-weight: bold;"><i class="fa-solid fa-floppy-disk"></i> 儲存獎金設定參數</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Popup for Messages -->
+    <div class="toast" id="toast-message">
+        <i class="fa-solid fa-circle-info toast-icon" id="toast-icon"></i>
+        <div class="toast-body" id="toast-body-text">提示訊息內容</div>
+    </div>
+
+    <!-- Admin Logic JavaScript -->
+    <script>
+        let currentCases = [];
+        let selectedCase = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadCaseList();
+            
+            // Register panel button event handlers
+            document.getElementById('btn-approve-case').addEventListener('click', approveCase);
+            document.getElementById('btn-reject-case').addEventListener('click', rejectCase);
+            document.getElementById('btn-destroy-case').addEventListener('click', destroyPIICase);
+            
+            // Register settings events
+            document.getElementById('btn-open-settings').addEventListener('click', openSettingsModal);
+            document.getElementById('form-settings').addEventListener('submit', saveSettings);
+            
+            // Register logout event
+            document.getElementById('btn-admin-logout').addEventListener('click', logoutAdmin);
+        });
+
+        // Load application list
+        function loadCaseList() {
+            fetch('/api/admin/list')
+                .then(res => res.json())
+                .then(data => {
+                    currentCases = data;
+                    renderCaseTable();
+                    calculateStats();
+                })
+                .catch(err => {
+                    console.error("Error fetching case list:", err);
+                    showToast("載入案件名冊失敗！", "fa-circle-xmark");
+                });
+        }
+
+        // Render table
+        function renderCaseTable() {
+            const tbody = document.getElementById('case-list-tbody');
+            tbody.innerHTML = '';
+
+            if (currentCases.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">目前無任何申請案件</td></tr>';
+                return;
+            }
+
+            currentCases.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = `case-row ${selectedCase && selectedCase.id === c.id ? 'active-row' : ''}`;
+                
+                // Set click handler
+                tr.addEventListener('click', () => selectCase(c));
+
+                // Translate type
+                let typeText = '成績挑戰';
+                if (c.type === 'progress') typeText = '學期進步';
+                if (c.type === 'blueprint') typeText = '未來藍圖';
+
+                // Target text
+                let targetText = '--';
+                if (c.type === 'challenge') targetText = `${c.challenge_target} 分`;
+                if (c.type === 'progress') targetText = `+${(c.gpa - c.prev_gpa).toFixed(2)} 分`;
+                if (c.type === 'blueprint') targetText = c.project_name.substring(0, 10) + '...';
+
+                // Format status badge
+                let statusBadge = `<span class="badge pending">待審核</span>`;
+                if (c.status === 'approved') statusBadge = `<span class="badge approved">已核准</span>`;
+                if (c.status === 'rejected') statusBadge = `<span class="badge rejected">已拒絕</span>`;
+                if (c.status === 'destroyed') statusBadge = `<span class="badge destroyed">已銷毀結案</span>`;
+
+                tr.innerHTML = `
+                    <td>${c.created_at}</td>
+                    <td class="font-tech" style="font-size: 0.85rem;">${c.school || ''} ${c.department || ''} (${c.grade || ''})</td>
+                    <td>${c.name || '已銷毀'}</td>
+                    <td>${typeText}</td>
+                    <td>${targetText}</td>
+                    <td class="font-tech text-gold font-bold">NT$ ${(c.amount || 0).toLocaleString()}</td>
+                    <td>${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Calculate statistics cards
+        function calculateStats() {
+            let pendingCount = 0;
+            let approvedCount = 0;
+            let destroyedCount = 0;
+            let totalAmount = 0;
+
+            currentCases.forEach(c => {
+                if (c.status === 'pending') pendingCount++;
+                if (c.status === 'approved') approvedCount++;
+                if (c.status === 'destroyed') {
+                    destroyedCount++;
+                    totalAmount += (c.amount || 0);
+                }
+                if (c.status === 'approved') {
+                    totalAmount += (c.amount || 0); // Include approved but not yet destroyed amount in tally
+                }
+            });
+
+            document.getElementById('stat-pending').innerText = pendingCount;
+            document.getElementById('stat-approved').innerText = approvedCount;
+            document.getElementById('stat-destroyed').innerText = destroyedCount;
+            document.getElementById('stat-total-amount').innerText = `NT$ ${totalAmount.toLocaleString()}`;
+        }
+
+        // Selection change handler
+        function selectCase(c) {
+            selectedCase = c;
+            
+            // Highlight row
+            const rows = document.querySelectorAll('.case-row');
+            const clickedIndex = currentCases.findIndex(item => item.id === c.id);
+            rows.forEach((r, idx) => {
+                if (idx === clickedIndex) r.classList.add('active-row');
+                else r.classList.remove('active-row');
+            });
+
+            // Show auditor split panel
+            document.getElementById('auditor-placeholder').style.display = 'none';
+            document.getElementById('auditor-pane').style.display = 'block';
+
+            // Fill auditor fields
+            document.getElementById('audit-case-id').innerText = c.id;
+            
+            let typeText = '🛡 方案一：成績挑戰獎';
+            if (c.type === 'progress') typeText = '📈 方案二：學期進步獎';
+            if (c.type === 'blueprint') typeText = '🚀 方案三：未來藍圖計畫';
+            
+            document.getElementById('audit-type').innerText = typeText;
+            document.getElementById('audit-name').innerText = c.name || '【個資已物理銷毀】';
+            document.getElementById('audit-grade').innerText = c.grade || '--';
+            document.getElementById('audit-school-dept').innerText = c.school && c.department ? `${c.school} ｜ ${c.department}` : '--';
+            document.getElementById('audit-amount').innerText = `NT$ ${(c.amount || 0).toLocaleString()}`;
+
+            // Adjust fields display by type
+            if (c.type === 'challenge') {
+                document.getElementById('row-gpas').style.display = 'grid';
+                document.getElementById('group-project').style.display = 'none';
+                document.getElementById('group-prev-gpa').style.display = 'none';
+                document.getElementById('group-gpa').style.display = 'block';
+                document.getElementById('label-gpa').innerText = '當學期平均';
+                document.getElementById('audit-gpa').innerText = `${c.gpa} 分`;
+                document.getElementById('group-target').style.display = 'block';
+                document.getElementById('audit-target').innerText = `${c.challenge_target} 分`;
+            } else if (c.type === 'progress') {
+                document.getElementById('row-gpas').style.display = 'grid';
+                document.getElementById('group-project').style.display = 'none';
+                document.getElementById('group-prev-gpa').style.display = 'block';
+                document.getElementById('audit-prev-gpa').innerText = `${c.prev_gpa} 分`;
+                document.getElementById('group-gpa').style.display = 'block';
+                document.getElementById('label-gpa').innerText = '本學期平均';
+                document.getElementById('audit-gpa').innerText = `${c.gpa} 分`;
+                document.getElementById('group-target').style.display = 'block';
+                document.getElementById('audit-target').innerText = `+${(c.gpa - c.prev_gpa).toFixed(2)} 分 (${c.credits}學分)`;
+            } else if (c.type === 'blueprint') {
+                document.getElementById('row-gpas').style.display = 'none';
+                document.getElementById('group-project').style.display = 'block';
+                document.getElementById('audit-project-name').innerText = c.project_name;
+                document.getElementById('audit-project-month').innerText = c.project_month;
+            }
+
+            // Remittance PII
+            if (c.status === 'destroyed') {
+                document.getElementById('audit-bank-code').innerText = '【已銷毀】';
+                document.getElementById('audit-bank-account').innerText = '【帳戶資料已抹除】';
+            } else {
+                document.getElementById('audit-bank-code').innerText = c.bank_code || '--';
+                document.getElementById('audit-bank-account').innerText = c.bank_account || '--';
+            }
+
+            // Adjust button actions depending on case status
+            const pendingGroup = document.getElementById('actions-pending-group');
+            const approvedGroup = document.getElementById('actions-approved-group');
+            const destroyedBanner = document.getElementById('actions-destroyed-banner');
+
+            pendingGroup.style.display = 'none';
+            approvedGroup.style.display = 'none';
+            destroyedBanner.style.display = 'none';
+
+            if (c.status === 'pending') {
+                pendingGroup.style.display = 'flex';
+            } else if (c.status === 'approved') {
+                approvedGroup.style.display = 'block';
+            } else if (c.status === 'destroyed' || c.status === 'rejected') {
+                destroyedBanner.style.display = 'block';
+                if (c.status === 'rejected') {
+                    destroyedBanner.className = "audit-destroyed-banner rejected";
+                    destroyedBanner.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> 該案已被拒絕核核退回。`;
+                } else {
+                    destroyedBanner.className = "audit-destroyed-banner";
+                    destroyedBanner.innerHTML = `<i class="fa-solid fa-shield-halved"></i> 該案已撥款結案。所有帳戶與成績圖檔個資已由系統銷毀抹除！`;
+                }
+            }
+
+            // Load document viewer (Image/PDF)
+            const imgViewer = document.getElementById('audit-document-img');
+            const pdfViewer = document.getElementById('audit-document-pdf');
+
+            imgViewer.style.display = 'none';
+            pdfViewer.style.display = 'none';
+
+            if (c.status === 'destroyed') {
+                // Display destroyed placeholder image
+                imgViewer.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23dc2626" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="9" y1="10" x2="15" y2="16"/><line x1="15" y1="10" x2="9" y2="16"/></svg>';
+                imgViewer.style.display = 'block';
+            } else if (c.file_path) {
+                const pathLower = c.file_path.toLowerCase();
+                if (pathLower.endsWith('.pdf')) {
+                    pdfViewer.src = `/static/uploads/${c.file_path}`;
+                    pdfViewer.style.display = 'block';
+                } else {
+                    imgViewer.src = `/static/uploads/${c.file_path}`;
+                    imgViewer.style.display = 'block';
+                }
+            } else {
+                imgViewer.src = '';
+                imgViewer.style.display = 'block';
+            }
+        }
+
+        // Approve Case
+        function approveCase() {
+            if (!selectedCase) return;
+            
+            fetch('/api/admin/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedCase.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "fa-circle-check");
+                    // Reload list & reset panel
+                    loadCaseList();
+                    // Keep active row visual selection
+                    setTimeout(() => {
+                        const updated = currentCases.find(item => item.id === selectedCase.id);
+                        if (updated) selectCase(updated);
+                    }, 300);
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("網路錯誤，審理核定失敗！", "fa-triangle-exclamation");
+            });
+        }
+
+        // Reject Case
+        function rejectCase() {
+            if (!selectedCase) return;
+            
+            fetch('/api/admin/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedCase.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "fa-circle-exclamation");
+                    loadCaseList();
+                    setTimeout(() => {
+                        const updated = currentCases.find(item => item.id === selectedCase.id);
+                        if (updated) selectCase(updated);
+                    }, 300);
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .catch(err => {
+                showToast("核退操作失敗！", "fa-triangle-exclamation");
+            });
+        }
+
+        // Wiping sensitive PII (GDPR shredding)
+        function destroyPIICase() {
+            if (!selectedCase) return;
+            
+            if (!confirm(`⚠ 【隱私物理銷毀警告】\n此操作將永久從伺服器磁碟刪除上傳的「成績單/企劃書圖檔」，並強制在資料庫中抹除「匯款指定帳號」與「學生真實姓名」，僅留存匿名發放次數統計。\n\n確認已在網銀完成 NT$ ${selectedCase.amount.toLocaleString()} 元之轉帳，並執行銷毀結案嗎？`)) {
+                return;
+            }
+
+            fetch('/api/admin/destroy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: selectedCase.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update console terminal dialog fields
+                    document.getElementById('log-file-delete').innerText = `> Deleting: static/uploads/${selectedCase.file_path || 'unknown'} - OK (Deleted physically)`;
+                    document.getElementById('log-name-wipe').innerText = `> Masking Name: ${selectedCase.name} ➔ ${data.anonymized_name}`;
+                    document.getElementById('log-email-body').innerText = data.email_log.body;
+                    
+                    // Show console log modal
+                    document.getElementById('modal-destroy-log').classList.add('show');
+                    
+                    showToast("該筆申請案件個資已物理銷毀！", "fa-user-shield");
+                    
+                    loadCaseList();
+                    setTimeout(() => {
+                        const updated = currentCases.find(item => item.id === selectedCase.id);
+                        if (updated) selectCase(updated);
+                    }, 300);
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .catch(err => {
+                showToast("個資物理銷毀執行失敗！", "fa-triangle-exclamation");
+            });
+        }
+
+        // Open Settings Modal & Populate Values
+        function openSettingsModal() {
+            fetch('/api/admin/settings')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('settings-progress-base').value = data.progress_base;
+                    document.getElementById('settings-progress-rate').value = data.progress_conversion_rate;
+                    document.getElementById('settings-blueprint').value = data.blueprint_amount;
+                    
+                    const challenges = data.challenge_amounts || [];
+                    for (let i = 1; i <= 8; i++) {
+                        document.getElementById(`settings-challenge-${i}`).value = challenges[i - 1] || 0;
+                    }
+                    
+                    document.getElementById('modal-settings').classList.add('show');
+                })
+                .catch(err => {
+                    console.error("Error fetching settings:", err);
+                    showToast("讀取獎金設定失敗，請確認伺服器連線狀態！", "fa-triangle-exclamation");
+                });
+        }
+
+        // Save Settings Form
+        function saveSettings(e) {
+            e.preventDefault();
+            
+            const progress_base = parseInt(document.getElementById('settings-progress-base').value);
+            const progress_conversion_rate = parseInt(document.getElementById('settings-progress-rate').value);
+            const blueprint_amount = parseInt(document.getElementById('settings-blueprint').value);
+            
+            const challenge_amounts = [];
+            for (let i = 1; i <= 8; i++) {
+                challenge_amounts.push(parseInt(document.getElementById(`settings-challenge-${i}`).value));
+            }
+            
+            const payload = {
+                progress_base,
+                progress_conversion_rate,
+                blueprint_amount,
+                challenge_amounts
+            };
+            
+            fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "fa-circle-check");
+                    document.getElementById('modal-settings').classList.remove('show');
+                    loadCaseList(); // Reload stats and lists
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .catch(err => {
+                console.error("Error saving settings:", err);
+                showToast("連線錯誤，儲存設定失敗！", "fa-triangle-exclamation");
+            });
+        }
+
+        // Logout Admin Account
+        function logoutAdmin() {
+            fetch('/api/admin/logout', {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast("已成功登出管理端！", "fa-right-from-bracket");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            })
+            .catch(err => {
+                console.error("Admin logout error:", err);
+                showToast("登出失敗，請檢查網路連線！", "fa-triangle-exclamation");
+            });
+        }
+
+        // Toast Helper
+        let toastTimer = null;
+        function showToast(text, iconClass = "fa-circle-info") {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-body-text');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            if (toast && toastText && toastIcon) {
+                toastText.innerText = text;
+                toastIcon.className = `fa-solid ${iconClass} toast-icon`;
+                toast.classList.add('show');
+                
+                if (toastTimer) clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+        }
+    </script>
+</body>
+</html>

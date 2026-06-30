@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【古哥獎學金】管理端後台 - 雙螢幕無痕銷毀系統</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Apps Script Inlined Style Sheets -->
+    <?!= include('admin_style'); ?>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="admin-header">
+        <div class="header-logo">
+            <i class="fa-solid fa-user-shield logo-icon"></i>
+            <div>
+                <h1>古哥獎學金管理後台</h1>
+                <p class="subtitle">雙螢幕快速對照審核與無痕銷毀系統</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="/" target="_blank" class="btn-back-home"><i class="fa-solid fa-circle-chevron-left"></i> 前往學生端前台 (另開視窗)</a>
+        </div>
+    </header>
+
+    <div class="admin-container">
+
+        <!-- Dashboard Stat Cards -->
+        <section class="stats-grid">
+            <div class="stat-card pending">
+                <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div class="stat-info">
+                    <span class="label">待審核案件</span>
+                    <strong class="count" id="stat-pending">0</strong>
+                </div>
+            </div>
+            <div class="stat-card approved">
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-info">
+                    <span class="label">已核准 (待撥款)</span>
+                    <strong class="count" id="stat-approved">0</strong>
+                </div>
+            </div>
+            <div class="stat-card paid">
+                <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                <div class="stat-info">
+                    <span class="label">已發放/個資已銷毀</span>
+                    <strong class="count" id="stat-destroyed">0</strong>
+                </div>
+            </div>
+            <div class="stat-card total-amount">
+                <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="stat-info">
+                    <span class="label">已核發累計獎金</span>
+                    <strong class="count" id="stat-total-amount">NT$ 0</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions Toolbar -->
+        <section class="toolbar-section">
+            <div class="toolbar-left">
+                <h2>申請案件審理名冊</h2>
+            </div>
+            <div class="toolbar-right" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="btn-open-settings" style="background: rgba(255,209,102,0.15); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--gold)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,209,102,0.15)'; this.style.color='var(--gold)';">
+                    <i class="fa-solid fa-gears"></i> 獎金設定
+                </button>
+                <button class="btn btn-reject" id="btn-admin-logout" style="background: rgba(255,0,127,0.15); border: 1px solid var(--neon-pink); color: var(--neon-pink); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--neon-pink)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,0,127,0.15)'; this.style.color='var(--neon-pink)';">
+                    <i class="fa-solid fa-right-from-bracket"></i> 登出後台
+                </button>
+                <button class="btn btn-export" id="btn-export-csv" style="border: none; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-file-excel"></i> 匯出華南網銀撥款名冊 (CSV)
+                </button>
+            </div>
+        </section>
+
+        <!-- Dual Split Audit Pane -->
+        <div class="split-pane-wrapper">
+            
+            <!-- Left Pane: Case List Grid -->
+            <div class="pane-list">
+                <div class="table-container">
+                    <table class="admin-table" id="table-cases">
+                        <thead>
+                            <tr>
+                                <th>申請時間</th>
+                                <th>就讀校系</th>
+                                <th>姓名</th>
+                                <th>學年度</th>
+                                <th>方案類型</th>
+                                <th>門檻/項目</th>
+                                <th>核定金額</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="case-list-tbody">
+                            <!-- JS dynamic insertion -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Pane: Split Audit Panel (Case detail & original file preview) -->
+            <div class="pane-audit" id="audit-pane" style="display: none;">
+                
+                <!-- Tab Headers (Audit info vs. original attachment preview) -->
+                <div class="audit-tabs">
+                    <div class="tab active"><i class="fa-solid fa-file-invoice-dollar"></i> 審查表單欄位</div>
+                    <div class="tab-right-preview"><i class="fa-solid fa-magnifying-glass-chart"></i> 原始檔案核對</div>
+                </div>
+
+                <div class="audit-split-grid">
+                    
+                    <!-- Detail forms fields column -->
+                    <div class="audit-details-col">
+                        <div class="details-section">
+                            <h3><i class="fa-solid fa-info-circle"></i> 案件基本資料</h3>
+                            
+                            <div class="meta-row">
+                                <span>申請序號：</span>
+                                <strong id="detail-id">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>真實姓名：</span>
+                                <strong id="detail-name">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>就讀校系：</span>
+                                <strong id="detail-school-dept">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>申報學年度：</span>
+                                <strong id="detail-academic-year">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>核定獎助金額：</span>
+                                <strong class="text-gold" id="detail-amount">NT$ 0</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>申請提交時間：</span>
+                                <strong id="detail-created">--</strong>
+                            </div>
+                        </div>
+
+                        <!-- Scheme specific parameter fields -->
+                        <div class="details-section" id="details-type-challenge" style="display: none;">
+                            <h3><i class="fa-solid fa-shield-halved"></i> 方案一：成績挑戰細節</h3>
+                            <div class="meta-row">
+                                <span>挑戰防線分數：</span>
+                                <strong class="text-neon" id="detail-challenge-target">0.00 分</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>當期實際分數：</span>
+                                <strong id="detail-challenge-gpa">0.00 分</strong>
+                            </div>
+                        </div>
+
+                        <div class="details-section" id="details-type-progress" style="display: none;">
+                            <h3><i class="fa-solid fa-chart-line-up"></i> 方案二：學期進步獎細節</h3>
+                            <div class="meta-row">
+                                <span>前一學期成績：</span>
+                                <strong id="detail-progress-prev">0.00 分</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>當期學期成績：</span>
+                                <strong class="text-neon" id="detail-progress-curr">0.00 分</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>當期修習學分：</span>
+                                <strong id="detail-progress-credits">0 學分</strong>
+                            </div>
+                            
+                            <h3 style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                                <i class="fa-solid fa-university"></i> 收款銀行與匯款資訊 (PII)
+                            </h3>
+                            <div class="meta-row">
+                                <span>收款銀行代碼：</span>
+                                <strong id="detail-bank-code">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>收款人銀行帳號：</span>
+                                <strong id="detail-bank-account" class="font-tech">--</strong>
+                            </div>
+                        </div>
+
+                        <div class="details-section" id="details-type-blueprint" style="display: none;">
+                            <h3><i class="fa-solid fa-rocket"></i> 方案三：未來藍圖圓夢細節</h3>
+                            <div class="meta-row">
+                                <span>專案圓夢主題：</span>
+                                <strong id="detail-blueprint-name">--</strong>
+                            </div>
+                            <div class="meta-row">
+                                <span>預定執行時程：</span>
+                                <strong id="detail-blueprint-month">--</strong>
+                            </div>
+                        </div>
+
+                        <!-- Action controls section -->
+                        <div class="details-section actions-section">
+                            <h3><i class="fa-solid fa-shield-halved"></i> 審查核定動作</h3>
+                            
+                            <!-- Action alert status feedback -->
+                            <div class="status-tip" id="case-status-msg" style="display: none;"></div>
+
+                            <div class="action-btn-row">
+                                <button class="btn btn-primary" id="btn-approve-case"><i class="fa-solid fa-circle-check"></i> 核准撥款</button>
+                                <button class="btn btn-reject-secondary" id="btn-reject-case"><i class="fa-solid fa-circle-xmark"></i> 拒絕申請</button>
+                            </div>
+                            
+                            <!-- Shredder Action: Destroy sensitive banking details physically -->
+                            <button class="btn btn-reject btn-full btn-destroy-shred" id="btn-destroy-case" style="margin-top: 15px;" disabled>
+                                <i class="fa-solid fa-dumpster-fire"></i> 已撥款，執行一鍵個資物理銷毀
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Pane: File Preview Column -->
+                    <div class="audit-preview-col">
+                        <div class="preview-header">
+                            <span><i class="fa-solid fa-paperclip"></i> 申報憑證/成績單原圖</span>
+                        </div>
+                        <div class="preview-body">
+                            <!-- Show file or PDF container -->
+                            <div id="preview-file-container"></div>
+                            
+                            <!-- Placeholder when no case is selected or file is destroyed -->
+                            <div class="preview-placeholder" id="preview-no-file">
+                                <i class="fa-solid fa-file-circle-check"></i>
+                                <p>點擊左側列表項目，即可在此預覽學生成績單或企劃書。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Alert / Toast Popup for Messages -->
+    <div class="toast" id="toast-message">
+        <i class="fa-solid fa-circle-info toast-icon" id="toast-icon"></i>
+        <div class="toast-body" id="toast-body-text">提示訊息</div>
+    </div>
+
+    <!-- Modal: Settings Parameters -->
+    <div class="modal" id="modal-settings">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gears text-gold"></i> 獎學金金額與加成參數設定</h2>
+                <button class="modal-close" onclick="closeModal('modal-settings')">&times;</button>
+            </div>
+            <form id="form-settings">
+                <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
+                    
+                    <!-- Progress parameters -->
+                    <div class="form-section-title">方案二：學期進步獎加成係數</div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label>基礎底金 (NT$)</label>
+                            <input type="number" id="set-progress-base" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>點數折現率 (NT$ / 點)</label>
+                            <input type="number" id="set-progress-rate" required min="0">
+                        </div>
+                    </div>
+
+                    <!-- Challenge amounts -->
+                    <div class="form-section-title" style="margin-top: 20px;">方案一：成績挑戰階梯獎金 (LV 1 - LV 8)</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div class="form-group">
+                            <label>LV 1 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-1" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 2 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-2" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 3 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-3" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 4 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-4" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 5 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-5" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 6 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-6" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 7 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-7" required min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>LV 8 獎金 (NT$)</label>
+                            <input type="number" id="set-ladder-8" required min="0">
+                        </div>
+                    </div>
+
+                    <!-- Blueprint parameters -->
+                    <div class="form-section-title" style="margin-top: 20px;">方案三：未來藍圖圓夢專案額度</div>
+                    <div class="form-group">
+                        <label>最高專案圓夢基金 (NT$)</label>
+                        <input type="number" id="set-blueprint-limit" required min="0">
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-glow-gold btn-full">
+                        <i class="fa-solid fa-save"></i> 儲存獎金設定
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Apps Script Inlined Javascripts -->
+    <?!= include('admin_javascript'); ?>
+</body>
+</html>

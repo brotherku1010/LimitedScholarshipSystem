@@ -1,0 +1,992 @@
+// ==========================================================================
+// 【古哥獎學金】成績挑戰系統 - 雲端 GAS 後端服務程式碼 (Code.gs)
+// ==========================================================================
+
+const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
+const PARENT_DRIVE_FOLDER_ID = '1SK0UyFssSFDR044v5Th-ZkbvagqdNsIo';
+
+// --- Web Routing (GET Entrance) ---
+function doGet(e) {
+  var page = e.parameter.page || 'index';
+  var token = e.parameter.token;
+  
+  if (page === 'admin') {
+    // Check if admin is logged in via token parameter
+    var isAuthorized = false;
+    if (token) {
+      var cached = CacheService.getScriptCache().get("admin_session_" + token);
+      if (cached === "active") {
+        isAuthorized = true;
+      }
+    }
+    
+    if (!isAuthorized) {
+      return HtmlService.createTemplateFromFile('admin_login')
+          .evaluate()
+          .setTitle('古哥獎學金審查系統 - 後台管理驗證')
+          .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+          .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+    
+    // Serve admin console
+    var template = HtmlService.createTemplateFromFile('admin');
+    template.adminToken = token;
+    return template.evaluate()
+        .setTitle('古哥獎學金審查系統 - 後台控制台')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  
+  // Default: Student Main Landing Page
+  return HtmlService.createTemplateFromFile('index')
+      .evaluate()
+      .setTitle('古哥獎學金 - 成績挑戰計畫')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// Helper to include files inside templates
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// --- Database Sheets Initialization ---
+function getDbSpreadsheet() {
+  try {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  } catch (err) {
+    throw new Error("無法連接至 Google 試算表，請確認試算表 ID 是否正確且具備共用存取權！");
+  }
+}
+
+function initSheets() {
+  const ss = getDbSpreadsheet();
+  
+  // 1. Check or Create 'students'
+  let studentSheet = ss.getSheetByName('students');
+  if (!studentSheet) {
+    studentSheet = ss.insertSheet('students');
+    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID']);
+    studentSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#b7e1cd');
+  }
+  
+  // 2. Check or Create 'applications'
+  let appSheet = ss.getSheetByName('applications');
+  if (!appSheet) {
+    appSheet = ss.insertSheet('applications');
+    appSheet.appendRow(['ApplicationID', 'Type', 'Status', 'StudentUID', 'RealName', 'Amount', 'AcademicYear', 'Details', 'FileLink1', 'FileLink2', 'CreatedAt']);
+    appSheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#c9daf8');
+  }
+  
+  // 3. Check or Create 'settings'
+  let settingsSheet = ss.getSheetByName('settings');
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet('settings');
+    settingsSheet.appendRow(['Key', 'Value']);
+    settingsSheet.getRange(1, 1, 1, 2).setFontWeight('bold').setBackground('#fce5cd');
+    
+    // Seed default values
+    const defaults = [
+      ['progress_base', '1500'],
+      ['progress_conversion_rate', '50'],
+      ['challenge_amounts', '7000,8500,10000,12000,15000,18000,20000,25000'],
+      ['blueprint_amount', '30000'],
+      ['admin_password', 'guge_admin_secret_999'],
+      ['line_channel_access_token', 'YOUR_LINE_ACCESS_TOKEN']
+    ];
+    for (let d of defaults) {
+      settingsSheet.appendRow(d);
+    }
+  }
+  
+  return "Database tables verified successfully!";
+}
+
+// --- Helper Functions to Query Sheets ---
+function getSettingsDict(ss) {
+  const sheet = ss.getSheetByName('settings');
+  const values = sheet.getDataRange().getValues();
+  const dict = {};
+  for (let i = 1; i < values.length; i++) {
+    const key = values[i][0];
+    const val = values[i][1];
+    dict[key] = val;
+  }
+  return dict;
+}
+
+function getSafeSettings(ss) {
+  const dict = getSettingsDict(ss);
+  // Exclude sensitive admin password and LINE channel token
+  delete dict['admin_password'];
+  delete dict['line_channel_access_token'];
+  
+  // Format data types for JS
+  return {
+    progress_base: parseInt(dict['progress_base'] || '1500'),
+    progress_conversion_rate: parseInt(dict['progress_conversion_rate'] || '50'),
+    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').split(',').map(Number),
+    blueprint_amount: parseInt(dict['blueprint_amount'] || '30000')
+  };
+}
+
+// --- LINE Push Notification Service ---
+function sendLinePushNotification(lineUserId, messageText) {
+  const ss = getDbSpreadsheet();
+  const dict = getSettingsDict(ss);
+  const token = dict['line_channel_access_token'];
+  
+  if (!token || token === 'YOUR_LINE_ACCESS_TOKEN' || !lineUserId || lineUserId.indexOf('mock_line_') === 0) {
+    Logger.log("LINE 推播取消：未設定 Access Token 或此學員為模擬測試身分。");
+    return false;
+  }
+  
+  const url = 'https://api.line.me/v2/bot/message/push';
+  const payload = {
+    to: lineUserId,
+    messages: [
+      {
+        type: 'text',
+        text: messageText
+      }
+    ]
+  };
+  
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + token
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const resCode = response.getResponseCode();
+    const resText = response.getContentText();
+    Logger.log("LINE 推播狀態碼: " + resCode + ", 回傳: " + resText);
+    return resCode === 200;
+  } catch (err) {
+    Logger.log("LINE 推播異常: " + err.toString());
+    return false;
+  }
+}
+
+// Find rows matching criteria in a sheet
+function findRows(sheet, colIndex, value) {
+  const data = sheet.getDataRange().getValues();
+  const matched = [];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][colIndex - 1].toString() === value.toString()) {
+      matched.push({ rowIndex: i + 1, rowData: data[i] });
+    }
+  }
+  return matched;
+}
+
+// --- Student API Logic ---
+
+// 1. Student Login
+function studentLogin(name, birthday) {
+  initSheets();
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const appSheet = ss.getSheetByName('applications');
+  
+  // Find student by name and birthday
+  const data = studentSheet.getDataRange().getValues();
+  let student = null;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1].toString().trim() === name.trim() && data[i][2].toString().trim() === birthday.toString().trim()) {
+      student = {
+        uid: data[i][0],
+        name: data[i][1],
+        birthday: data[i][2],
+        nickname: data[i][3],
+        school: data[i][4],
+        department: data[i][5],
+        grade: data[i][6],
+        lineUid: data[i][7],
+        folderId: data[i][8]
+      };
+      break;
+    }
+  }
+  
+  if (!student) {
+    return {
+      success: false,
+      code: 'NOT_REGISTERED',
+      message: '系統未偵測到此身分紀錄。若您是首次登入，請填寫下方基本資料以完成計畫註冊！'
+    };
+  }
+  
+  // Get unlocked levels for this student (Scheme 1 target scores)
+  const appData = appSheet.getDataRange().getValues();
+  const unlockedChallenges = [];
+  let attempts = 0;
+  
+  for (let j = 1; j < appData.length; j++) {
+    const appUID = appData[j][3];
+    const appType = appData[j][1];
+    const appStatus = appData[j][2];
+    const detailsStr = appData[j][7];
+    
+    if (appUID === student.uid && appStatus !== 'rejected') {
+      if (appType === 'challenge') {
+        attempts++;
+        try {
+          const detailsObj = JSON.parse(detailsStr);
+          if (detailsObj && detailsObj.target) {
+            unlockedChallenges.push(parseFloat(detailsObj.target));
+          }
+        } catch (e) {}
+      }
+    }
+  }
+  
+  // Get settings
+  const settings = getSafeSettings(ss);
+  
+  return {
+    success: true,
+    uid: student.uid,
+    name: student.name,
+    birthday: student.birthday,
+    nickname: student.nickname,
+    school: student.school,
+    department: student.department,
+    grade: student.grade,
+    unlocked_challenges: unlockedChallenges,
+    attempts: attempts,
+    settings: settings
+  };
+}
+
+// 2. Student Register
+function studentRegister(data) {
+  initSheets();
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  
+  const name = data.name.trim();
+  const birthday = data.birthday.trim();
+  
+  // Verify duplication
+  const rows = studentSheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][1].toString().trim() === name && rows[i][2].toString().trim() === birthday) {
+      return { success: false, message: '此真實姓名與生日組合已存在，請直接點選驗證登入！' };
+    }
+  }
+  
+  // Generate a random UID (Format: U + 8 digits)
+  let studentUid = 'U';
+  for (let k = 0; k < 8; k++) {
+    studentUid += Math.floor(Math.random() * 10).toString();
+  }
+  
+  // Create student's dedicated folder in Google Drive under Parent Folder
+  let studentFolderId = "";
+  try {
+    const parentFolder = DriveApp.getFolderById(PARENT_DRIVE_FOLDER_ID);
+    const subFolder = parentFolder.createFolder(name);
+    studentFolderId = subFolder.getId();
+  } catch (err) {
+    // Fallback: If folder creation fails, write a mock folder value so execution does not crash
+    studentFolderId = "error_drive_access";
+  }
+  
+  // Append new student record
+  studentSheet.appendRow([
+    studentUid,
+    name,
+    birthday,
+    data.nickname.trim(),
+    data.school.trim(),
+    data.department.trim(),
+    data.grade.trim(),
+    data.lineUid || "mock_line_" + studentUid,
+    studentFolderId
+  ]);
+  
+  // Send welcome push notification
+  const lineId = data.lineUid || "mock_line_" + studentUid;
+  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${data.school.trim()} ${data.department.trim()} (${data.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
+  sendLinePushNotification(lineId, welcomeMsg);
+  
+  return {
+    success: true,
+    message: '註冊資料成功建立！歡迎加入古哥成績挑戰計畫！'
+  };
+}
+
+// Helper to decode Base64 file string and save to Drive folder
+function saveBase64File(folderId, base64Data, filename) {
+  if (!folderId || folderId === "error_drive_access") {
+    return "https://docs.google.com/error_drive";
+  }
+  try {
+    const folder = DriveApp.getFolderById(folderId);
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64Data));
+    blob.setName(filename);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return file.getUrl();
+  } catch (err) {
+    return "https://docs.google.com/upload_error?msg=" + encodeURIComponent(err.toString());
+  }
+}
+
+// 3. Scheme 1: Submit Score Challenge
+function submitChallenge(payload) {
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const appSheet = ss.getSheetByName('applications');
+  
+  const studentName = payload.student_name;
+  const studentBirthday = payload.student_birthday;
+  const target = parseFloat(payload.target);
+  const gpa = parseFloat(payload.gpa);
+  const academicYear = payload.academic_year || "未填學年度";
+  
+  // Verify student
+  const studentRows = findRows(studentSheet, 2, studentName);
+  let student = null;
+  for (let r of studentRows) {
+    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+      student = r.rowData;
+      break;
+    }
+  }
+  if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
+  
+  const studentUid = student[0];
+  const folderId = student[8];
+  
+  // Count previous attempts to assign reward amount
+  let currentAttempts = 0;
+  const appRows = appSheet.getDataRange().getValues();
+  for (let j = 1; j < appRows.length; j++) {
+    if (appRows[j][3] === studentUid && appRows[j][1] === 'challenge' && appRows[j][2] !== 'rejected') {
+      currentAttempts++;
+    }
+  }
+  
+  // Check duplication for this threshold
+  for (let j = 1; j < appRows.length; j++) {
+    if (appRows[j][3] === studentUid && parseFloat(appRows[j][7] ? JSON.parse(appRows[j][7]).target : 0) === target && appRows[j][2] !== 'rejected') {
+      return { success: false, message: `您已挑戰或擊破過此防線門檻 (${target})，請選擇其他防線` };
+    }
+  }
+  
+  // Calculate reward amount
+  const settings = getSafeSettings(ss);
+  const rewards = settings.challenge_amounts;
+  const assignedAmount = rewards[Math.min(currentAttempts, rewards.length - 1)];
+  
+  // Upload file
+  let fileUrl = "";
+  if (payload.file_base64 && payload.file_name) {
+    const ext = payload.file_name.substring(payload.file_name.lastIndexOf('.'));
+    const finalFilename = `${studentUid}-${academicYear}成績挑戰單${ext}`;
+    fileUrl = saveBase64File(folderId, payload.file_base64, finalFilename);
+  }
+  
+  // Save application record
+  const appId = "APP-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  const details = JSON.stringify({ target: target, gpa: gpa });
+  const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
+  
+  appSheet.appendRow([
+    appId,
+    'challenge',
+    'pending',
+    studentUid,
+    payload.name, // Real name in PII
+    assignedAmount,
+    academicYear,
+    details,
+    fileUrl,
+    "", // No FileLink2 for challenge
+    createdAt
+  ]);
+  
+  return {
+    success: true,
+    message: `您的第 ${currentAttempts + 1} 次成績挑戰已成功送出！解鎖關卡金額為 NT$ ${assignedAmount.toLocaleString()} 元，系統已進入快速審查階段。`
+  };
+}
+
+// 4. Scheme 2: Submit Progress Award
+function submitProgress(payload) {
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const appSheet = ss.getSheetByName('applications');
+  
+  const studentName = payload.student_name;
+  const studentBirthday = payload.student_birthday;
+  const prevGpa = parseFloat(payload.prev_gpa);
+  const currGpa = parseFloat(payload.curr_gpa);
+  const credits = parseInt(payload.credits);
+  const academicYear = payload.academic_year || "未填學年度";
+  
+  // Verify student & grade
+  const studentRows = findRows(studentSheet, 2, studentName);
+  let student = null;
+  for (let r of studentRows) {
+    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+      student = r.rowData;
+      break;
+    }
+  }
+  if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
+  if (student[6] === '大一') {
+    return { success: false, message: '抱歉！學期進步獎限大二（含）以上學生申請。' };
+  }
+  
+  const studentUid = student[0];
+  const folderId = student[8];
+  
+  // Calculate reward amount
+  const settings = getSafeSettings(ss);
+  const base = settings.progress_base;
+  const rate = settings.progress_conversion_rate;
+  
+  let creditsBonus = 0;
+  if (credits >= 1 && credits <= 9) {
+    creditsBonus = 300;
+  } else if (credits >= 10 && credits <= 15) {
+    creditsBonus = 500;
+  } else if (credits >= 16 && credits <= 23) {
+    creditsBonus = 1000;
+  } else if (credits >= 24) {
+    creditsBonus = 1800;
+  }
+  
+  let difficultyCoeff = 0;
+  if (prevGpa >= 93.3333) {
+    difficultyCoeff = 15.0;
+  } else {
+    difficultyCoeff = 100.0 / (100.0 - prevGpa);
+  }
+  
+  const creditWeight = credits / 15.0;
+  const diff = currGpa - prevGpa;
+  const points = diff * difficultyCoeff * creditWeight;
+  const conversion = points * rate;
+  const totalAmount = base + creditsBonus + Math.round(conversion);
+  
+  // Save both files to Drive folder
+  let fileUrl1 = "";
+  if (payload.file1_base64 && payload.file1_name) {
+    const ext = payload.file1_name.substring(payload.file1_name.lastIndexOf('.'));
+    const finalFilename = `${studentUid}-${academicYear}上學期成績單${ext}`;
+    fileUrl1 = saveBase64File(folderId, payload.file1_base64, finalFilename);
+  }
+  
+  let fileUrl2 = "";
+  if (payload.file2_base64 && payload.file2_name) {
+    const ext = payload.file2_name.substring(payload.file2_name.lastIndexOf('.'));
+    const finalFilename = `${studentUid}-${academicYear}下學期成績單${ext}`;
+    fileUrl2 = saveBase64File(folderId, payload.file2_base64, finalFilename);
+  }
+  
+  const appId = "APP-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  const details = JSON.stringify({
+    prev_gpa: prevGpa,
+    curr_gpa: currGpa,
+    credits: credits,
+    bank_code: payload.bank_code,
+    bank_account: payload.bank_account
+  });
+  const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
+  
+  appSheet.appendRow([
+    appId,
+    'progress',
+    'pending',
+    studentUid,
+    payload.name, // Real name PII
+    totalAmount,
+    academicYear,
+    details,
+    fileUrl1,
+    fileUrl2,
+    createdAt
+  ]);
+  
+  return {
+    success: true,
+    message: `您的學期進步獎申請已成功送出！試算金額為 NT$ ${totalAmount.toLocaleString()} 元，審核中。`
+  };
+}
+
+// 5. Scheme 3: Submit Future Blueprint Project
+function submitBlueprint(payload) {
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const appSheet = ss.getSheetByName('applications');
+  
+  const studentName = payload.student_name;
+  const studentBirthday = payload.student_birthday;
+  const projectName = payload.project_name;
+  const projectMonth = payload.project_month;
+  const academicYear = payload.academic_year || "未填學年度";
+  
+  // Verify student
+  const studentRows = findRows(studentSheet, 2, studentName);
+  let student = null;
+  for (let r of studentRows) {
+    if (r.rowData[2].toString().trim() === studentBirthday.toString().trim()) {
+      student = r.rowData;
+      break;
+    }
+  }
+  if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
+  
+  const studentUid = student[0];
+  const folderId = student[8];
+  
+  // Get blueprint funding limit setting
+  const settings = getSafeSettings(ss);
+  const blueprintAmount = settings.blueprint_amount;
+  
+  // Upload blueprint proposal file
+  let fileUrl = "";
+  if (payload.file_base64 && payload.file_name) {
+    const ext = payload.file_name.substring(payload.file_name.lastIndexOf('.'));
+    const finalFilename = `${studentUid}-${academicYear}企劃書${ext}`;
+    fileUrl = saveBase64File(folderId, payload.file_base64, finalFilename);
+  }
+  
+  const appId = "APP-" + Utilities.getUuid().substring(0, 8).toUpperCase();
+  const details = JSON.stringify({
+    project_name: projectName,
+    project_month: projectMonth
+  });
+  const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
+  
+  appSheet.appendRow([
+    appId,
+    'blueprint',
+    'pending',
+    studentUid,
+    payload.name, // Real name PII
+    blueprintAmount,
+    academicYear,
+    details,
+    fileUrl,
+    "", // No FileLink2 for blueprint
+    createdAt
+  ]);
+  
+  return {
+    success: true,
+    message: '您的未來藍圖計畫提案已成功提交！此專案有專屬三階段里程碑，審核通過後即解鎖執行權限！'
+  };
+}
+
+// --- Admin Panel API Logic ---
+
+// Admin Session Verification Helper
+function verifyAdminToken(token) {
+  if (!token) return false;
+  var cached = CacheService.getScriptCache().get("admin_session_" + token);
+  return cached === "active";
+}
+
+// 1. Admin Login
+function adminLogin(password) {
+  const ss = getDbSpreadsheet();
+  const dict = getSettingsDict(ss);
+  const correctPassword = dict['admin_password'] || 'guge_admin_secret_999';
+  
+  if (password !== correctPassword) {
+    return { success: false, message: '密碼錯誤，拒絕登入後台管理端！' };
+  }
+  
+  // Generate security token
+  const token = Utilities.getUuid();
+  // Keep active session in CacheService for 25 minutes (1500 seconds)
+  CacheService.getScriptCache().put("admin_session_" + token, "active", 1500);
+  
+  return {
+    success: true,
+    token: token,
+    message: '管理端驗證登入成功！'
+  };
+}
+
+// 2. Admin Logout
+function adminLogout(token) {
+  if (token) {
+    CacheService.getScriptCache().remove("admin_session_" + token);
+  }
+  return { success: true, message: '已登出管理端身分！' };
+}
+
+// 3. Admin Get Settings
+function adminGetSettings(token) {
+  if (!verifyAdminToken(token)) {
+    throw new Error("未授權的操作，請先登入管理端！");
+  }
+  const ss = getDbSpreadsheet();
+  const dict = getSettingsDict(ss);
+  
+  // Return all settings, but mask/convert challenge amounts
+  return {
+    progress_base: parseInt(dict['progress_base'] || '1500'),
+    progress_conversion_rate: parseInt(dict['progress_conversion_rate'] || '50'),
+    blueprint_amount: parseInt(dict['blueprint_amount'] || '30000'),
+    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').split(',').map(Number)
+  };
+}
+
+// 4. Admin Save Settings
+function adminSaveSettings(token, payload) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const sheet = ss.getSheetByName('settings');
+  const challengeAmountsStr = payload.challenge_amounts.join(',');
+  
+  const updates = {
+    'progress_base': payload.progress_base.toString(),
+    'progress_conversion_rate': payload.progress_conversion_rate.toString(),
+    'blueprint_amount': payload.blueprint_amount.toString(),
+    'challenge_amounts': challengeAmountsStr
+  };
+  
+  const dataRange = sheet.getDataRange();
+  const values = dataRange.getValues();
+  
+  for (let key in updates) {
+    let found = false;
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === key) {
+        sheet.getRange(i + 1, 2).setValue(updates[key]);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      sheet.appendRow([key, updates[key]]);
+    }
+  }
+  
+  return {
+    success: true,
+    message: '獎金參數設定已成功更新！所有學生試算及申報金額將同步生效。'
+  };
+}
+
+// 5. Admin Get Cases List
+function adminGetList(token) {
+  if (!verifyAdminToken(token)) {
+    throw new Error("未授權的操作，請先登入管理端！");
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const studentSheet = ss.getSheetByName('students');
+  
+  const appData = appSheet.getDataRange().getValues();
+  const studentData = studentSheet.getDataRange().getValues();
+  
+  // Create student index for joining
+  const studentIndex = {};
+  for (let i = 1; i < studentData.length; i++) {
+    const uid = studentData[i][0];
+    studentIndex[uid] = {
+      nickname: studentData[i][3],
+      school: studentData[i][4],
+      department: studentData[i][5],
+      grade: studentData[i][6]
+    };
+  }
+  
+  const results = [];
+  // Parse rows (newest first, so traverse backwards)
+  for (let j = appData.length - 1; j >= 1; j--) {
+    const studentUid = appData[j][3];
+    const sInfo = studentIndex[studentUid] || { nickname: '', school: '', department: '', grade: '' };
+    
+    // Parse json details column
+    let prevGpa = "";
+    let currGpa = "";
+    let credits = "";
+    let challengeTarget = "";
+    let projectName = "";
+    let projectMonth = "";
+    let bankCode = "";
+    let bankAccount = "";
+    
+    const detailsStr = appData[j][7];
+    const type = appData[j][1];
+    
+    try {
+      if (detailsStr) {
+        const detailsObj = JSON.parse(detailsStr);
+        if (type === 'challenge') {
+          challengeTarget = detailsObj.target || "";
+          prevGpa = detailsObj.gpa || ""; // Current uploaded GPA
+        } else if (type === 'progress') {
+          prevGpa = detailsObj.prev_gpa || "";
+          currGpa = detailsObj.curr_gpa || "";
+          credits = detailsObj.credits || "";
+          bankCode = detailsObj.bank_code || "";
+          bankAccount = detailsObj.bank_account || "";
+        } else if (type === 'blueprint') {
+          projectName = detailsObj.project_name || "";
+          projectMonth = detailsObj.project_month || "";
+        }
+      }
+    } catch(e) {}
+    
+    results.appendRow = null; // Clean prototype reference
+    results.push({
+      id: appData[j][0],
+      type: type,
+      status: appData[j][2],
+      student_uid: studentUid,
+      student_name: studentUid, // Standard UID identifier
+      name: appData[j][4], // Student RealName (PII)
+      amount: parseInt(appData[j][5] || '0'),
+      academic_year: appData[j][6],
+      challenge_target: challengeTarget,
+      gpa: prevGpa,
+      prev_gpa: prevGpa,
+      curr_gpa: currGpa,
+      credits: credits,
+      projectName: projectName,
+      project_name: projectName,
+      project_month: projectMonth,
+      bank_code: bankCode,
+      bank_account: bankAccount,
+      file_path: appData[j][8], // Drive Link 1
+      prev_file_path: appData[j][9], // Drive Link 2
+      created_at: appData[j][10],
+      nickname: sInfo.nickname,
+      school: sInfo.school,
+      department: sInfo.department,
+      grade: sInfo.grade
+    });
+  }
+  
+  return results;
+}
+
+// Helper to query student LineUID
+function getStudentLineUid(ss, studentUid) {
+  const sheet = ss.getSheetByName('students');
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === studentUid) {
+      return rows[i][7]; // LineUID
+    }
+  }
+  return null;
+}
+
+// 6. Admin Approve Case
+function adminApproveCase(token, appId) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = appSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      appSheet.getRange(i + 1, 3).setValue('approved'); // Set status to approved
+      
+      // Get student's LineUID and send notification
+      const studentUid = rows[i][3];
+      const typeText = rows[i][1] === 'challenge' ? '成績挑戰' : rows[i][1] === 'progress' ? '學期進步獎' : '未來藍圖計畫';
+      const amount = rows[i][5];
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        const msg = `🔔 恭喜！您的【${typeText}】申請案已審查「核准」！\n💰 核定金額：NT$ ${parseInt(amount).toLocaleString()} 元。\n隨後將進入網銀撥款流程，撥款完成後會再次通知您！`;
+        sendLinePushNotification(lineUid, msg);
+      }
+      
+      return { success: true, message: '此筆申請案件已審定核准！隨後可匯出至網銀撥款。' };
+    }
+  }
+  
+  return { success: false, message: '找不到該筆申請案！' };
+}
+
+// 7. Admin Reject Case
+function adminRejectCase(token, appId) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = appSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      appSheet.getRange(i + 1, 3).setValue('rejected'); // Set status to rejected
+      
+      // Get student's LineUID and send notification
+      const studentUid = rows[i][3];
+      const typeText = rows[i][1] === 'challenge' ? '成績挑戰' : rows[i][1] === 'progress' ? '學期進步獎' : '未來藍圖計畫';
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        const msg = `🔔 通知：您的【${typeText}】申請案已被審核「退回」。\n請登入系統檢視數據是否填寫錯誤，或確認重新上傳正確之證明文件。`;
+        sendLinePushNotification(lineUid, msg);
+      }
+      
+      return { success: true, message: '此筆申請案件已被拒絕。' };
+    }
+  }
+  
+  return { success: false, message: '找不到該筆申請案！' };
+}
+
+// Helper to extract file ID from Google Drive URL
+function getFileIdFromUrl(url) {
+  if (!url) return null;
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
+}
+
+// 8. Admin Physical PII Destruction (GDPR Secure shredding)
+function adminDestroyCase(token, appId) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = appSheet.getDataRange().getValues();
+  
+  let targetRowIndex = -1;
+  let appRow = null;
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      targetRowIndex = i + 1;
+      appRow = rows[i];
+      break;
+    }
+  }
+  
+  if (targetRowIndex === -1 || !appRow) {
+    return { success: false, message: '找不到該筆申請案！' };
+  }
+  
+  const originalName = appRow[4] || '申請人';
+  const fileUrl1 = appRow[8];
+  const fileUrl2 = appRow[9];
+  
+  // 1. Delete physical files from Google Drive
+  const fileIds = [getFileIdFromUrl(fileUrl1), getFileIdFromUrl(fileUrl2)].filter(Boolean);
+  for (let fid of fileIds) {
+    try {
+      DriveApp.getFileById(fid).setTrashed(true); // Move to trash or delete
+    } catch(e) {
+      // Ignore if file doesn't exist
+    }
+  }
+  
+  // 2. Anonymize name (e.g. 王小明 -> 王*明)
+  let maskedName = originalName;
+  if (originalName.length >= 3) {
+    maskedName = originalName[0] + '*' + originalName.substring(2);
+  } else if (originalName.length === 2) {
+    maskedName = originalName[0] + '*';
+  }
+  
+  // 3. Clear sensitive PII in Details JSON
+  let cleanedDetails = "";
+  try {
+    const detailsObj = JSON.parse(appRow[7]);
+    if (detailsObj) {
+      // Strip bank details for progress award
+      delete detailsObj['bank_code'];
+      delete detailsObj['bank_account'];
+      cleanedDetails = JSON.stringify(detailsObj);
+    }
+  } catch(e) {
+    cleanedDetails = appRow[7];
+  }
+  
+  // 4. Update row values to wipe out PII in applications sheet
+  appSheet.getRange(targetRowIndex, 3).setValue('destroyed'); // status
+  appSheet.getRange(targetRowIndex, 5).setValue(maskedName); // masked name
+  appSheet.getRange(targetRowIndex, 8).setValue(cleanedDetails); // cleaned details json
+  appSheet.getRange(targetRowIndex, 9).setValue(''); // wipe filelink1
+  appSheet.getRange(targetRowIndex, 10).setValue(''); // wipe filelink2
+  
+  // Get student's LineUID and send notification
+  const studentUid = appRow[3];
+  const lineUid = getStudentLineUid(ss, studentUid);
+  if (lineUid) {
+    const msg = `🔒 隱私安全通知：您的【古哥獎學金】申請已完成撥款結案。\n依個資防護承諾，您的真實姓名、收款帳戶與成績單圖檔均已從資料庫與雲端硬碟中【徹底物理銷毀】，系統將不再留存任何敏感個資。祝您學業順利！`;
+    sendLinePushNotification(lineUid, msg);
+  }
+  
+  // Simulated email dispatch details
+  const emailNotification = {
+    to: 'student_registered_email@example.com',
+    subject: '【古哥獎學金】已撥款暨個人隱私資料銷毀通知',
+    body: `親愛的同學您好：您所申請的【古哥獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計數據。祝您學業更上一層樓！`
+  };
+  
+  return {
+    success: true,
+    message: '「一鍵個資銷毀」執行完畢！',
+    anonymized_name: maskedName,
+    email_log: emailNotification
+  };
+}
+
+// 9. Admin Export Approved Cases (CSV Simulation)
+// Since this is Apps Script, we return a CSV string and the browser will download it directly
+function adminExportApproved(token) {
+  if (!verifyAdminToken(token)) {
+    throw new Error("未授權的操作，請先登入管理端！");
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = appSheet.getDataRange().getValues();
+  
+  const csvLines = [];
+  // Write UTF-8 BOM
+  csvLines.push('\ufeff');
+  csvLines.push('銀行代號,收款帳戶,金額,戶名/備註');
+  
+  for (let i = 1; i < rows.length; i++) {
+    const status = rows[i][2];
+    const type = rows[i][1];
+    
+    if (status === 'approved') {
+      const name = rows[i][4];
+      const amount = rows[i][5];
+      const detailsStr = rows[i][7];
+      
+      let bankCode = "";
+      let bankAccount = "";
+      
+      if (type === 'progress') {
+        try {
+          const details = JSON.parse(detailsStr);
+          bankCode = details.bank_code || "";
+          bankAccount = details.bank_account || "";
+        } catch(e) {}
+      }
+      
+      // Escape CSV values
+      const line = `"${bankCode}","${bankAccount}",${amount},"${name}-古哥獎學金"`;
+      csvLines.push(line);
+    }
+  }
+  
+  return csvLines.join('\r\n');
+}

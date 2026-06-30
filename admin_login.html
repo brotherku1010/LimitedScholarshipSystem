@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古哥獎學金審查系統 - 後台管理驗證</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --card-bg: rgba(13, 27, 42, 0.45);
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff007f;
+            --border-color: rgba(0, 240, 255, 0.2);
+            --text-primary: #f8f9fa;
+            --text-secondary: #a0aec0;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-outfit: 'Outfit', 'Noto Sans TC', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            font-family: var(--font-outfit);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Abstract Neon Background Orbs */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(130px);
+            z-index: -1;
+            opacity: 0.25;
+        }
+        body::before {
+            background: var(--neon-blue);
+            top: 20%;
+            left: 25%;
+        }
+        body::after {
+            background: var(--neon-pink);
+            bottom: 20%;
+            right: 25%;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            transition: var(--transition-smooth);
+        }
+
+        .login-card:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.1);
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); text-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
+            100% { transform: scale(1.05); text-shadow: 0 0 20px rgba(0, 240, 255, 0.8); }
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        p.subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+            margin-bottom: 8px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            background: rgba(10, 14, 23, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: var(--transition-smooth);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.25);
+            background: rgba(10, 14, 23, 0.95);
+        }
+
+        .form-group input:focus + i {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--neon-blue);
+            border: none;
+            border-radius: 8px;
+            color: #0a0e17;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .error-msg {
+            color: var(--neon-pink);
+            font-size: 0.85rem;
+            margin-top: 15px;
+            display: none;
+            text-align: left;
+            padding: 8px 12px;
+            background: rgba(255, 0, 127, 0.1);
+            border-left: 3px solid var(--neon-pink);
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 14, 23, 0.9);
+            border: 1px solid var(--neon-blue);
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 9999;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo-icon">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <h1>古哥獎學金審查系統</h1>
+        <p class="subtitle">後台管理端安全驗證登入</p>
+
+        <form id="admin-login-form">
+            <div class="form-group">
+                <label for="admin-password">管理安全驗證密碼</label>
+                <div class="input-wrapper">
+                    <input type="password" id="admin-password" placeholder="請輸入管理安全密碼" required autofocus>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-circle-check"></i> 驗證身分並登入
+            </button>
+
+            <div class="error-msg" id="login-error">密碼驗證錯誤，拒絕登入後台！</div>
+        </form>
+    </div>
+
+    <!-- Alert / Toast Popup for Messages -->
+    <div class="toast" id="toast-message">
+        <i class="fa-solid fa-circle-info" id="toast-icon"></i>
+        <div id="toast-body-text">提示訊息</div>
+    </div>
+
+    <script>
+        document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            errorDiv.style.display = 'none';
+            
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success) {
+                        showToast("密碼驗證成功，正在載入審核控制台...", "fa-circle-check");
+                        setTimeout(() => {
+                            // Apps Script redirection with active token
+                            window.location.href = google.script.host.origin + "?page=admin&token=" + response.token;
+                        }, 1000);
+                    } else {
+                        errorDiv.innerText = response.message || "密碼錯誤，登入失敗！";
+                        errorDiv.style.display = 'block';
+                        showToast("登入失敗，拒絕連線！", "fa-triangle-exclamation");
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    errorDiv.innerText = "連線失敗，請檢查系統權限與 API 開啟狀態！";
+                    errorDiv.style.display = 'block';
+                })
+                .adminLogin(password);
+        });
+
+        // Toast Helper
+        let toastTimer = null;
+        function showToast(text, iconClass = "fa-circle-info") {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-body-text');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            if (toast && toastText && toastIcon) {
+                toastText.innerText = text;
+                toastIcon.className = `fa-solid ${iconClass}`;
+                toast.classList.add('show');
+                
+                if (toastTimer) clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+        }
+    </script>
+</body>
+</html>
