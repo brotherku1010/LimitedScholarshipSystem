@@ -27,8 +27,8 @@ git add .
 if %errorlevel% neq 0 goto :error
 
 echo [4/5] Committing changes...
+:: Git commit returns exit code 1 if there's nothing to commit. We bypass this error check.
 git commit -m "Initialize Google Apps Script Serverless Scholarship System"
-if %errorlevel% neq 0 goto :error
 
 echo [5/5] Pushing to GitHub...
 echo * Note: If a login popup appears, please complete the GitHub authorization...
