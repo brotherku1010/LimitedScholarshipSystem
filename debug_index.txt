@@ -1,0 +1,24 @@
+=== File: index.html ===
+Length in chars: 41258
+--- Header (first 300 chars) ---
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【古哥獎學金】成績挑戰計畫</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&fam
+
+--- Footer (last 100 chars) ---
+
+
+
+    <!-- Apps Script Inlined Javascripts -->
+    <?!= include('javascript'); ?>
+</body>
+
+</html>
+
