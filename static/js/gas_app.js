@@ -1,6 +1,3 @@
-
-
-
 /* ==========================================================================
    【古哥獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
    ========================================================================== */
@@ -36,6 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Initialize Progress Calculator Auto-updater
     initProgressCalculator();
+
+    // Recalculate milestone wrapping on window resize
+    window.addEventListener('resize', adjustMilestones);
+    
+    // Initialize Scheme 1 Drag & Drop File Upload area
+    initDragAndDropUpload();
 });
 
 // Debug Logger function
@@ -119,6 +122,9 @@ function onLiffLoginSuccess(data) {
         currentUser.grade = data.grade;
         currentUser.attempts = data.attempts;
         currentUser.unlockedChallenges = data.unlocked_challenges;
+        currentUser.applications = data.applications || [];
+        currentUser.bankCode = data.bankCode || '';
+        currentUser.bankAccount = data.bankAccount || '';
         
         if (data.settings) {
             activeSettings.progressBase = data.settings.progress_base || 1500;
@@ -174,6 +180,7 @@ function refreshUserStatusLiff() {
             if (data.success) {
                 currentUser.attempts = data.attempts;
                 currentUser.unlockedChallenges = data.unlocked_challenges;
+                currentUser.applications = data.applications || [];
                 updateStudentUI();
             }
         })
@@ -182,10 +189,45 @@ function refreshUserStatusLiff() {
 
 // Update the entire UI based on logged-in student state
 function updateStudentUI() {
-    // Update top status bar
-    document.getElementById('logged-student-name').innerText = currentUser.name;
-    document.getElementById('logged-student-attempts').innerText = currentUser.attempts;
-    document.getElementById('student-status-bar').style.display = 'flex';
+    // Update top student profile panel
+    const infoPanel = document.getElementById('student-info-panel');
+    if (infoPanel) {
+        infoPanel.style.display = 'block';
+        document.getElementById('student-display-name').innerText = currentUser.name + " 同學";
+        
+        const schoolText = currentUser.school + " " + currentUser.department + " (" + currentUser.grade + ")";
+        document.getElementById('student-display-meta').innerHTML = `<i class="fa-solid fa-graduation-cap"></i> ${schoolText}`;
+        document.getElementById('student-display-attempts').innerText = currentUser.attempts || 0;
+    }
+    
+    // Prefill Bank Code and Account inputs across all three application forms
+    if (currentUser.bankCode) {
+        const challengeBank = document.getElementById('challenge-bank-code');
+        if (challengeBank) challengeBank.value = currentUser.bankCode;
+        const progressBank = document.getElementById('progress-bank-code');
+        if (progressBank) progressBank.value = currentUser.bankCode;
+        const blueprintBank = document.getElementById('blueprint-bank-code');
+        if (blueprintBank) blueprintBank.value = currentUser.bankCode;
+    }
+    if (currentUser.bankAccount) {
+        const challengeAcct = document.getElementById('challenge-bank-account');
+        if (challengeAcct) challengeAcct.value = currentUser.bankAccount;
+        const progressAcct = document.getElementById('progress-bank-account');
+        if (progressAcct) progressAcct.value = currentUser.bankAccount;
+        const blueprintAcct = document.getElementById('blueprint-bank-account');
+        if (blueprintAcct) blueprintAcct.value = currentUser.bankAccount;
+    }
+    if (currentUser.name) {
+        const challengeName = document.getElementById('challenge-name');
+        if (challengeName) challengeName.value = currentUser.name;
+        const progressName = document.getElementById('progress-name');
+        if (progressName) progressName.value = currentUser.name;
+        const blueprintName = document.getElementById('blueprint-name');
+        if (blueprintName) blueprintName.value = currentUser.name;
+    }
+    
+    // Render History List
+    renderHistoryList(currentUser.applications || []);
     
     // Show tab buttons
     document.getElementById('program-tabs').style.display = 'grid';
@@ -339,7 +381,10 @@ function initEventListeners() {
     }
 
     // 3. Logout
-    document.getElementById('logout-btn').addEventListener('click', logout);
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
 
     // 3.5 Program Tabs Switching
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -379,12 +424,12 @@ function initEventListeners() {
         }
         
         // Populate threshold value in modal
-        document.getElementById('form-challenge-target').innerText = selectedChallengeTarget.toFixed(2);
+        document.getElementById('form-challenge-target-score').innerText = selectedChallengeTarget.toFixed(2);
         
         // Populate level amount
         const currentLevel = Math.min(currentUser.attempts + 1, 8);
         const assignedAmt = activeSettings.challengeAmounts[currentLevel - 1];
-        document.getElementById('form-challenge-amount').innerText = `NT$ ${assignedAmt.toLocaleString()}`;
+        document.getElementById('form-challenge-target-amount').innerText = `NT$ ${assignedAmt.toLocaleString()}`;
         
         openModal('modal-apply-challenge');
     });
@@ -402,6 +447,8 @@ function initEventListeners() {
             name: document.getElementById('challenge-name').value.trim(),
             gpa: document.getElementById('challenge-gpa').value,
             target: selectedChallengeTarget,
+            bank_code: document.getElementById('challenge-bank-code').value.trim(),
+            bank_account: document.getElementById('challenge-bank-account').value.trim(),
             academic_year: document.querySelector('#form-apply-challenge [name="academic_year"]').value,
             file_base64: '',
             file_name: ''
@@ -421,7 +468,7 @@ function initEventListeners() {
                     if (data.success) {
                         closeModal('modal-apply-challenge');
                         e.target.reset();
-                        document.getElementById('challenge-file-display').innerText = '';
+                        document.getElementById('challenge-file-name-display').innerText = '';
                         document.querySelectorAll('.shield-item').forEach(s => s.classList.remove('selected'));
                         selectedChallengeTarget = null;
                         
@@ -457,7 +504,7 @@ function initEventListeners() {
             });
         }
     };
-    setupFileFeedback('challenge-file', 'challenge-file-display');
+    setupFileFeedback('challenge-file', 'challenge-file-name-display');
     setupFileFeedback('progress-prev-file', 'progress-prev-file-display');
     setupFileFeedback('progress-curr-file', 'progress-curr-file-display');
     setupFileFeedback('blueprint-file', 'blueprint-file-display');
@@ -627,6 +674,8 @@ function initEventListeners() {
             name: document.getElementById('blueprint-name').value.trim(),
             project_name: document.getElementById('blueprint-project-name').value.trim(),
             project_month: document.getElementById('blueprint-project-month').value.trim(),
+            bank_code: document.getElementById('blueprint-bank-code').value.trim(),
+            bank_account: document.getElementById('blueprint-bank-account').value.trim(),
             academic_year: document.querySelector('#form-apply-blueprint [name="academic_year"]').value,
             file_base64: '',
             file_name: ''
@@ -880,7 +929,242 @@ function switchTab(tabName) {
     if (cardBlueprint) cardBlueprint.style.display = tabName === 'blueprint' ? 'block' : 'none';
     
     sessionStorage.setItem('guge_active_tab', tabName);
+    
+    if (tabName === 'blueprint') {
+        // Recalculate milestone wrapping when blueprint tab is displayed
+        setTimeout(adjustMilestones, 50);
+    }
 }
 
+// Adjust milestone tracker nodes wrapping style dynamically based on box width
+function adjustMilestones() {
+    const panel = document.querySelector('.blueprint-milestone-panel');
+    if (!panel) return;
+    
+    const nodes = document.querySelectorAll('.milestone-node');
+    const textContents = document.querySelectorAll('.node-text-content');
+    
+    // Reset force-wrap class first
+    nodes.forEach(n => n.classList.remove('force-wrap'));
+    
+    // If the display of parent card is none, sizes will be 0. Avoid checking in this state.
+    const cardBlueprint = document.getElementById('card-blueprint');
+    if (cardBlueprint && cardBlueprint.style.display === 'none') {
+        return;
+    }
+    
+    const panelWidth = panel.getBoundingClientRect().width;
+    let shouldWrapAll = (panelWidth < 450); // standard threshold where Phase 2 wraps in the inner box
+    
+    // Check if any node text wraps naturally by checking height of text containers
+    if (!shouldWrapAll) {
+        textContents.forEach(tc => {
+            // If height of text container is greater than one line (e.g. > 24px)
+            if (tc.clientHeight > 24) {
+                shouldWrapAll = true;
+            }
+        });
+    }
+    
+    // If any wraps or container is below width threshold, add force-wrap class to all nodes
+    if (shouldWrapAll) {
+        nodes.forEach(n => n.classList.add('force-wrap'));
+    }
+}
 
+// Render Application History List grouped by type
+function renderHistoryList(apps) {
+    const panel = document.getElementById('student-history-panel');
+    const container = document.getElementById('history-list');
+    if (!panel || !container) return;
+    
+    if (!apps || apps.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+    
+    panel.style.display = 'block';
+    container.innerHTML = '';
+    
+    // Filter by type: challenge, progress, blueprint
+    const challengeApps = apps.filter(a => a.type === 'challenge');
+    const progressApps = apps.filter(a => a.type === 'progress');
+    const blueprintApps = apps.filter(a => a.type === 'blueprint');
+    
+    // Unified order from top to bottom: Scheme 1 -> Scheme 2 -> Scheme 3
+    const sortedApps = [...challengeApps, ...progressApps, ...blueprintApps];
+    
+    if (sortedApps.length === 0) {
+        panel.style.display = 'none';
+        return;
+    }
+    
+    sortedApps.forEach(app => {
+        let typeLabel = "";
+        let iconClass = "";
+        let badgeClass = "";
+        let badgeText = "";
+        
+        if (app.type === 'challenge') {
+            typeLabel = "方案一：成績挑戰獎";
+            iconClass = "fa-shield-halved";
+        } else if (app.type === 'progress') {
+            typeLabel = "方案二：學期進步獎";
+            iconClass = "fa-arrow-up-right-dots";
+        } else {
+            typeLabel = "方案三：未來藍圖計畫";
+            iconClass = "fa-diagram-project";
+        }
+        
+        // Status checks
+        if (app.status === 'pending') {
+            badgeClass = 'badge-pending';
+            badgeText = '審查中';
+        } else if (app.status === 'approved') {
+            badgeClass = 'badge-approved';
+            badgeText = '審核通過';
+        } else if (app.status === 'rejected') {
+            badgeClass = 'badge-rejected';
+            badgeText = '退回修正';
+        } else if (app.status === 'destroyed') {
+            badgeClass = 'badge-destroyed';
+            badgeText = '已撥款結案';
+        } else {
+            badgeClass = 'badge-pending';
+            badgeText = app.status || '未定義';
+        }
+        
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        row.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        `;
+        
+        row.onmouseenter = () => {
+            row.style.background = 'rgba(255,255,255,0.06)';
+            row.style.borderColor = 'var(--neon-blue)';
+        };
+        row.onmouseleave = () => {
+            row.style.background = 'rgba(255,255,255,0.03)';
+            row.style.borderColor = 'rgba(255,255,255,0.06)';
+        };
+        
+        row.onclick = () => showApplicationDetail(app);
+        
+        row.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+                <i class="fa-solid ${iconClass}" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>
+                <div>
+                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">${typeLabel}</span>
+                    <small style="color: var(--text-muted); font-size: 0.8rem;">${app.academicYear} | NT$ ${parseInt(app.amount).toLocaleString()}</small>
+                </div>
+            </div>
+            <span class="status-badge ${badgeClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">${badgeText}</span>
+        `;
+        
+        container.appendChild(row);
+    });
+}
 
+// Show specific Application Detail Modal
+function showApplicationDetail(app) {
+    let typeLabel = "";
+    if (app.type === 'challenge') typeLabel = "方案一：成績挑戰獎";
+    else if (app.type === 'progress') typeLabel = "方案二：學期進步獎";
+    else typeLabel = "方案三：未來藍圖計畫";
+    
+    let statusText = "";
+    let badgeHtml = "";
+    let feedbackText = "";
+    
+    if (app.status === 'pending') {
+        statusText = "審查中";
+        badgeHtml = `<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        feedbackText = "資料已送出，後台管理團隊審核中。請耐心等待 LINE 通知。";
+    } else if (app.status === 'approved') {
+        statusText = "審核通過";
+        badgeHtml = `<span class="status-badge badge-approved" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        feedbackText = "審核已通過！目前已送交網銀進行撥款流程。請於近日注意您的收款帳戶變動。";
+    } else if (app.status === 'rejected') {
+        statusText = "退回修正";
+        badgeHtml = `<span class="status-badge badge-rejected" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        feedbackText = "審核未通過（已被退回）。請確認您的申請資料填寫是否正確，或者上傳之證明文件是否清晰。您可以隨時重新送出申請。";
+    } else if (app.status === 'destroyed') {
+        statusText = "已撥款結案";
+        badgeHtml = `<span class="status-badge badge-destroyed" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        feedbackText = "已完成撥款！本申請案已正式結案。依照隱私安全承諾，您的真實姓名、收款銀行帳戶及成績單檔案均已【物理銷毀】並完成去識別化，感謝您的參與！";
+    } else {
+        statusText = app.status || "核定中";
+        badgeHtml = `<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        feedbackText = "本案正在審理中。";
+    }
+    
+    document.getElementById('detail-app-id').innerText = app.id || "N/A";
+    document.getElementById('detail-app-type').innerText = typeLabel;
+    document.getElementById('detail-app-year').innerText = app.academicYear || "N/A";
+    document.getElementById('detail-app-amount').innerText = "NT$ " + parseInt(app.amount).toLocaleString();
+    document.getElementById('detail-app-date').innerText = app.createdAt ? app.createdAt.substring(0, 16) : "--";
+    document.getElementById('detail-app-status-badge').innerHTML = badgeHtml;
+    document.getElementById('detail-app-feedback').innerText = feedbackText;
+    
+    openModal('modal-history-detail');
+}
+
+// Initialize Drag & Drop and Click triggers for Scheme 1 file upload
+function initDragAndDropUpload() {
+    const dragArea = document.getElementById('drag-challenge-file');
+    const fileInput = document.getElementById('challenge-file');
+    const display = document.getElementById('challenge-file-name-display');
+    
+    if (!dragArea || !fileInput) return;
+    
+    // 1. Click on drag area triggers file input click
+    dragArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // Prevent event bubbling when file input is clicked to avoid infinite click loop!
+    fileInput.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    // 2. Drag & Drop visual feedback and file placement
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dragArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragArea.style.borderColor = 'var(--neon-blue)';
+            dragArea.style.background = 'rgba(0, 187, 249, 0.08)';
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dragArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragArea.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            dragArea.style.background = 'rgba(255, 255, 255, 0.02)';
+        }, false);
+    });
+    
+    dragArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            fileInput.files = files;
+            // Update display text
+            if (display) {
+                display.innerText = `已選取: ${files[0].name} (${(files[0].size/1024).toFixed(1)} KB)`;
+            }
+        }
+    });
+}

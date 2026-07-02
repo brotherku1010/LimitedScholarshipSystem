@@ -755,11 +755,18 @@ body {
     z-index: 2;
 }
 
+.node-text-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 10px;
+}
+
 .node-title {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-secondary);
-    margin-top: 10px;
 }
 
 .node-percent {
@@ -1560,7 +1567,7 @@ body {
     .milestone-track-container {
         height: 150px;
         width: 4px;
-        margin: 10px auto;
+        margin: 10px 0 10px 20px;
     }
     
     .milestone-line-progress {
@@ -1573,14 +1580,31 @@ body {
         flex-direction: column;
         height: 100%;
         top: 0;
-        left: -58px;
+        left: -20px;
+        width: calc(100vw - 60px);
     }
     
     .milestone-node {
         flex-direction: row;
-        width: 250px;
+        width: 100%;
         text-align: left;
         gap: 15px;
+    }
+    
+    .node-text-content {
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        text-align: left;
+        gap: 4px 10px;
+        margin-top: 0;
+        flex: 1;
+    }
+    
+    .milestone-node.force-wrap .node-text-content {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
     }
     
     .node-title {
@@ -1588,7 +1612,7 @@ body {
     }
     
     .node-percent {
-        display: block;
+        display: inline-block;
     }
     
     .modal-content {
@@ -1625,4 +1649,26 @@ body {
     grid-template-columns: 1.2fr 1fr;
     gap: 10px;
     margin-bottom: 15px;
+}
+
+/* Student Application History Badges */
+.status-badge.badge-pending {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+}
+.status-badge.badge-approved {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+.status-badge.badge-rejected {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+.status-badge.badge-destroyed {
+    background: rgba(0, 187, 249, 0.1) !important;
+    color: var(--neon-blue) !important;
+    border: 1px solid rgba(0, 187, 249, 0.2) !important;
 }

@@ -119,6 +119,40 @@ body {
     align-items: center;
     gap: 20px;
     backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 187, 249, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-card.active-tab {
+    border-color: var(--neon-blue);
+    background: rgba(0, 187, 249, 0.08);
+    box-shadow: 0 0 15px rgba(0, 187, 249, 0.25);
+}
+
+.stat-card.active-tab.pending {
+    border-color: var(--neon-blue);
+    background: rgba(0, 187, 249, 0.08);
+}
+
+.stat-card.active-tab.approved {
+    border-color: var(--neon-green);
+    background: rgba(0, 245, 212, 0.08);
+}
+
+.stat-card.active-tab.paid {
+    border-color: var(--gold);
+    background: rgba(255, 209, 102, 0.08);
+}
+
+.stat-card.active-tab.total-amount {
+    border-color: var(--neon-blue);
+    background: rgba(0, 187, 249, 0.08);
 }
 
 .stat-icon {

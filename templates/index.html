@@ -24,16 +24,22 @@
 <body>
 
     <!-- Full-screen LINE Login Card when not authorized -->
-    <div id="app-login-redirect-card" style="display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
-        <div class="modal-content glass" style="max-width: 420px; width: 100%; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.5); padding: 30px; text-align: center; border-radius: var(--border-radius-lg);">
+    <div id="app-login-redirect-card"
+        style="display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+        <div class="modal-content glass"
+            style="max-width: 420px; width: 100%; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.5); padding: 30px; text-align: center; border-radius: var(--border-radius-lg);">
             <div style="margin-bottom: 20px;">
-                <i class="fa-solid fa-shield-halved" style="font-size: 5rem; color: var(--neon-blue); filter: drop-shadow(0 0 15px rgba(0,187,249,0.4));"></i>
+                <i class="fa-solid fa-shield-halved"
+                    style="font-size: 5rem; color: var(--neon-blue); filter: drop-shadow(0 0 15px rgba(0,187,249,0.4));"></i>
             </div>
-            <h1 style="font-family: 'Orbitron', 'Noto Sans TC', sans-serif; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: 1px;">古哥獎學金安全驗證系統</h1>
+            <h1
+                style="font-family: 'Orbitron', 'Noto Sans TC', sans-serif; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: 1px;">
+                古哥獎學金安全驗證系統</h1>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
                 歡迎進入本計畫！系統正在對您的帳號進行 LINE 安全授權校對，請點擊下方按鈕確認驗證。
             </p>
-            <a id="lnk-line-authorize" href="#" target="_top" class="btn btn-primary btn-full" style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-size: 1.1rem; height: 50px; font-weight: bold; background: linear-gradient(135deg, var(--neon-blue) 0%, #0077b6 100%); border: none; box-shadow: 0 4px 15px rgba(0,187,249,0.3); animation: pulse 1.5s infinite alternate;">
+            <a id="lnk-line-authorize" href="#" target="_top" class="btn btn-primary btn-full"
+                style="display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; font-size: 1.1rem; height: 50px; font-weight: bold; background: linear-gradient(135deg, var(--neon-blue) 0%, #0077b6 100%); border: none; box-shadow: 0 4px 15px rgba(0,187,249,0.3); animation: pulse 1.5s infinite alternate;">
                 <i class="fa-solid fa-circle-check" style="font-size: 1.3rem;"></i> 確認驗證並進入系統
             </a>
         </div>
@@ -50,28 +56,30 @@
                 <p class="subtitle">— 突破極限，投資你的未來 —</p>
             </div>
 
-            <!-- Remaining Budget Progress Indicator -->
-            <div class="budget-panel">
-                <div class="budget-info">
-                    <span class="label"><i class="fa-solid fa-circle-nodes pulse-green"></i> 當期剩餘總預算額度</span>
-                    <span class="value" id="budget-value">NT$ 350,000 / $500,000</span>
+            <!-- Student Information & Profile Panel -->
+            <div class="budget-panel" id="student-info-panel" style="display: none; padding: 20px;">
+                <div class="student-profile-main" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div style="text-align: left;">
+                        <span class="student-name-large" id="student-display-name" style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(135deg, #fff 30%, var(--neon-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">--</span>
+                        <div class="student-school-grade" id="student-display-meta" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 5px;"><i class="fa-solid fa-graduation-cap"></i> 學校科系 / 年級</div>
+                    </div>
+                    <div style="text-align: right; background: rgba(255, 255, 255, 0.04); padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <span style="color: var(--text-secondary); font-size: 0.8rem; display: block;">已擊破分數防線</span>
+                        <strong id="student-display-attempts" style="font-size: 1.5rem; color: var(--neon-blue);">0</strong> <span style="font-size: 0.85rem; color: var(--text-secondary);">次</span>
+                    </div>
                 </div>
-                <div class="progress-track">
-                    <div class="progress-bar" style="width: 70%;"></div>
-                </div>
-                <div class="budget-tip">額度有限，額滿即止。創辦人保有最終調整與比例發放之權利。</div>
+                <div class="budget-tip" style="border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 10px; margin-top: 10px;">額度有限，額滿即止。創辦人保有最終調整與比例發放之權利。</div>
             </div>
         </header>
 
-        <!-- Student Login Status Display -->
-        <div class="student-status-bar" id="student-status-bar" style="display: none;">
-            <div class="status-info">
-                <i class="fa-solid fa-graduation-cap"></i>
-                <span>已登入學生：<strong id="logged-student-name">王小明</strong> 同學</span>
-                <span class="divider">|</span>
-                <span>累計擊破防線：<strong id="logged-student-attempts">0</strong> 次</span>
+        <!-- Student Applied Schemes History Panel -->
+        <div class="student-history-panel card" id="student-history-panel" style="display: none; margin-bottom: 30px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; color: var(--neon-blue);">
+                <i class="fa-solid fa-clock-rotate-left"></i> 目前已申請方案進度 (Applied Schemes)
+            </h3>
+            <div class="history-list" id="history-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Dynamically populated rows -->
             </div>
-            <button class="logout-btn" id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> 登出</button>
         </div>
 
         <!-- Program Tabs Navigation -->
@@ -188,7 +196,7 @@
                             <div class="ladder-step" data-level="8">
                                 <div class="level-badge">LV 8</div>
                                 <div class="level-detail">
-                                    <span class="level-desc">第 8 次解鎖：大學霸終極大賞！</span>
+                                    <span class="level-desc">第 8 次解鎖：學霸級！</span>
                                     <span class="level-amount">NT$ 25,000</span>
                                 </div>
                                 <i class="fa-solid fa-crown crown-icon"></i>
@@ -300,9 +308,9 @@
                         style="display: none; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
                         <h4
                             style="color: var(--neon-blue); margin-bottom: 10px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成明細 (RPG Level Up Breakdown)</h4>
-                        <div class="responsive-grid-2"
-                            style="color: var(--text-secondary);">
+                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成明細 (RPG Level Up Breakdown)
+                        </h4>
+                        <div class="responsive-grid-2" style="color: var(--text-secondary);">
                             <div>• 基礎底金：<span style="color:#fff;" id="breakdown-base">NT$ 1,500</span></div>
                             <div>• 學分加給：<span style="color:#fff;" id="breakdown-tier">NT$ 0</span></div>
                             <div>• 起點難度係數：<span style="color:#fff;" id="breakdown-coeff">1.00</span></div>
@@ -337,33 +345,43 @@
                 <p class="program-desc">提交個人學習、購書、研究或競賽的「未來企劃書」，通過後分階段給予最高 NT$ 30,000 的圓夢資金支援！</p>
 
                 <!-- Plan Contents Guidelines Block -->
-                <div class="blueprint-guidelines" style="margin-top: 15px; margin-bottom: 25px; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--border-radius-sm); font-size: 0.9rem;">
-                    <h3 style="color: var(--gold); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; font-weight: bold;">
+                <div class="blueprint-guidelines"
+                    style="margin-top: 15px; margin-bottom: 25px; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                    <h3
+                        style="color: var(--gold); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; font-weight: bold;">
                         <i class="fa-solid fa-file-signature"></i> 未來企劃書撰寫規範與評分比重
                     </h3>
-                    <ul class="responsive-grid-2" style="list-style: none; padding: 0; margin: 0; gap: 10px; color: var(--text-secondary);">
+                    <ul class="responsive-grid-2"
+                        style="list-style: none; padding: 0; margin: 0; gap: 10px; color: var(--text-secondary);">
                         <li style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
+                            <span
+                                style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
                             <span>個人自我介紹 (自介)</span>
                         </li>
                         <li style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
+                            <span
+                                style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">10%</span>
                             <span>企劃宗旨與初心</span>
                         </li>
                         <li class="span-2" style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--neon-green); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">20%</span>
+                            <span
+                                style="color: var(--neon-green); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">20%</span>
                             <span>具體執行方向、近期與長期目標</span>
                         </li>
                         <li style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
+                            <span
+                                style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
                             <span>預定執行進度時程</span>
                         </li>
                         <li style="display: flex; align-items: center; gap: 8px;">
-                            <span style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
+                            <span
+                                style="color: var(--neon-blue); font-weight: bold; font-family: monospace; font-size: 0.95rem; width: 45px; display: inline-block;">5%</span>
                             <span>預期經費支出明細</span>
                         </li>
-                        <li style="display: flex; align-items: center; gap: 8px; grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px; margin-top: 5px;">
-                            <span style="color: var(--gold); font-weight: bold; font-family: monospace; font-size: 1.1rem; width: 45px; display: inline-block;">50%</span>
+                        <li
+                            style="display: flex; align-items: center; gap: 8px; grid-column: span 2; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 8px; margin-top: 5px;">
+                            <span
+                                style="color: var(--gold); font-weight: bold; font-family: monospace; font-size: 1.1rem; width: 45px; display: inline-block;">50%</span>
                             <span style="color: #fff; font-weight: bold;">人生未來的走向與終極目標</span>
                         </li>
                     </ul>
@@ -378,18 +396,24 @@
                         <div class="milestone-steps-wrap">
                             <div class="milestone-node done">
                                 <div class="node-circle"><i class="fa-solid fa-file-invoice"></i></div>
-                                <span class="node-title">階段一：提案通過</span>
-                                <span class="node-percent">撥付 30% 圓夢金</span>
+                                <div class="node-text-content">
+                                    <span class="node-title">階段一：提案通過</span>
+                                    <span class="node-percent">撥付首款 30%</span>
+                                </div>
                             </div>
                             <div class="milestone-node active">
                                 <div class="node-circle"><i class="fa-solid fa-receipt"></i></div>
-                                <span class="node-title">階段二：中期報告</span>
-                                <span class="node-percent">憑購書/課程發票撥付 40%</span>
+                                <div class="node-text-content">
+                                    <span class="node-title">階段二：中期報告</span>
+                                    <span class="node-percent">審核通過撥付 40%</span>
+                                </div>
                             </div>
                             <div class="milestone-node">
                                 <div class="node-circle"><i class="fa-solid fa-images"></i></div>
-                                <span class="node-title">階段三：成果發布</span>
-                                <span class="node-percent">憑成果照撥付最後 30%</span>
+                                <div class="node-text-content">
+                                    <span class="node-title">階段三：期末報告</span>
+                                    <span class="node-percent">審核通過撥付 30%</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -482,7 +506,7 @@
                 <!-- Registration specific inputs: Displayed by default in LIFF -->
                 <div id="group-register-details"
                     style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
-                    
+
                     <div class="form-group">
                         <label class="required-label">暱稱</label>
                         <input type="text" id="login-student-nickname" placeholder="例如: 小明">
@@ -601,6 +625,16 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="required-label">申請學年度學期</label>
+                        <select name="academic_year" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;" required>
+                            <option value="114-2">114 學年度 第二學期</option>
+                            <option value="114-1">114 學年度 第一學期</option>
+                            <option value="115-1">115 學年度 第一學期</option>
+                            <option value="115-2">115 學年度 第二學期</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label class="required-label">上傳學期成績單 (拍照或截圖)</label>
                         <div class="file-upload-drag" id="drag-challenge-file">
                             <i class="fa-solid fa-cloud-arrow-up drag-icon"></i>
@@ -648,9 +682,9 @@
                         style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
                         <h4
                             style="color: var(--neon-blue); margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成計算明細</h4>
-                        <div class="responsive-grid-2"
-                            style="color: var(--text-secondary);">
+                            <i class="fa-solid fa-square-poll-vertical"></i> 獎金加成計算明細
+                        </h4>
+                        <div class="responsive-grid-2" style="color: var(--text-secondary);">
                             <div>• 基礎底金：<span style="color:#fff;" id="modal-breakdown-base">NT$ 1,500</span></div>
                             <div>• 學分加給：<span style="color:#fff;" id="modal-breakdown-tier">NT$ 0</span></div>
                             <div>• 起點難度係數：<span style="color:#fff;" id="modal-breakdown-coeff">1.00</span></div>
@@ -695,6 +729,16 @@
                             <input type="text" name="bank_account" id="progress-bank-account" required
                                 placeholder="請輸入完整收款帳號">
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required-label">申請學年度學期</label>
+                        <select name="academic_year" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;" required>
+                            <option value="114-2">114 學年度 第二學期</option>
+                            <option value="114-1">114 學年度 第一學期</option>
+                            <option value="115-1">115 學年度 第一學期</option>
+                            <option value="115-2">115 學年度 第二學期</option>
+                        </select>
                     </div>
 
                     <div class="form-row-2">
@@ -755,6 +799,29 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="required-label">申請學年度學期</label>
+                        <select name="academic_year" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;" required>
+                            <option value="114-2">114 學年度 第二學期</option>
+                            <option value="114-1">114 學年度 第一學期</option>
+                            <option value="115-1">115 學年度 第一學期</option>
+                            <option value="115-2">115 學年度 第二學期</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="required-label">收款銀行代碼 (3碼)</label>
+                            <input type="text" name="bank_code" id="blueprint-bank-code" required placeholder="例如: 008"
+                                maxlength="3">
+                        </div>
+                        <div class="form-group">
+                            <label class="required-label">收款銀行帳號</label>
+                            <input type="text" name="bank_account" id="blueprint-bank-account" required
+                                placeholder="請輸入完整收款帳號">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label class="required-label">上傳企劃書 (PDF 格式或壓縮包)</label>
                         <input type="file" name="file" id="blueprint-file" required accept=".pdf,.zip,.rar">
                         <small class="form-help">請包含：專案背景、預期購置書單/課程/硬體、執行時程與預估產出。</small>
@@ -766,6 +833,51 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Application History Detail -->
+    <div class="modal" id="modal-history-detail">
+        <div class="modal-content glass" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-invoice"></i> 申請案件狀態明細</h2>
+                <button class="modal-close" onclick="closeModal('modal-history-detail')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <div class="detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">申請案號：</span>
+                    <strong style="color: #fff;" id="detail-app-id">APP-0000</strong>
+                </div>
+                <div class="detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">申請項目：</span>
+                    <strong style="color: #fff;" id="detail-app-type">方案一</strong>
+                </div>
+                <div class="detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">學年度：</span>
+                    <span style="color: #fff;" id="detail-app-year">--</span>
+                </div>
+                <div class="detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">申請金額：</span>
+                    <strong style="color: var(--gold);" id="detail-app-amount">NT$ 0</strong>
+                </div>
+                <div class="detail-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">申請時間：</span>
+                    <span style="color: #fff;" id="detail-app-date">--</span>
+                </div>
+                <div class="detail-row" style="margin-bottom: 15px; display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 8px; align-items: center;">
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">目前狀態：</span>
+                    <span id="detail-app-status-badge">--</span>
+                </div>
+                <div class="feedback-box" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; font-size: 0.9rem;">
+                    <h4 style="color: var(--neon-blue); margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: bold;">
+                        <i class="fa-solid fa-circle-info"></i> 後台審查進度說明
+                    </h4>
+                    <p style="color: #e2e8f0; line-height: 1.5; margin: 0;" id="detail-app-feedback">審查進度說明載入中...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-full" onclick="closeModal('modal-history-detail')">關閉視窗</button>
+            </div>
         </div>
     </div>
 

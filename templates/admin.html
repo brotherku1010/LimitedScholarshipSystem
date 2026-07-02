@@ -12,6 +12,37 @@
 </head>
 <body>
 
+    <!-- Admin Login Overlay -->
+    <div id="admin-login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0e17; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: 'Noto Sans TC', sans-serif;">
+        <!-- Glowing background blobs -->
+        <div style="position: absolute; width: 300px; height: 300px; border-radius: 50%; filter: blur(130px); opacity: 0.25; z-index: 1; background: var(--neon-blue); top: 20%; left: 25%;"></div>
+        <div style="position: absolute; width: 300px; height: 300px; border-radius: 50%; filter: blur(130px); opacity: 0.25; z-index: 1; background: var(--neon-pink); bottom: 20%; right: 25%;"></div>
+        
+        <div class="login-card" style="background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 40px; width: 90%; max-width: 420px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); text-align: center; position: relative; z-index: 10;">
+            <div class="logo-icon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; color: #fff; margin-top: 0;">古哥獎學金審查系統</h1>
+            <p class="subtitle" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 30px; margin-top: 0;">後台管理端安全驗證登入</p>
+
+            <form id="admin-login-form">
+                <div class="form-group" style="position: relative; margin-bottom: 25px; text-align: left;">
+                    <label for="admin-password" style="display: block; font-size: 0.85rem; color: var(--neon-blue); margin-bottom: 8px; font-weight: bold; letter-spacing: 0.5px;">管理安全驗證密碼</label>
+                    <div class="input-wrapper" style="position: relative;">
+                        <input type="password" id="admin-password" placeholder="請輸入管理安全密碼" required style="width: 100%; padding: 12px 12px 12px 40px; background: rgba(10, 14, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #fff; font-size: 1rem; box-sizing: border-box;">
+                        <i class="fa-solid fa-lock" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1rem;"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" style="width: 100%; padding: 12px; background: var(--neon-blue); border: none; border-radius: 8px; color: #0a0e17; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: var(--transition-smooth);">
+                    <i class="fa-solid fa-circle-check"></i> 驗證身分並登入
+                </button>
+
+                <div class="error-msg" id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; text-align: center; font-weight: bold;">密碼驗證錯誤，拒絕登入後台！</div>
+            </form>
+        </div>
+    </div>
+
     <!-- Top Navigation Bar -->
     <header class="admin-header">
         <div class="header-logo">
@@ -30,28 +61,28 @@
 
         <!-- Dashboard Stat Cards -->
         <section class="stats-grid">
-            <div class="stat-card pending">
+            <div class="stat-card pending" id="tab-pending">
                 <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
                 <div class="stat-info">
                     <span class="label">待審核案件</span>
                     <strong class="count" id="stat-pending">0</strong>
                 </div>
             </div>
-            <div class="stat-card approved">
+            <div class="stat-card approved" id="tab-approved">
                 <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="stat-info">
                     <span class="label">已核准 (待撥款)</span>
                     <strong class="count" id="stat-approved">0</strong>
                 </div>
             </div>
-            <div class="stat-card paid">
+            <div class="stat-card paid" id="tab-destroyed">
                 <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                 <div class="stat-info">
                     <span class="label">已發放/個資已銷毀</span>
                     <strong class="count" id="stat-destroyed">0</strong>
                 </div>
             </div>
-            <div class="stat-card total-amount">
+            <div class="stat-card total-amount" id="tab-total">
                 <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
                 <div class="stat-info">
                     <span class="label">已核發累計獎金</span>
@@ -209,8 +240,10 @@
                         <div class="audit-document">
                             <h4 class="section-title"><i class="fa-solid fa-file-image"></i> 成績單/企劃書證明文件 (雙螢幕比對區)</h4>
                             <div class="document-viewer-container" id="document-viewer">
-                                <img src="/static/uploads/mock_report.svg" alt="成績單證明文件" class="audit-img" id="audit-document-img">
-                                <iframe src="" class="audit-iframe" id="audit-document-pdf" style="display: none;"></iframe>
+                                <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color); width: 100%;">
+                                    <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 10px; display: block; color: var(--text-muted);"></i>
+                                    請從左側點選申請案件以開啟證明文件預覽。
+                                </div>
                             </div>
                         </div>
 

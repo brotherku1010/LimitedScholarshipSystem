@@ -270,31 +270,29 @@
             
             errorDiv.style.display = 'none';
             
-            fetch('/api/admin/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ password: password })
-            })
-            .then(res => res.json().then(data => ({ status: res.status, body: data })))
-            .then(response => {
-                if (response.status === 200 && response.body.success) {
-                    showToast("密碼驗證成功，正在載入審核控制台...", "fa-circle-check");
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    errorDiv.innerText = response.body.message || "密碼錯誤，登入失敗！";
+            showToast("驗證中，請稍候...", "fa-circle-notch");
+            
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response.success && response.token) {
+                        showToast("密碼驗證成功，正在載入審核控制台...", "fa-circle-check");
+                        setTimeout(() => {
+                            const cleanUrl = window.location.href.split('?')[0];
+                            window.location.href = cleanUrl + "?page=admin&token=" + response.token;
+                        }, 1000);
+                    } else {
+                        errorDiv.innerText = response.message || "密碼錯誤，登入失敗！";
+                        errorDiv.style.display = 'block';
+                        showToast("登入失敗，拒絕連線！", "fa-triangle-exclamation");
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    console.error("Login connection error:", err);
+                    errorDiv.innerText = "連線失敗，請檢查伺服器狀態！";
                     errorDiv.style.display = 'block';
-                    showToast("登入失敗，拒絕連線！", "fa-triangle-exclamation");
-                }
-            })
-            .catch(err => {
-                console.error("Login connection error:", err);
-                errorDiv.innerText = "連線失敗，請檢查伺服器狀態！";
-                errorDiv.style.display = 'block';
-            });
+                    showToast("伺服器回應錯誤！", "fa-triangle-exclamation");
+                })
+                .adminLogin(password);
         });
 
         // Toast Helper

@@ -12,30 +12,10 @@ const LINE_CHANNEL_SECRET = '77a41dd44223451bac61802baa2f6246'; // ⚠️ 已填
 // --- Web Routing (GET Entrance) ---
 function doGet(e) {
   var page = e.parameter.page || 'index';
-  var token = e.parameter.token;
   
   if (page === 'admin') {
-    // Check if admin is logged in via token parameter
-    var isAuthorized = false;
-    if (token) {
-      var cached = CacheService.getScriptCache().get("admin_session_" + token);
-      if (cached === "active") {
-        isAuthorized = true;
-      }
-    }
-    
-    if (!isAuthorized) {
-      return HtmlService.createTemplateFromFile('admin_login')
-          .evaluate()
-          .setTitle('古哥獎學金審查系統 - 後台管理驗證')
-          .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-          .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-    }
-    
-    // Serve admin console
-    var template = HtmlService.createTemplateFromFile('admin');
-    template.adminToken = token;
-    return template.evaluate()
+    // Serve admin console skeleton directly (PII authentication managed asynchronously by client token)
+    return HtmlService.createHtmlOutputFromFile('admin')
         .setTitle('古哥獎學金審查系統 - 後台控制台')
         .addMetaTag('viewport', 'width=device-width, initial-scale=1')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -47,10 +27,12 @@ function doGet(e) {
   const redirectUri = parentUrl || gasUrl;
   const code = e.parameter.code;
   
-  let lineUid = "";
-  let lineDisplayName = "";
+  // Try to read parameters passed directly from the GitHub Pages parent LIFF wrapper
+  let lineUid = e.parameter.lineUid || "";
+  let lineDisplayName = e.parameter.lineDisplayName ? decodeURIComponent(e.parameter.lineDisplayName) : "";
   
-  if (code) {
+  // Fallback to Server-side OAuth exchange only if lineUid is not provided directly
+  if (!lineUid && code) {
     // Exchange code for token
     try {
       const tokenUrl = 'https://api.line.me/oauth2/v2.1/token';
@@ -118,11 +100,15 @@ function initSheets() {
   let studentSheet = ss.getSheetByName('students');
   if (!studentSheet) {
     studentSheet = ss.insertSheet('students');
-    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID', 'ConsentSigned']);
-    studentSheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#b7e1cd');
+    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID', 'ConsentSigned', 'BankCode', 'BankAccount']);
+    studentSheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#b7e1cd');
   } else {
     if (studentSheet.getLastColumn() < 10 || studentSheet.getRange(1, 10).getValue().toString().trim() !== "ConsentSigned") {
       studentSheet.getRange(1, 10).setValue("ConsentSigned").setFontWeight('bold').setBackground('#b7e1cd');
+    }
+    if (studentSheet.getLastColumn() < 12) {
+      studentSheet.getRange(1, 11).setValue("BankCode").setFontWeight('bold').setBackground('#b7e1cd');
+      studentSheet.getRange(1, 12).setValue("BankAccount").setFontWeight('bold').setBackground('#b7e1cd');
     }
   }
   
@@ -287,7 +273,9 @@ function studentLiffLogin(lineUid) {
         grade: data[i][6] ? data[i][6].toString() : "",
         lineUid: data[i][7] ? data[i][7].toString() : "",
         folderId: data[i][8] ? data[i][8].toString() : "",
-        consentSigned: data[i][9] ? data[i][9].toString().trim() === "true" : false
+        consentSigned: data[i][9] ? data[i][9].toString().trim() === "true" : false,
+        bankCode: data[i][10] ? data[i][10].toString() : "",
+        bankAccount: data[i][11] ? data[i][11].toString() : ""
       };
       break;
     }
@@ -301,17 +289,32 @@ function studentLiffLogin(lineUid) {
     };
   }
   
-  // Get unlocked levels and attempts count
+  // Get unlocked levels, attempts, and applications list
   const appData = appSheet.getDataRange().getValues();
   const unlockedChallenges = [];
+  const applications = [];
   let attempts = 0;
+  
   for (let i = 1; i < appData.length; i++) {
-    if (appData[i][3] === student.uid) {
+    if (appData[i][3] && appData[i][3].toString().trim() === student.uid.trim()) {
+      // Add to application history
+      applications.push({
+        id: appData[i][0] ? appData[i][0].toString() : "",
+        type: appData[i][1] ? appData[i][1].toString() : "",
+        status: appData[i][2] ? appData[i][2].toString() : "",
+        amount: appData[i][5] ? parseFloat(appData[i][5]) : 0,
+        academicYear: appData[i][6] ? appData[i][6].toString() : "",
+        details: appData[i][7] ? appData[i][7].toString() : "",
+        createdAt: appData[i][10] ? appData[i][10].toString() : ""
+      });
+      
       if (appData[i][1] === 'challenge') {
-        const details = JSON.parse(appData[i][7]);
-        if (appData[i][2] === 'approved') {
-          unlockedChallenges.push(parseInt(details.level));
-        }
+        try {
+          const detailsObj = JSON.parse(appData[i][7]);
+          if (appData[i][2] === 'approved') {
+            unlockedChallenges.push(parseInt(detailsObj.level));
+          }
+        } catch (e) {}
         attempts++;
       }
     }
@@ -331,6 +334,7 @@ function studentLiffLogin(lineUid) {
     consent_signed: student.consentSigned,
     unlocked_challenges: unlockedChallenges,
     attempts: attempts,
+    applications: applications,
     settings: settings
   };
 }
@@ -600,15 +604,23 @@ function submitChallenge(payload) {
   // Verify student
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  let studentRowIndex = -1;
   const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
     const sheetBirthday = normalizeBirthday(r.rowData[2]);
     if (sheetBirthday === inputBirthday) {
       student = r.rowData;
+      studentRowIndex = r.rowIndex;
       break;
     }
   }
   if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
+  
+  // Record/Update student's bank info in students sheet profile
+  if (payload.bank_code && payload.bank_account) {
+    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
+    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
+  }
   
   const studentUid = student[0];
   const folderId = student[8];
@@ -683,17 +695,25 @@ function submitProgress(payload) {
   // Verify student & grade
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  let studentRowIndex = -1;
   const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
     const sheetBirthday = normalizeBirthday(r.rowData[2]);
     if (sheetBirthday === inputBirthday) {
       student = r.rowData;
+      studentRowIndex = r.rowIndex;
       break;
     }
   }
   if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
   if (student[6] === '大一') {
     return { success: false, message: '抱歉！學期進步獎限大二（含）以上學生申請。' };
+  }
+  
+  // Record/Update student's bank info in students sheet profile
+  if (payload.bank_code && payload.bank_account) {
+    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
+    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
   }
   
   const studentUid = student[0];
@@ -788,15 +808,23 @@ function submitBlueprint(payload) {
   // Verify student
   const studentRows = findRows(studentSheet, 2, studentName);
   let student = null;
+  let studentRowIndex = -1;
   const inputBirthday = normalizeBirthday(studentBirthday);
   for (let r of studentRows) {
     const sheetBirthday = normalizeBirthday(r.rowData[2]);
     if (sheetBirthday === inputBirthday) {
       student = r.rowData;
+      studentRowIndex = r.rowIndex;
       break;
     }
   }
   if (!student) return { success: false, message: '身份驗證失敗，請重試！' };
+  
+  // Record/Update student's bank info in students sheet profile
+  if (payload.bank_code && payload.bank_account) {
+    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
+    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
+  }
   
   const studentUid = student[0];
   const folderId = student[8];
@@ -847,6 +875,11 @@ function verifyAdminToken(token) {
   if (!token) return false;
   var cached = CacheService.getScriptCache().get("admin_session_" + token);
   return cached === "active";
+}
+
+// Client-side Session verification
+function clientVerifyAdminToken(token) {
+  return { success: verifyAdminToken(token) };
 }
 
 // 1. Admin Login
@@ -955,7 +988,9 @@ function adminGetList(token) {
       nickname: studentData[i][3],
       school: studentData[i][4],
       department: studentData[i][5],
-      grade: studentData[i][6]
+      grade: studentData[i][6],
+      bank_code: studentData[i][10] ? studentData[i][10].toString() : '',
+      bank_account: studentData[i][11] ? studentData[i][11].toString() : ''
     };
   }
   
@@ -963,7 +998,7 @@ function adminGetList(token) {
   // Parse rows (newest first, so traverse backwards)
   for (let j = appData.length - 1; j >= 1; j--) {
     const studentUid = appData[j][3];
-    const sInfo = studentIndex[studentUid] || { nickname: '', school: '', department: '', grade: '' };
+    const sInfo = studentIndex[studentUid] || { nickname: '', school: '', department: '', grade: '', bank_code: '', bank_account: '' };
     
     // Parse json details column
     let prevGpa = "";
@@ -972,8 +1007,8 @@ function adminGetList(token) {
     let challengeTarget = "";
     let projectName = "";
     let projectMonth = "";
-    let bankCode = "";
-    let bankAccount = "";
+    let bankCode = sInfo.bank_code;
+    let bankAccount = sInfo.bank_account;
     
     const detailsStr = appData[j][7];
     const type = appData[j][1];
@@ -1019,7 +1054,7 @@ function adminGetList(token) {
       bank_account: bankAccount,
       file_path: appData[j][8], // Drive Link 1
       prev_file_path: appData[j][9], // Drive Link 2
-      created_at: appData[j][10],
+      created_at: appData[j][10] ? appData[j][10].toString() : "--",
       nickname: sInfo.nickname,
       school: sInfo.school,
       department: sInfo.department,
@@ -1175,6 +1210,15 @@ function adminDestroyCase(token, appId) {
   appSheet.getRange(targetRowIndex, 9).setValue(''); // wipe filelink1
   appSheet.getRange(targetRowIndex, 10).setValue(''); // wipe filelink2
   
+  // Clear bank details in students sheet profile (GDPR Shred)
+  const studentSheet = ss.getSheetByName('students');
+  const studentRows = findRows(studentSheet, 1, studentUid); // Col 1 is StudentUID
+  if (studentRows.length > 0) {
+    const sRowIndex = studentRows[0].rowIndex;
+    studentSheet.getRange(sRowIndex, 11).setValue(''); // Clear BankCode
+    studentSheet.getRange(sRowIndex, 12).setValue(''); // Clear BankAccount
+  }
+  
   // Get student's LineUID and send notification
   const studentUid = appRow[3];
   const lineUid = getStudentLineUid(ss, studentUid);
@@ -1276,5 +1320,40 @@ function clearDatabaseForProd() {
     Logger.log(`✅ Cleared database successfully! Removed ${studentCleared} students and ${appCleared} applications.`);
   } catch (e) {
     Logger.log(`❌ Failed to clear database: ${e.toString()}`);
+  }
+}
+
+// Server-side helper to query Drive file metadata (MIME type) on-demand to bypass extension parsing limits
+function adminGetFileMetadata(token, fileUrl) {
+  if (!verifyAdminToken(token)) {
+    throw new Error("未授權的操作，請先登入管理端！");
+  }
+  if (!fileUrl) return { success: false, error: "Empty URL" };
+  
+  let fileId = '';
+  const regId = /id=([^&]+)/;
+  const regPath = /\/file\/d\/([^\/]+)/;
+  let match = fileUrl.match(regId);
+  if (match) {
+    fileId = match[1];
+  } else {
+    match = fileUrl.match(regPath);
+    if (match) {
+      fileId = match[1];
+    }
+  }
+  if (!fileId) return { success: false, error: "Invalid Drive URL structure" };
+  
+  try {
+    const file = DriveApp.getFileById(fileId);
+    return {
+      success: true,
+      id: fileId,
+      name: file.getName(),
+      mimeType: file.getMimeType(),
+      size: file.getSize()
+    };
+  } catch (e) {
+    return { success: false, error: e.toString() };
   }
 }
