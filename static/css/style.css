@@ -1690,3 +1690,25 @@ body {
     color: var(--neon-blue) !important;
     border: 1px solid rgba(0, 187, 249, 0.2) !important;
 }
+
+/* ==========================================
+   🌌 前台學生端雲端隨機底圖與全息發光特效
+   ========================================== */
+.random-pic {
+    position: fixed;
+    z-index: 0;
+    opacity: 0.12; /* 於科技暗黑背景中呈現極度隱約的反光效果 */
+    pointer-events: none;
+    mask-image: radial-gradient(circle at center, black 15%, transparent 60%);
+    -webkit-mask-image: radial-gradient(circle at center, black 15%, transparent 60%);
+    animation: floatDino 6s ease-in-out infinite alternate;
+}
+
+@keyframes floatDino {
+    0% {
+        transform: translateY(0px) rotate(-2deg);
+    }
+    100% {
+        transform: translateY(-15px) rotate(2deg);
+    }
+}

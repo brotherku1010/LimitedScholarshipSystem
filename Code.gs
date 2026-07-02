@@ -11,9 +11,24 @@ const LINE_CHANNEL_SECRET = '77a41dd44223451bac61802baa2f6246'; // ⚠️ 已填
 
 // --- Web Routing (GET Entrance) ---
 function doGet(e) {
-  var page = e.parameter.page || 'index';
+  const params = e ? e.parameter : {};
+  const action = params.action || params.page || "index";
   
-  if (page === 'admin') {
+  // ─── 雲端底圖系統 API 分流 ───
+  if (action === "getAlbumList") {
+    return ContentService.createTextOutput(JSON.stringify(getAlbumList()))
+        .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (action === "getImagesByFolder") {
+    return ContentService.createTextOutput(JSON.stringify(getImagesByFolder(params.folderId)))
+        .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (action === "getActiveBgImages") {
+    return ContentService.createTextOutput(JSON.stringify(getActiveBgImages()))
+        .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (action === 'admin') {
     // Serve admin console skeleton directly (PII authentication managed asynchronously by client token)
     return HtmlService.createHtmlOutputFromFile('admin')
         .setTitle('古哥獎學金審查系統 - 後台控制台')
@@ -147,7 +162,7 @@ function initSheets() {
 // --- Helper Functions to Query Sheets ---
 function getSettingsDict(ss) {
   const sheet = ss.getSheetByName('settings');
-  const values = sheet.getDataRange().getValues();
+  const values = getSafeValues(sheet);
   const dict = {};
   for (let i = 1; i < values.length; i++) {
     const key = values[i][0];
@@ -168,7 +183,8 @@ function getSafeSettings(ss) {
     progress_base: parseInt(dict['progress_base'] || '1500'),
     progress_conversion_rate: parseInt(dict['progress_conversion_rate'] || '50'),
     challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').toString().split(',').map(Number),
-    blueprint_amount: parseInt(dict['blueprint_amount'] || '30000')
+    blueprint_amount: parseInt(dict['blueprint_amount'] || '30000'),
+    active_bg_folder_id: dict['active_bg_folder_id'] || ""
   };
 }
 
@@ -218,7 +234,7 @@ function sendLinePushNotification(lineUserId, messageText) {
 
 // Find rows matching criteria in a sheet
 function findRows(sheet, colIndex, value) {
-  const data = sheet.getDataRange().getValues();
+  const data = getSafeValues(sheet);
   const matched = [];
   for (let i = 1; i < data.length; i++) {
     if (data[i][colIndex - 1].toString() === value.toString()) {
@@ -258,7 +274,7 @@ function studentLiffLogin(lineUid) {
     return { success: false, message: '缺少 LINE UID，請從 LINE App 內開啟此網頁！' };
   }
   
-  const data = studentSheet.getDataRange().getValues();
+  const data = getSafeValues(studentSheet);
   let student = null;
   for (let i = 1; i < data.length; i++) {
     const sheetLineUid = data[i][7] ? data[i][7].toString().trim() : "";
@@ -290,7 +306,7 @@ function studentLiffLogin(lineUid) {
   }
   
   // Get unlocked levels, attempts, and applications list
-  const appData = appSheet.getDataRange().getValues();
+  const appData = getSafeValues(appSheet);
   const unlockedChallenges = [];
   const pendingChallenges = [];
   const applications = [];
@@ -367,7 +383,7 @@ function studentLiffRegister(regData, lineUid) {
   }
   
   // Verify duplication
-  const rows = studentSheet.getDataRange().getValues();
+  const rows = getSafeValues(studentSheet);
   for (let i = 1; i < rows.length; i++) {
     const sheetName = rows[i][1] ? rows[i][1].toString().trim() : "";
     const sheetBirthday = rows[i][2] ? normalizeBirthday(rows[i][2]) : "";
@@ -402,14 +418,14 @@ function studentLiffRegister(regData, lineUid) {
   studentSheet.appendRow([
     studentUid,
     name,
-    "'" + inputBirthday,
+    inputBirthday,
     regData.nickname.trim(),
     regData.school.trim(),
     regData.department.trim(),
     regData.grade.trim(),
     lineUid,
     studentFolderId
-  ]);
+  ].map(safeWriteVal));
   
   // Send welcome push notification
   const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${regData.school.trim()} ${regData.department.trim()} (${regData.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
@@ -429,7 +445,7 @@ function studentSignConsent(lineUid) {
   
   if (!lineUid) return { success: false, message: "缺少 LINE UID！" };
   
-  const data = studentSheet.getDataRange().getValues();
+  const data = getSafeValues(studentSheet);
   for (let i = 1; i < data.length; i++) {
     const sheetLineUid = data[i][7] ? data[i][7].toString().trim() : "";
     if (sheetLineUid === lineUid.trim()) {
@@ -452,7 +468,7 @@ function studentLogin(name, birthday) {
   const inputBirthday = normalizeBirthday(birthday);
   
   // Find student by name and birthday
-  const data = studentSheet.getDataRange().getValues();
+  const data = getSafeValues(studentSheet);
   let student = null;
   for (let i = 1; i < data.length; i++) {
     const sheetName = data[i][1] ? data[i][1].toString().trim() : "";
@@ -483,7 +499,7 @@ function studentLogin(name, birthday) {
   }
   
   // Get unlocked levels for this student (Scheme 1 target scores)
-  const appData = appSheet.getDataRange().getValues();
+  const appData = getSafeValues(appSheet);
   const unlockedChallenges = [];
   let attempts = 0;
   
@@ -535,7 +551,7 @@ function studentRegister(data) {
   const inputBirthday = normalizeBirthday(birthday);
   
   // Verify duplication
-  const rows = studentSheet.getDataRange().getValues();
+  const rows = getSafeValues(studentSheet);
   for (let i = 1; i < rows.length; i++) {
     const sheetName = rows[i][1] ? rows[i][1].toString().trim() : "";
     const sheetBirthday = rows[i][2] ? normalizeBirthday(rows[i][2]) : "";
@@ -565,14 +581,14 @@ function studentRegister(data) {
   studentSheet.appendRow([
     studentUid,
     name,
-    "'" + birthday, 
+    birthday, 
     data.nickname.trim(),
     data.school.trim(),
     data.department.trim(),
     data.grade.trim(),
     data.lineUid || "mock_line_" + studentUid,
     studentFolderId
-  ]);
+  ].map(safeWriteVal));
   
   // Send welcome push notification
   const lineId = data.lineUid || "mock_line_" + studentUid;
@@ -631,8 +647,8 @@ function submitChallenge(payload) {
   
   // Record/Update student's bank info in students sheet profile
   if (payload.bank_code && payload.bank_account) {
-    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
-    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
+    studentSheet.getRange(studentRowIndex, 11).setValue(safeWriteVal(payload.bank_code));
+    studentSheet.getRange(studentRowIndex, 12).setValue(safeWriteVal(payload.bank_account));
   }
   
   const studentUid = student[0];
@@ -640,7 +656,7 @@ function submitChallenge(payload) {
   
   // Count previous attempts to assign reward amount
   let currentAttempts = 0;
-  const appRows = appSheet.getDataRange().getValues();
+  const appRows = getSafeValues(appSheet);
   for (let j = 1; j < appRows.length; j++) {
     if (appRows[j][3] === studentUid && appRows[j][1] === 'challenge' && appRows[j][2] !== 'rejected') {
       currentAttempts++;
@@ -684,7 +700,7 @@ function submitChallenge(payload) {
     fileUrl,
     "", // No FileLink2 for challenge
     createdAt
-  ]);
+  ].map(safeWriteVal));
   
   return {
     success: true,
@@ -725,8 +741,8 @@ function submitProgress(payload) {
   
   // Record/Update student's bank info in students sheet profile
   if (payload.bank_code && payload.bank_account) {
-    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
-    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
+    studentSheet.getRange(studentRowIndex, 11).setValue(safeWriteVal(payload.bank_code));
+    studentSheet.getRange(studentRowIndex, 12).setValue(safeWriteVal(payload.bank_account));
   }
   
   const studentUid = student[0];
@@ -798,7 +814,7 @@ function submitProgress(payload) {
     fileUrl1,
     fileUrl2,
     createdAt
-  ]);
+  ].map(safeWriteVal));
   
   return {
     success: true,
@@ -835,8 +851,8 @@ function submitBlueprint(payload) {
   
   // Record/Update student's bank info in students sheet profile
   if (payload.bank_code && payload.bank_account) {
-    studentSheet.getRange(studentRowIndex, 11).setValue(payload.bank_code.toString().trim());
-    studentSheet.getRange(studentRowIndex, 12).setValue(payload.bank_account.toString().trim());
+    studentSheet.getRange(studentRowIndex, 11).setValue(safeWriteVal(payload.bank_code));
+    studentSheet.getRange(studentRowIndex, 12).setValue(safeWriteVal(payload.bank_account));
   }
   
   const studentUid = student[0];
@@ -873,7 +889,7 @@ function submitBlueprint(payload) {
     fileUrl,
     "", // No FileLink2 for blueprint
     createdAt
-  ]);
+  ].map(safeWriteVal));
   
   return {
     success: true,
@@ -955,17 +971,18 @@ function adminSaveSettings(token, payload) {
     'progress_base': payload.progress_base.toString(),
     'progress_conversion_rate': payload.progress_conversion_rate.toString(),
     'blueprint_amount': payload.blueprint_amount.toString(),
-    'challenge_amounts': challengeAmountsStr
+    'challenge_amounts': challengeAmountsStr,
+    'active_bg_folder_id': payload.active_bg_folder_id ? payload.active_bg_folder_id.toString().trim() : ""
   };
   
   const dataRange = sheet.getDataRange();
-  const values = dataRange.getValues();
+  const values = getSafeValues(sheet);
   
   for (let key in updates) {
     let found = false;
     for (let i = 1; i < values.length; i++) {
       if (values[i][0] === key) {
-        sheet.getRange(i + 1, 2).setValue(updates[key]);
+        sheet.getRange(i + 1, 2).setValue(safeWriteVal(updates[key]));
         found = true;
         break;
       }
@@ -990,8 +1007,8 @@ function adminGetList(token) {
   const appSheet = ss.getSheetByName('applications');
   const studentSheet = ss.getSheetByName('students');
   
-  const appData = appSheet.getDataRange().getValues();
-  const studentData = studentSheet.getDataRange().getValues();
+  const appData = getSafeValues(appSheet);
+  const studentData = getSafeValues(studentSheet);
   
   // Create student index for joining
   const studentIndex = {};
@@ -1081,7 +1098,7 @@ function adminGetList(token) {
 // Helper to query student LineUID
 function getStudentLineUid(ss, studentUid) {
   const sheet = ss.getSheetByName('students');
-  const rows = sheet.getDataRange().getValues();
+  const rows = getSafeValues(sheet);
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === studentUid) {
       return rows[i][7]; // LineUID
@@ -1097,11 +1114,11 @@ function adminApproveCase(token, appId) {
   }
   const ss = getDbSpreadsheet();
   const appSheet = ss.getSheetByName('applications');
-  const rows = appSheet.getDataRange().getValues();
+  const rows = getSafeValues(appSheet);
   
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === appId) {
-      appSheet.getRange(i + 1, 3).setValue('approved'); // Set status to approved
+      appSheet.getRange(i + 1, 3).setValue(safeWriteVal('approved')); // Set status to approved
       
       // Get student's LineUID and send notification
       const studentUid = rows[i][3];
@@ -1127,11 +1144,11 @@ function adminRejectCase(token, appId) {
   }
   const ss = getDbSpreadsheet();
   const appSheet = ss.getSheetByName('applications');
-  const rows = appSheet.getDataRange().getValues();
+  const rows = getSafeValues(appSheet);
   
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === appId) {
-      appSheet.getRange(i + 1, 3).setValue('rejected'); // Set status to rejected
+      appSheet.getRange(i + 1, 3).setValue(safeWriteVal('rejected')); // Set status to rejected
       
       // Get student's LineUID and send notification
       const studentUid = rows[i][3];
@@ -1163,7 +1180,7 @@ function adminDestroyCase(token, appId) {
   }
   const ss = getDbSpreadsheet();
   const appSheet = ss.getSheetByName('applications');
-  const rows = appSheet.getDataRange().getValues();
+  const rows = getSafeValues(appSheet);
   
   let targetRowIndex = -1;
   let appRow = null;
@@ -1217,9 +1234,9 @@ function adminDestroyCase(token, appId) {
   }
   
   // 4. Update row values to wipe out PII in applications sheet
-  appSheet.getRange(targetRowIndex, 3).setValue('destroyed'); // status
-  appSheet.getRange(targetRowIndex, 5).setValue(maskedName); // masked name
-  appSheet.getRange(targetRowIndex, 8).setValue(cleanedDetails); // cleaned details json
+  appSheet.getRange(targetRowIndex, 3).setValue(safeWriteVal('destroyed')); // status
+  appSheet.getRange(targetRowIndex, 5).setValue(safeWriteVal(maskedName)); // masked name
+  appSheet.getRange(targetRowIndex, 8).setValue(safeWriteVal(cleanedDetails)); // cleaned details json
   appSheet.getRange(targetRowIndex, 9).setValue(''); // wipe filelink1
   appSheet.getRange(targetRowIndex, 10).setValue(''); // wipe filelink2
   
@@ -1263,7 +1280,7 @@ function adminExportApproved(token) {
   }
   const ss = getDbSpreadsheet();
   const appSheet = ss.getSheetByName('applications');
-  const rows = appSheet.getDataRange().getValues();
+  const rows = getSafeValues(appSheet);
   
   const csvLines = [];
   // Write UTF-8 BOM
@@ -1369,4 +1386,113 @@ function adminGetFileMetadata(token, fileUrl) {
   } catch (e) {
     return { success: false, error: e.toString() };
   }
+}
+
+// ==========================================
+// 🌌 系統雲端底圖生成與切換引擎
+// ==========================================
+const BACKGROUND_ROOT_FOLDER_ID = "19VeS2TmOyzREGHNzECqQLSwhOISLUA45";
+
+// 取得母資料夾內的所有子資料夾（底圖專輯分類）
+function getAlbumList() {
+  try {
+    const folder = DriveApp.getFolderById(BACKGROUND_ROOT_FOLDER_ID);
+    const subFolders = folder.getFolders();
+    const albums = [];
+    while (subFolders.hasNext()) {
+      const subFolder = subFolders.next();
+      albums.push({ name: subFolder.getName(), id: subFolder.getId() });
+    }
+    return { success: true, albums: albums };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// 根據子資料夾 ID，取得內部的隨機 3 張底圖 URL
+function getImagesByFolder(folderId) {
+  try {
+    const folder = DriveApp.getFolderById(folderId);
+    const files = folder.getFiles();
+    const allImageUrls = [];
+    while (files.hasNext()) {
+      const file = files.next();
+      const mimeType = file.getMimeType();
+      if (mimeType && mimeType.indexOf("image") > -1) {
+        allImageUrls.push("https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w1000");
+      }
+    }
+    
+    // 隨機抽取 3 張
+    const randomSelectedImages = [];
+    while (allImageUrls.length > 0 && randomSelectedImages.length < 3) {
+      const randIdx = Math.floor(Math.random() * allImageUrls.length);
+      randomSelectedImages.push(allImageUrls.splice(randIdx, 1)[0]);
+    }
+    return { success: true, images: randomSelectedImages };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// 取得當前設定啟用的分類底圖
+function getActiveBgImages() {
+  try {
+    const ss = getDbSpreadsheet();
+    const settings = getSafeSettings(ss);
+    let folderId = settings.active_bg_folder_id || "";
+    
+    // 如果尚未設定，預設選擇母資料夾下的第一個子資料夾
+    if (!folderId) {
+      const rootFolder = DriveApp.getFolderById(BACKGROUND_ROOT_FOLDER_ID);
+      const subFolders = rootFolder.getFolders();
+      if (subFolders.hasNext()) {
+        folderId = subFolders.next().getId();
+      }
+    }
+    
+    if (!folderId) {
+      return { success: false, message: "無任何底圖子資料夾" };
+    }
+    
+    return getImagesByFolder(folderId);
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+// ==========================================
+// 📊 Google Sheets 資料防溢位格式安全防護引擎
+// ==========================================
+// 寫入 Google Sheets 時在數字/字串前加上單引號，強迫 Sheets 將該欄位視為文字（防止去掉前導零或變成科學記號）
+function safeWriteVal(val) {
+  if (val === null || val === undefined) return "";
+  if (typeof val === 'boolean') return val; // 保持布林值以利 Checkbox 正常渲染
+  const s = val.toString().trim();
+  if (s === "") return "";
+  if (s.indexOf("'") === 0) return s; // 避免重複加引號
+  return "'" + s;
+}
+
+// 讀取 Google Sheets 時若發現首位為單引號，自動剝除，回傳原始乾淨字串
+function safeReadVal(val) {
+  if (val === null || val === undefined) return "";
+  if (typeof val === 'boolean') return val;
+  const s = val.toString().trim();
+  if (s.indexOf("'") === 0) {
+    return s.substring(1);
+  }
+  return s;
+}
+
+// 包裝 Sheet.getValues() 讀取，自動剝除所有儲存格中的前置單引號，但跳過第一列 Header 標頭
+function getSafeValues(sheet) {
+  const values = sheet.getDataRange().getValues();
+  if (values.length <= 1) return values;
+  for (let r = 1; r < values.length; r++) {
+    for (let c = 0; c < values[r].length; c++) {
+      values[r][c] = safeReadVal(values[r][c]);
+    }
+  }
+  return values;
 }

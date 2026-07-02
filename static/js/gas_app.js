@@ -41,6 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Initialize Scheme 1 Drag & Drop File Upload area
     initDragAndDropUpload();
+
+    // Spawn background images from Google Drive settings
+    spawnRandomPic();
 });
 
 // Debug Logger function
@@ -1215,4 +1218,56 @@ function initDragAndDropUpload() {
             }
         }
     });
+}
+
+// ==========================================
+// 🌌 雲端底圖非同步載入引擎
+// ==========================================
+function spawnRandomPic() {
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (result.success && Array.isArray(result.images)) {
+                // 先清除舊圖
+                document.querySelectorAll('.random-pic').forEach(el => el.remove());
+                result.images.forEach((imgUrl, index) => {
+                    renderSinglePic(imgUrl, index);
+                });
+            }
+        })
+        .getActiveBgImages();
+}
+
+function renderSinglePic(imgUrl, index) {
+    const container = document.body;
+    if (!container) return;
+
+    const isMobile = window.innerWidth < 768;
+
+    const picImg = document.createElement('img');
+    picImg.src = imgUrl;
+    picImg.className = 'random-pic';
+    picImg.style.pointerEvents = 'none';
+    picImg.style.position = 'fixed'; // 使用 fixed 以利滑動時固定在背景
+    picImg.style.zIndex = '0';          // 確保圖片在最底層
+
+    // 尺寸設定
+    const baseSize = isMobile
+        ? Math.floor(Math.random() * 60 + 160)
+        : Math.floor(Math.random() * 80 + 200);
+    picImg.style.width = baseSize + 'px';
+
+    // 排版邏輯
+    if (index === 0) {
+        picImg.style.top = isMobile ? '8%' : '10%';
+        picImg.style.left = '-15px';
+    } else if (index === 1) {
+        picImg.style.top = isMobile ? '38%' : '40%';
+        picImg.style.right = '-15px';
+        picImg.style.transform = 'scaleX(-1)';
+    } else {
+        picImg.style.bottom = isMobile ? '8%' : '10%';
+        picImg.style.left = '-10px';
+    }
+
+    container.appendChild(picImg);
 }

@@ -191,13 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // Perform initial session verification
-
-
-
     verifySessionOnLoad();
-
-
-
+    
+    // Spawn background images from Google Drive settings
+    spawnRandomPic();
 });
 
 
@@ -1653,101 +1650,57 @@ function closeModal(id) {
 
 
 // Open settings parameters modal
-
-
-
 function openSettingsModal() {
-
-
-
     showToast("獲取最新參數設定中...", "fa-arrows-spin");
-
-
-
     google.script.run
-
-
-
         .withSuccessHandler(function(data) {
-
-
-
-            document.getElementById('set-progress-base').value = data.progress_base;
-
-
-
-            document.getElementById('set-progress-rate').value = data.progress_conversion_rate;
-
-
-
-            document.getElementById('set-blueprint-limit').value = data.blueprint_amount;
-
-
-
+            document.getElementById('settings-progress-base').value = data.progress_base;
+            document.getElementById('settings-progress-rate').value = data.progress_conversion_rate;
+            document.getElementById('settings-blueprint').value = data.blueprint_amount;
             
-
-
-
             // Fill challenge level inputs
-
-
-
             if (data.challenge_amounts) {
-
-
-
                 for (let i = 0; i < 8; i++) {
-
-
-
-                    const inp = document.getElementById(`set-ladder-${i+1}`);
-
-
-
+                    const inp = document.getElementById(`settings-challenge-${i+1}`);
                     if (inp) {
-
-
-
                         inp.value = data.challenge_amounts[i] !== undefined ? data.challenge_amounts[i] : '';
-
-
-
                     }
-
-
-
                 }
-
-
-
             }
-
-
-
+            
+            // 載入底圖分類資料夾選單
+            const bgSelect = document.getElementById('settings-bg-folder');
+            if (bgSelect) {
+                bgSelect.innerHTML = '<option value="">⏳ 載入分類清單中...</option>';
+                google.script.run
+                    .withSuccessHandler(function(bgData) {
+                        bgSelect.innerHTML = '';
+                        if (bgData.success && bgData.albums) {
+                            bgData.albums.forEach(album => {
+                                const opt = document.createElement('option');
+                                opt.value = album.id;
+                                opt.textContent = album.name;
+                                if (album.id === data.active_bg_folder_id) {
+                                    opt.selected = true;
+                                }
+                                bgSelect.appendChild(opt);
+                            });
+                        } else {
+                            bgSelect.innerHTML = '<option value="">❌ 無法載入雲端分類</option>';
+                        }
+                    })
+                    .withFailureHandler(function(err) {
+                        bgSelect.innerHTML = '<option value="">❌ 載入失敗</option>';
+                    })
+                    .getAlbumList();
+            }
+            
             openModal('modal-settings');
-
-
-
         })
-
-
-
         .withFailureHandler(function(err) {
-
-
-
             showToast("載入設定參數失敗！", "fa-triangle-exclamation");
-
-
-
         })
-
-
-
         .adminGetSettings(ADMIN_TOKEN);
-
-
-
 }
 
 
@@ -1757,153 +1710,47 @@ function openSettingsModal() {
 
 
 // Save settings parameters
-
-
-
 function saveSettings(e) {
-
-
-
     e.preventDefault();
-
-
-
     
-
-
-
     const challengeAmounts = [];
-
-
-
     for (let i = 0; i < 8; i++) {
-
-
-
-        const val = parseInt(document.getElementById(`set-ladder-${i+1}`).value);
-
-
-
+        const val = parseInt(document.getElementById(`settings-challenge-${i+1}`).value);
         if (isNaN(val)) {
-
-
-
             showToast("所有挑戰級距獎金均為必填！", "fa-triangle-exclamation");
-
-
-
             return;
-
-
-
         }
-
-
-
         challengeAmounts.push(val);
-
-
-
     }
-
-
-
     
-
-
-
     const payload = {
-
-
-
-        progress_base: parseInt(document.getElementById('set-progress-base').value),
-
-
-
-        progress_conversion_rate: parseInt(document.getElementById('set-progress-rate').value),
-
-
-
-        blueprint_amount: parseInt(document.getElementById('set-blueprint-limit').value),
-
-
-
-        challenge_amounts: challengeAmounts
-
-
-
+        progress_base: parseInt(document.getElementById('settings-progress-base').value),
+        progress_conversion_rate: parseInt(document.getElementById('settings-progress-rate').value),
+        blueprint_amount: parseInt(document.getElementById('settings-blueprint').value),
+        challenge_amounts: challengeAmounts,
+        active_bg_folder_id: document.getElementById('settings-bg-folder').value
     };
-
-
-
     
-
-
-
     showToast("儲存設定中...", "fa-gears");
-
-
-
     
-
-
-
     google.script.run
-
-
-
         .withSuccessHandler(function(data) {
-
-
-
             if (data.success) {
-
-
-
                 closeModal('modal-settings');
-
-
-
                 showToast(data.message, "fa-circle-check");
-
-
-
                 loadCaseList();
-
-
-
+                // 儲存成功後，若有更新底圖設定，立即重新載入底圖
+                if (typeof spawnRandomPic === 'function') {
+                    spawnRandomPic();
+                }
             } else {
-
-
-
                 showToast(data.message, "fa-triangle-exclamation");
-
-
-
             }
-
-
-
         })
-
-
-
         .withFailureHandler(function(err) {
-
-
-
             showToast("伺服器錯誤，儲存設定失敗！", "fa-triangle-exclamation");
-
-
-
         })
-
-
-
         .adminSaveSettings(ADMIN_TOKEN, payload);
-
-
-
 }
 
 
@@ -2444,4 +2291,56 @@ function renderFilePreview(c) {
         imgHTML += `</div>`;
         docViewer.innerHTML = imgHTML;
     }
+}
+
+// ==========================================
+// 🌌 雲端底圖非同步載入引擎
+// ==========================================
+function spawnRandomPic() {
+    google.script.run
+        .withSuccessHandler(function(result) {
+            if (result.success && Array.isArray(result.images)) {
+                // 先清除畫面上的舊圖，確保不會重複疊加
+                document.querySelectorAll('.random-pic').forEach(el => el.remove());
+                result.images.forEach((imgUrl, index) => {
+                    renderSinglePic(imgUrl, index);
+                });
+            }
+        })
+        .getActiveBgImages();
+}
+
+function renderSinglePic(imgUrl, index) {
+    const container = document.body;
+    if (!container) return;
+
+    const isMobile = window.innerWidth < 768;
+
+    const picImg = document.createElement('img');
+    picImg.src = imgUrl;
+    picImg.className = 'random-pic';
+    picImg.style.pointerEvents = 'none';
+    picImg.style.position = 'fixed'; // 使用 fixed 以利滑動時固定在背景
+    picImg.style.zIndex = '0';          // 確保圖片在最底層
+
+    // 尺寸設定
+    const baseSize = isMobile
+        ? Math.floor(Math.random() * 60 + 160)
+        : Math.floor(Math.random() * 80 + 200);
+    picImg.style.width = baseSize + 'px';
+
+    // 排版邏輯
+    if (index === 0) {
+        picImg.style.top = isMobile ? '8%' : '10%';
+        picImg.style.left = '-15px';
+    } else if (index === 1) {
+        picImg.style.top = isMobile ? '38%' : '40%';
+        picImg.style.right = '-15px';
+        picImg.style.transform = 'scaleX(-1)';
+    } else {
+        picImg.style.bottom = isMobile ? '8%' : '10%';
+        picImg.style.left = '-10px';
+    }
+
+    container.appendChild(picImg);
 }
