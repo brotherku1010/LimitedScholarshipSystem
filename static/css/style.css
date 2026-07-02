@@ -505,6 +505,24 @@ body {
     opacity: 0.8;
 }
 
+/* 5. Pending Review State (Orange/Yellow) */
+.shield-item.pending {
+    border-color: #ff9f1c;
+    background: rgba(255, 159, 28, 0.03);
+}
+.shield-item.pending .shield-icon-container {
+    color: #ff9f1c;
+    text-shadow: 0 0 15px rgba(255, 159, 28, 0.4);
+}
+.shield-item.pending .unlocked-icon {
+    display: block;
+    color: #ff9f1c;
+    text-shadow: 0 0 5px rgba(255, 159, 28, 0.4);
+}
+.shield-item.pending .shield-score {
+    color: #ff9f1c;
+}
+
 /* 4. Ultimate Defense shield (Golden) */
 .shield-item.ultimate {
     grid-column: span 3;

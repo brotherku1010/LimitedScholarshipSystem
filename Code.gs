@@ -292,16 +292,20 @@ function studentLiffLogin(lineUid) {
   // Get unlocked levels, attempts, and applications list
   const appData = appSheet.getDataRange().getValues();
   const unlockedChallenges = [];
+  const pendingChallenges = [];
   const applications = [];
   let attempts = 0;
+  let approvedAttempts = 0;
   
   for (let i = 1; i < appData.length; i++) {
     if (appData[i][3] && appData[i][3].toString().trim() === student.uid.trim()) {
+      const status = appData[i][2] ? appData[i][2].toString().trim() : "";
+      
       // Add to application history
       applications.push({
         id: appData[i][0] ? appData[i][0].toString() : "",
         type: appData[i][1] ? appData[i][1].toString() : "",
-        status: appData[i][2] ? appData[i][2].toString() : "",
+        status: status,
         amount: appData[i][5] ? parseFloat(appData[i][5]) : 0,
         academicYear: appData[i][6] ? appData[i][6].toString() : "",
         details: appData[i][7] ? appData[i][7].toString() : "",
@@ -311,11 +315,18 @@ function studentLiffLogin(lineUid) {
       if (appData[i][1] === 'challenge') {
         try {
           const detailsObj = JSON.parse(appData[i][7]);
-          if (appData[i][2] === 'approved') {
-            unlockedChallenges.push(parseInt(detailsObj.level));
+          const targetVal = parseFloat(detailsObj.target);
+          if (status === 'approved') {
+            unlockedChallenges.push(targetVal);
+            approvedAttempts++;
+          } else if (status === 'pending') {
+            pendingChallenges.push(targetVal);
           }
         } catch (e) {}
-        attempts++;
+        
+        if (status !== 'rejected') {
+          attempts++;
+        }
       }
     }
   }
@@ -333,7 +344,9 @@ function studentLiffLogin(lineUid) {
     grade: student.grade,
     consent_signed: student.consentSigned,
     unlocked_challenges: unlockedChallenges,
+    pending_challenges: pendingChallenges,
     attempts: attempts,
+    approved_attempts: approvedAttempts,
     applications: applications,
     settings: settings
   };

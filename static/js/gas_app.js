@@ -11,7 +11,9 @@ let currentUser = {
     department: '',
     grade: '',
     attempts: 0,
-    unlockedChallenges: []
+    approvedAttempts: 0,
+    unlockedChallenges: [],
+    pendingChallenges: []
 };
 
 let selectedChallengeTarget = null;
@@ -121,7 +123,9 @@ function onLiffLoginSuccess(data) {
         currentUser.department = data.department;
         currentUser.grade = data.grade;
         currentUser.attempts = data.attempts;
+        currentUser.approvedAttempts = data.approved_attempts;
         currentUser.unlockedChallenges = data.unlocked_challenges;
+        currentUser.pendingChallenges = data.pending_challenges || [];
         currentUser.applications = data.applications || [];
         currentUser.bankCode = data.bankCode || '';
         currentUser.bankAccount = data.bankAccount || '';
@@ -179,7 +183,9 @@ function refreshUserStatusLiff() {
         .withSuccessHandler(function(data) {
             if (data.success) {
                 currentUser.attempts = data.attempts;
+                currentUser.approvedAttempts = data.approved_attempts;
                 currentUser.unlockedChallenges = data.unlocked_challenges;
+                currentUser.pendingChallenges = data.pending_challenges || [];
                 currentUser.applications = data.applications || [];
                 updateStudentUI();
             }
@@ -197,7 +203,7 @@ function updateStudentUI() {
         
         const schoolText = currentUser.school + " " + currentUser.department + " (" + currentUser.grade + ")";
         document.getElementById('student-display-meta').innerHTML = `<i class="fa-solid fa-graduation-cap"></i> ${schoolText}`;
-        document.getElementById('student-display-attempts').innerText = currentUser.attempts || 0;
+        document.getElementById('student-display-attempts').innerText = currentUser.approvedAttempts || 0;
     }
     
     // Prefill Bank Code and Account inputs across all three application forms
@@ -265,6 +271,20 @@ function updateStudentUI() {
     document.getElementById('progress-name').value = currentUser.name;
     document.getElementById('blueprint-name').value = currentUser.name;
 
+    // Toggle Scheme 1 Apply Button based on pending status
+    const hasPendingChallenge = (currentUser.applications || []).some(app => app.type === 'challenge' && app.status === 'pending');
+    const challengeBtn = document.getElementById('btn-apply-challenge-modal');
+    const challengeNotice = document.getElementById('challenge-pending-notice');
+    if (challengeBtn && challengeNotice) {
+        if (hasPendingChallenge) {
+            challengeBtn.style.display = 'none';
+            challengeNotice.style.display = 'block';
+        } else {
+            challengeBtn.style.display = 'block';
+            challengeNotice.style.display = 'none';
+        }
+    }
+
     // Apply active settings values to UI text
     const formulaDesc = document.getElementById('calc-formula-desc');
     if (formulaDesc && activeSettings) {
@@ -297,15 +317,25 @@ function renderShields() {
         const targetVal = parseFloat(item.getAttribute('data-target'));
         
         // Reset states
-        item.classList.remove('unlocked', 'selected');
+        item.classList.remove('unlocked', 'selected', 'pending');
         
-        // If already unlocked
+        const lockIcon = item.querySelector('.unlocked-icon');
+        if (lockIcon) {
+            lockIcon.className = "fa-solid fa-lock-open unlocked-icon";
+        }
+        
+        // If already unlocked (approved)
         if (currentUser.unlockedChallenges.includes(targetVal)) {
             item.classList.add('unlocked');
-            // Change unlock icon
-            const lockIcon = item.querySelector('.unlocked-icon');
             if (lockIcon) {
                 lockIcon.className = "fa-solid fa-circle-check unlocked-icon";
+            }
+        }
+        // If pending review
+        else if (currentUser.pendingChallenges.includes(targetVal)) {
+            item.classList.add('pending');
+            if (lockIcon) {
+                lockIcon.className = "fa-solid fa-hourglass-half unlocked-icon";
             }
         }
     });
@@ -404,6 +434,10 @@ function initEventListeners() {
                 showToast("此分數防線已在往期擊破，請選擇其他防線進行挑戰！", "fa-circle-xmark");
                 return;
             }
+            if (item.classList.contains('pending')) {
+                showToast("此分數防線目前正在審核中，請耐心等候審核結果！", "fa-circle-exclamation");
+                return;
+            }
             
             // Remove selected class from all shields
             shieldItems.forEach(s => s.classList.remove('selected'));
@@ -426,9 +460,12 @@ function initEventListeners() {
         // Populate threshold value in modal
         document.getElementById('form-challenge-target-score').innerText = selectedChallengeTarget.toFixed(2);
         
-        // Populate level amount
-        const currentLevel = Math.min(currentUser.attempts + 1, 8);
-        const assignedAmt = activeSettings.challengeAmounts[currentLevel - 1];
+        // Populate level amount safely
+        const currentLevel = Math.min((currentUser.attempts || 0) + 1, 8);
+        let assignedAmt = 0;
+        if (activeSettings && activeSettings.challengeAmounts && activeSettings.challengeAmounts[currentLevel - 1] !== undefined) {
+            assignedAmt = activeSettings.challengeAmounts[currentLevel - 1];
+        }
         document.getElementById('form-challenge-target-amount').innerText = `NT$ ${assignedAmt.toLocaleString()}`;
         
         openModal('modal-apply-challenge');
@@ -437,6 +474,17 @@ function initEventListeners() {
     // 6. Form Submission: Scheme 1 (Challenge Award)
     document.getElementById('form-apply-challenge').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const selectedYear = document.querySelector('#form-apply-challenge [name="academic_year"]').value;
+        const alreadyApplied = (currentUser.applications || []).some(app => 
+            app.type === 'challenge' && 
+            app.academicYear === selectedYear && 
+            app.status !== 'rejected'
+        );
+        if (alreadyApplied) {
+            showToast("此學年度學期已申請過成績挑戰，不可重複申請！", "fa-circle-xmark");
+            return;
+        }
         
         const fileInput = document.getElementById('challenge-file');
         const file = fileInput.files[0];

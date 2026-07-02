@@ -3564,13 +3564,13 @@ function getGoogleDriveEmbedUrl(url, type) {
 
         // Embed PDF inside iframe using Google Drive PDF preview mode
 
-        return `https://drive.google.com/file/d/${fileId}/preview`;
+        return 'https://drive.google.com/file/d/' + fileId + '/preview';
 
     } else {
 
         // Render image thumbnail directly
 
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+        return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1000';
 
     }
 
