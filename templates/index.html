@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【古哥獎學金】成績挑戰計畫</title>
+    <title>【古哥挑戰獎學金】成績挑戰計畫</title>
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap"
@@ -29,7 +29,7 @@
             <div class="global-loading-logo">
                 <i class="fa-solid fa-compass-drafting fa-spin-pulse"></i>
             </div>
-            <h2>古哥獎學金系統</h2>
+            <h2>古哥挑戰獎學金系統</h2>
             <div class="global-loading-status">
                 <span class="spinner-dot"></span>
                 <span id="global-loading-text">正在建立安全連線...</span>
@@ -48,7 +48,7 @@
             </div>
             <h1
                 style="font-family: 'Orbitron', 'Noto Sans TC', sans-serif; font-size: 1.5rem; font-weight: 900; color: #fff; margin-bottom: 12px; letter-spacing: 1px;">
-                古哥獎學金安全驗證系統</h1>
+                古哥挑戰獎學金安全驗證系統</h1>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px;">
                 歡迎進入本計畫！系統正在對您的帳號進行 LINE 安全授權校對，請點擊下方按鈕確認驗證。
             </p>
@@ -66,7 +66,7 @@
         <header class="app-header">
             <div class="logo-area">
                 <span class="badge-new">LIMITED</span>
-                <h1>古哥獎學金</h1>
+                <h1>古哥挑戰獎學金</h1>
                 <p class="subtitle">— 突破極限，投資你的未來 —</p>
             </div>
 
@@ -75,6 +75,9 @@
                 <div class="student-profile-main" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                     <div style="text-align: left;">
                         <span class="student-name-large" id="student-display-name" style="font-size: 1.8rem; font-weight: 900; background: linear-gradient(135deg, #fff 30%, var(--neon-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">--</span>
+                        <button id="btn-edit-profile" style="background: none; border: none; color: var(--neon-blue); cursor: pointer; font-size: 1.2rem; margin-left: 8px; transition: 0.2s; vertical-align: middle;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--neon-blue)';" title="編輯個人基本資料">
+                            <i class="fa-solid fa-user-pen"></i>
+                        </button>
                         <div class="student-school-grade" id="student-display-meta" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 5px;"><i class="fa-solid fa-graduation-cap"></i> 學校科系 / 年級</div>
                     </div>
                     <div style="text-align: right; background: rgba(255, 255, 255, 0.04); padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
@@ -560,6 +563,82 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary btn-full" id="btn-submit-login">完成註冊並進入計畫</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1b: Edit Profile Details -->
+    <div class="modal" id="modal-edit-profile">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-pen"></i> 編輯個人基本資料</h2>
+                <button class="modal-close" onclick="closeModal('modal-edit-profile')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+                <p class="modal-tip">您可以隨時更新以下基本資料。為了系統帳號安全性與防弊，真實姓名與生日為唯讀不可修改。</p>
+                
+                <div class="form-group-row-2">
+                    <div class="form-group">
+                        <label>真實姓名 (不可修改)</label>
+                        <input type="text" id="edit-student-name" disabled style="background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label>生日 (不可修改)</label>
+                        <input type="text" id="edit-student-birthday" disabled style="background: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">暱稱</label>
+                    <input type="text" id="edit-student-nickname" placeholder="例如: 小明">
+                </div>
+
+                <div class="form-group">
+                    <label class="required-label">學校名稱</label>
+                    <input type="text" id="edit-student-school" placeholder="例如: 國立台灣大學">
+                </div>
+
+                <div class="form-group-row-2">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="required-label">就讀科系</label>
+                        <input type="text" id="edit-student-department" placeholder="例如: 資訊工程學系">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="required-label">年級</label>
+                        <select id="edit-student-grade" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px; box-sizing: border-box;">
+                            <option value="大一">大一</option>
+                            <option value="大二">大二</option>
+                            <option value="大三">大三</option>
+                            <option value="大四">大四</option>
+                            <option value="碩一">碩一</option>
+                            <option value="碩二">碩二</option>
+                            <option value="博一">博一</option>
+                            <option value="博二">博二</option>
+                            <option value="博三">博三</option>
+                            <option value="博四">博四</option>
+                            <option value="其它">其它</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
+                    <h3 style="font-size: 1rem; color: var(--gold); margin-bottom: 12px;"><i class="fa-solid fa-building-columns"></i> 收款銀行帳戶設定</h3>
+                    <div class="form-group-row-2">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>銀行代碼 (3碼數字，如 008)</label>
+                            <input type="text" id="edit-student-bankcode" placeholder="例如: 008" maxlength="3">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>銀行帳號 (不可含符號或空格)</label>
+                            <input type="text" id="edit-student-bankaccount" placeholder="例如: 123456789012">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-msg" id="edit-error-msg" style="display: none; text-align: center; margin-top: 10px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-full" id="btn-submit-edit-profile"><i class="fa-solid fa-floppy-disk"></i> 儲存個人基本資料</button>
             </div>
         </div>
     </div>

@@ -478,6 +478,16 @@ function initEventListeners() {
         });
     });
 
+    // 3.75 Edit Profile Dialog
+    const btnEditProfile = document.getElementById('btn-edit-profile');
+    if (btnEditProfile) {
+        btnEditProfile.addEventListener('click', openEditProfileModal);
+    }
+    const btnSubmitEditProfile = document.getElementById('btn-submit-edit-profile');
+    if (btnSubmitEditProfile) {
+        btnSubmitEditProfile.addEventListener('click', handleEditProfileSubmit);
+    }
+
     // 4. Shields Click event
     const shieldItems = document.querySelectorAll('.shield-item');
     shieldItems.forEach(item => {
@@ -1320,4 +1330,107 @@ function renderSinglePic(imgUrl, index) {
     }
 
     container.appendChild(picImg);
+}
+
+// ==========================================
+// ✏️ 編輯個人基本資料處理引擎
+// ==========================================
+function openEditProfileModal() {
+    // 預填當前使用者資料
+    document.getElementById('edit-student-name').value = currentUser.name || '';
+    document.getElementById('edit-student-birthday').value = currentUser.birthday || '';
+    document.getElementById('edit-student-nickname').value = currentUser.nickname || '';
+    document.getElementById('edit-student-school').value = currentUser.school || '';
+    document.getElementById('edit-student-department').value = currentUser.department || '';
+    
+    const gradeSelect = document.getElementById('edit-student-grade');
+    if (gradeSelect) {
+        gradeSelect.value = currentUser.grade || '大一';
+    }
+    
+    document.getElementById('edit-student-bankcode').value = currentUser.bankCode || '';
+    document.getElementById('edit-student-bankaccount').value = currentUser.bankAccount || '';
+    
+    // 隱藏錯誤訊息
+    const errorDiv = document.getElementById('edit-error-msg');
+    if (errorDiv) errorDiv.style.display = 'none';
+    
+    openModal('modal-edit-profile');
+}
+
+function handleEditProfileSubmit() {
+    const nicknameVal = document.getElementById('edit-student-nickname').value.trim();
+    const schoolVal = document.getElementById('edit-student-school').value.trim();
+    const departmentVal = document.getElementById('edit-student-department').value.trim();
+    const gradeVal = document.getElementById('edit-student-grade').value;
+    const bankcodeVal = document.getElementById('edit-student-bankcode').value.trim();
+    const bankaccountVal = document.getElementById('edit-student-bankaccount').value.trim();
+    const errorDiv = document.getElementById('edit-error-msg');
+    
+    if (!nicknameVal || !schoolVal || !departmentVal || !gradeVal) {
+        if (errorDiv) {
+            errorDiv.innerText = "暱稱、學校、科系、年級皆為必填項目！";
+            errorDiv.style.display = "block";
+        }
+        return;
+    }
+    
+    // 銀行代碼校驗
+    if (bankcodeVal && (bankcodeVal.length !== 3 || isNaN(bankcodeVal))) {
+        if (errorDiv) {
+            errorDiv.innerText = "銀行代碼必須為 3 碼數字 (如 008)！";
+            errorDiv.style.display = "block";
+        }
+        return;
+    }
+    
+    // 銀行帳號校驗
+    if (bankaccountVal && isNaN(bankaccountVal)) {
+        if (errorDiv) {
+            errorDiv.innerText = "銀行帳號必須為純數字，不可包含符號或空格！";
+            errorDiv.style.display = "block";
+        }
+        return;
+    }
+    
+    if (errorDiv) errorDiv.style.display = "none";
+    toggleLoading(true, "正在儲存更新資料並與雲端同步...");
+    
+    const payload = {
+        nickname: nicknameVal,
+        school: schoolVal,
+        department: departmentVal,
+        grade: gradeVal,
+        bank_code: bankcodeVal,
+        bank_account: bankaccountVal
+    };
+    
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.success) {
+                closeModal('modal-edit-profile');
+                showToast(res.message, "fa-circle-check");
+                
+                // 重新載入學生資料以刷新 UI 與快取
+                toggleLoading(true, "正在重新載入最新學籍資料...");
+                google.script.run
+                    .withSuccessHandler(onLiffLoginSuccess)
+                    .withFailureHandler(onLiffLoginFailure)
+                    .studentLiffLogin(window.lineUid);
+            } else {
+                toggleLoading(false);
+                if (errorDiv) {
+                    errorDiv.innerText = res.message;
+                    errorDiv.style.display = "block";
+                }
+            }
+        })
+        .withFailureHandler(function(err) {
+            toggleLoading(false);
+            if (errorDiv) {
+                errorDiv.innerText = "儲存資料失敗，請確認連線狀態！";
+                errorDiv.style.display = "block";
+            }
+        })
+        .studentUpdateProfile(window.lineUid, payload);
 }

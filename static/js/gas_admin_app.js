@@ -75,8 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     document.getElementById('btn-open-settings').addEventListener('click', openSettingsModal);
-
-
+    
+    const btnPromote = document.getElementById('btn-promote-grades');
+    if (btnPromote) {
+        btnPromote.addEventListener('click', handlePromoteGrades);
+    }
 
     document.getElementById('form-settings').addEventListener('submit', saveSettings);
 
@@ -2343,4 +2346,39 @@ function renderSinglePic(imgUrl, index) {
     }
 
     container.appendChild(picImg);
+}
+
+// ==========================================
+// 🎓 學年升級校對處理函式
+// ==========================================
+function handlePromoteGrades() {
+    if (!confirm("確定要執行學年升級校對嗎？\n\n系統將會比對所有學員的「註冊時間」與「當前時間」，判定是否跨越 8 月份的開學分水嶺，自動將學員年級往上升級（例如大一 ➔ 大二，大四 ➔ 已畢業）並直接寫入試算表資料庫中。")) {
+        return;
+    }
+    
+    showToast("正在執行年級升級校對...", "fa-arrows-spin");
+    
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.success) {
+                if (res.updatedCount === 0) {
+                    showToast("校對完成！所有學籍皆為最新年級，無須更新。", "fa-circle-check");
+                } else {
+                    showToast(res.message, "fa-circle-check");
+                    // 以詳細對話框展示升級清單
+                    let logStr = `🎉 學年升級校對成功！共更新 ${res.updatedCount} 位學員：\n\n`;
+                    res.logs.forEach(log => {
+                        logStr += `• ${log.name} (${log.uid}): ${log.oldGrade} ➔ ${log.newGrade}\n`;
+                    });
+                    alert(logStr);
+                    loadCaseList(); // 重新載入案件列表
+                }
+            } else {
+                showToast(res.message, "fa-triangle-exclamation");
+            }
+        })
+        .withFailureHandler(function(err) {
+            showToast("伺服器連線失敗，學年升級校對執行失敗！", "fa-triangle-exclamation");
+        })
+        .adminPromoteStudentGrades(ADMIN_TOKEN);
 }

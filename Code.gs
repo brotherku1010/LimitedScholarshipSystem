@@ -1,5 +1,5 @@
 // ==========================================================================
-// 【古哥獎學金】成績挑戰系統 - 雲端 GAS 後端服務程式碼 (Code.gs)
+// 【古哥挑戰獎學金】成績挑戰系統 - 雲端 GAS 後端服務程式碼 (Code.gs)
 // ==========================================================================
 
 const SPREADSHEET_ID = '1DsGusSd_s6zXyOl3Pf_Ql-IUI4ncutFnFK0HgMpuID8';
@@ -31,7 +31,7 @@ function doGet(e) {
   if (action === 'admin') {
     // Serve admin console skeleton directly (PII authentication managed asynchronously by client token)
     return HtmlService.createHtmlOutputFromFile('admin')
-        .setTitle('古哥獎學金審查系統 - 後台控制台')
+        .setTitle('古哥挑戰獎學金審查系統 - 後台控制台')
         .addMetaTag('viewport', 'width=device-width, initial-scale=1')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
@@ -115,8 +115,8 @@ function initSheets() {
   let studentSheet = ss.getSheetByName('students');
   if (!studentSheet) {
     studentSheet = ss.insertSheet('students');
-    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID', 'ConsentSigned', 'BankCode', 'BankAccount']);
-    studentSheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#b7e1cd');
+    studentSheet.appendRow(['StudentUID', 'RealName', 'Birthday', 'Nickname', 'School', 'Department', 'Grade', 'LineUID', 'FolderID', 'ConsentSigned', 'BankCode', 'BankAccount', 'CreatedAt']);
+    studentSheet.getRange(1, 1, 1, 13).setFontWeight('bold').setBackground('#b7e1cd');
   } else {
     if (studentSheet.getLastColumn() < 10 || studentSheet.getRange(1, 10).getValue().toString().trim() !== "ConsentSigned") {
       studentSheet.getRange(1, 10).setValue("ConsentSigned").setFontWeight('bold').setBackground('#b7e1cd');
@@ -124,6 +124,9 @@ function initSheets() {
     if (studentSheet.getLastColumn() < 12) {
       studentSheet.getRange(1, 11).setValue("BankCode").setFontWeight('bold').setBackground('#b7e1cd');
       studentSheet.getRange(1, 12).setValue("BankAccount").setFontWeight('bold').setBackground('#b7e1cd');
+    }
+    if (studentSheet.getLastColumn() < 13) {
+      studentSheet.getRange(1, 13).setValue("CreatedAt").setFontWeight('bold').setBackground('#b7e1cd');
     }
   }
   
@@ -424,11 +427,15 @@ function studentLiffRegister(regData, lineUid) {
     regData.department.trim(),
     regData.grade.trim(),
     lineUid,
-    studentFolderId
+    studentFolderId,
+    false, // ConsentSigned
+    "",    // BankCode
+    "",    // BankAccount
+    Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss") // CreatedAt
   ].map(safeWriteVal));
   
   // Send welcome push notification
-  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${regData.school.trim()} ${regData.department.trim()} (${regData.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
+  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥挑戰獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${regData.school.trim()} ${regData.department.trim()} (${regData.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
   sendLinePushNotification(lineUid, welcomeMsg);
   
   return {
@@ -587,12 +594,16 @@ function studentRegister(data) {
     data.department.trim(),
     data.grade.trim(),
     data.lineUid || "mock_line_" + studentUid,
-    studentFolderId
+    studentFolderId,
+    false, // ConsentSigned
+    "",    // BankCode
+    "",    // BankAccount
+    Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss") // CreatedAt
   ].map(safeWriteVal));
   
   // Send welcome push notification
   const lineId = data.lineUid || "mock_line_" + studentUid;
-  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${data.school.trim()} ${data.department.trim()} (${data.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
+  const welcomeMsg = `🎉 恭喜！您已成功註冊加入【古哥挑戰獎學金】成績挑戰計畫。\n學員編號：${studentUid}\n就讀學籍：${data.school.trim()} ${data.department.trim()} (${data.grade.trim()})\n\n讓我們一起突破自我的成績極限！`;
   sendLinePushNotification(lineId, welcomeMsg);
   
   return {
@@ -1253,15 +1264,15 @@ function adminDestroyCase(token, appId) {
   const studentUid = appRow[3];
   const lineUid = getStudentLineUid(ss, studentUid);
   if (lineUid) {
-    const msg = `🔒 隱私安全通知：您的【古哥獎學金】申請已完成撥款結案。\n依個資防護承諾，您的真實姓名、收款帳戶與成績單圖檔均已從資料庫與雲端硬碟中【徹底物理銷毀】，系統將不再留存任何敏感個資。祝您學業順利！`;
+    const msg = `🔒 隱私安全通知：您的【古哥挑戰獎學金】申請已完成撥款結案。\n依個資防護承諾，您的真實姓名、收款帳戶與成績單圖檔均已從資料庫與雲端硬碟中【徹底物理銷毀】，系統將不再留存任何敏感個資。祝您學業順利！`;
     sendLinePushNotification(lineUid, msg);
   }
   
   // Simulated email dispatch details
   const emailNotification = {
     to: 'student_registered_email@example.com',
-    subject: '【古哥獎學金】已撥款暨個人隱私資料銷毀通知',
-    body: `親愛的同學您好：您所申請的【古哥獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計數據。祝您學業更上一層樓！`
+    subject: '【古哥挑戰獎學金】已撥款暨個人隱私資料銷毀通知',
+    body: `親愛的同學您好：您所申請的【古哥挑戰獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計數據。祝您學業更上一層樓！`
   };
   
   return {
@@ -1308,7 +1319,7 @@ function adminExportApproved(token) {
       }
       
       // Escape CSV values
-      const line = `"${bankCode}","${bankAccount}",${amount},"${name}-古哥獎學金"`;
+      const line = `"${bankCode}","${bankAccount}",${amount},"${name}-古哥挑戰獎學金"`;
       csvLines.push(line);
     }
   }
@@ -1495,4 +1506,164 @@ function getSafeValues(sheet) {
     }
   }
   return values;
+}
+
+// ==========================================
+// ✏️ 學員自我基本資料編輯 API
+// ==========================================
+function studentUpdateProfile(lineUid, payload) {
+  if (!lineUid) return { success: false, message: '無效的學員識別！' };
+  
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const rows = getSafeValues(studentSheet);
+  
+  let studentRowIndex = -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][7] === lineUid) { // LineUID is column 8 (index 7)
+      studentRowIndex = i + 1; // 1-indexed row number
+      break;
+    }
+  }
+  
+  if (studentRowIndex === -1) {
+    return { success: false, message: '找不到對應的學員資料！' };
+  }
+  
+  // 僅更新非關鍵驗證欄位：暱稱、學校、科系、年級、銀行資訊
+  if (payload.nickname) studentSheet.getRange(studentRowIndex, 4).setValue(safeWriteVal(payload.nickname.trim()));
+  if (payload.school) studentSheet.getRange(studentRowIndex, 5).setValue(safeWriteVal(payload.school.trim()));
+  if (payload.department) studentSheet.getRange(studentRowIndex, 6).setValue(safeWriteVal(payload.department.trim()));
+  if (payload.grade) studentSheet.getRange(studentRowIndex, 7).setValue(safeWriteVal(payload.grade.trim()));
+  
+  if (payload.bank_code !== undefined) studentSheet.getRange(studentRowIndex, 11).setValue(safeWriteVal(payload.bank_code.trim()));
+  if (payload.bank_account !== undefined) studentSheet.getRange(studentRowIndex, 12).setValue(safeWriteVal(payload.bank_account.trim()));
+  
+  return { success: true, message: '個人基本資料已成功同步更新！' };
+}
+
+// ==========================================
+// 🎓 後台學年級自動升級校對邏輯
+// ==========================================
+function adminPromoteStudentGrades(token) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  
+  const ss = getDbSpreadsheet();
+  const studentSheet = ss.getSheetByName('students');
+  const rows = getSafeValues(studentSheet);
+  
+  const now = new Date();
+  const updatedLogs = [];
+  
+  for (let i = 1; i < rows.length; i++) {
+    const studentUid = rows[i][0];
+    const name = rows[i][1];
+    const originalGrade = rows[i][6];
+    let createdAtStr = rows[i].length >= 13 ? rows[i][12] : "";
+    
+    // 智慧相容：若舊學員缺少 CreatedAt，則嘗試抓取該學員最早的申請案時間，或以預設值 (ROC 114 / 2025-11-01) 寫入
+    if (!createdAtStr) {
+      const appSheet = ss.getSheetByName('applications');
+      const appRows = getSafeValues(appSheet);
+      let earliestAppDate = null;
+      for (let j = 1; j < appRows.length; j++) {
+        if (appRows[j][3] === studentUid) { // StudentUID
+          const appDate = new Date(appRows[j][10]); // CreatedAt
+          if (!isNaN(appDate.getTime())) {
+            if (!earliestAppDate || appDate < earliestAppDate) {
+              earliestAppDate = appDate;
+            }
+          }
+        }
+      }
+      if (earliestAppDate) {
+        createdAtStr = Utilities.formatDate(earliestAppDate, "GMT+8", "yyyy-MM-dd HH:mm:ss");
+      } else {
+        createdAtStr = "2025-11-01 12:00:00"; // 預設 ROC 114 年 11 月
+      }
+      // 回寫 CreatedAt 供後續精準校對
+      studentSheet.getRange(i + 1, 13).setValue(safeWriteVal(createdAtStr));
+    }
+    
+    // 計算學員當前應為之年級
+    const newGrade = calculateCurrentGrade(originalGrade, createdAtStr, now);
+    if (newGrade !== originalGrade) {
+      studentSheet.getRange(i + 1, 7).setValue(safeWriteVal(newGrade));
+      updatedLogs.push({
+        name: name,
+        uid: studentUid,
+        oldGrade: originalGrade,
+        newGrade: newGrade
+      });
+    }
+  }
+  
+  return {
+    success: true,
+    updatedCount: updatedLogs.length,
+    logs: updatedLogs,
+    message: `學年升級校對完成！共升級 ${updatedLogs.length} 位學員之學籍。`
+  };
+}
+
+// 取得該日期對應之學年年份 (以 8 月為開學分水嶺，8-12月為當年，1-7月為前一年)
+function getAcademicYearYear(date) {
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1; // 1-indexed
+  if (m >= 8) {
+    return y;
+  } else {
+    return y - 1;
+  }
+}
+
+// 根據註冊初始年級、註冊時間與當前時間，算出當前年級
+function calculateCurrentGrade(initialGrade, registrationDateStr, currentDate) {
+  if (!registrationDateStr) return initialGrade;
+  const regDate = new Date(registrationDateStr);
+  if (isNaN(regDate.getTime())) return initialGrade;
+  
+  const diff = getAcademicYearYear(currentDate) - getAcademicYearYear(regDate);
+  if (diff <= 0) return initialGrade;
+  
+  const gradeMap = {
+    "大一": 1, "大二": 2, "大三": 3, "大四": 4,
+    "碩一": 1, "碩二": 2,
+    "博一": 1, "博二": 2, "博三": 3, "博四": 4
+  };
+  
+  let gradeType = "";
+  let startYear = 0;
+  if (initialGrade.indexOf("大") === 0) {
+    gradeType = "大";
+    startYear = gradeMap[initialGrade] || 1;
+  } else if (initialGrade.indexOf("碩") === 0) {
+    gradeType = "碩";
+    startYear = gradeMap[initialGrade] || 1;
+  } else if (initialGrade.indexOf("博") === 0) {
+    gradeType = "博";
+    startYear = gradeMap[initialGrade] || 1;
+  } else {
+    return initialGrade; // 其它自訂年級不自動變更
+  }
+  
+  const currentYear = startYear + diff;
+  if (gradeType === "大") {
+    if (currentYear > 4) return "已畢業";
+    return "大" + getChineseNumber(currentYear);
+  } else if (gradeType === "碩") {
+    if (currentYear > 2) return "已畢業";
+    return "碩" + getChineseNumber(currentYear);
+  } else if (gradeType === "博") {
+    if (currentYear > 4) return "已畢業";
+    return "博" + getChineseNumber(currentYear);
+  }
+  return initialGrade;
+}
+
+function getChineseNumber(num) {
+  const ch = ["", "一", "二", "三", "四", "五", "六"];
+  return ch[num] || num.toString();
 }

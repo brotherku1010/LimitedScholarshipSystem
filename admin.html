@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【古哥獎學金】管理端後台 - 雙螢幕無痕銷毀系統</title>
+    <title>【古哥挑戰獎學金】管理端後台 - 雙螢幕無痕銷毀系統</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -959,7 +959,7 @@ body {
             <div class="logo-icon" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);">
                 <i class="fa-solid fa-user-shield"></i>
             </div>
-            <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; color: #fff; margin-top: 0;">古哥獎學金審查系統</h1>
+            <h1 style="font-size: 1.6rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; color: #fff; margin-top: 0;">古哥挑戰獎學金審查系統</h1>
             <p class="subtitle" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 30px; margin-top: 0;">後台管理端安全驗證登入</p>
 
             <form id="admin-login-form">
@@ -985,7 +985,7 @@ body {
         <div class="header-logo">
             <i class="fa-solid fa-user-shield logo-icon"></i>
             <div>
-                <h1>古哥獎學金管理後台</h1>
+                <h1>古哥挑戰獎學金管理後台</h1>
                 <p class="subtitle">雙螢幕快速對照審核與無痕銷毀系統</p>
             </div>
         </div>
@@ -1036,6 +1036,9 @@ body {
             <div class="toolbar-right" style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" id="btn-open-settings" style="background: rgba(255,209,102,0.15); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--gold)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,209,102,0.15)'; this.style.color='var(--gold)';">
                     <i class="fa-solid fa-gears"></i> 獎金設定
+                </button>
+                <button class="btn btn-secondary" id="btn-promote-grades" style="background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #10b981; padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='#10b981'; this.style.color='#000';" onmouseout="this.style.background='rgba(16,185,129,0.15)'; this.style.color='#10b981';">
+                    <i class="fa-solid fa-graduation-cap"></i> 學年升級校對
                 </button>
                 <button class="btn btn-reject" id="btn-admin-logout" style="background: rgba(255,0,127,0.15); border: 1px solid var(--neon-pink); color: var(--neon-pink); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--neon-pink)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,0,127,0.15)'; this.style.color='var(--neon-pink)';">
                     <i class="fa-solid fa-right-from-bracket"></i> 登出後台
@@ -1222,7 +1225,7 @@ body {
                     <div class="email-mock-box">
                         <span class="em-title">✉ 模擬郵件伺服器記錄 (已寄出)：</span>
                         <p class="em-meta"><strong>收件人:</strong> student_registered_email@example.com</p>
-                        <p class="em-meta"><strong>主旨:</strong> 【古哥獎學金】已撥款暨個人隱私資料銷毀通知</p>
+                        <p class="em-meta"><strong>主旨:</strong> 【古哥挑戰獎學金】已撥款暨個人隱私資料銷毀通知</p>
                         <p class="em-body" id="log-email-body">...</p>
                     </div>
                     <p class="console-line text-green">> OK. Shredding complete. Connection closed.</p>
@@ -1401,8 +1404,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     document.getElementById('btn-open-settings').addEventListener('click', openSettingsModal);
-
-
+    
+    const btnPromote = document.getElementById('btn-promote-grades');
+    if (btnPromote) {
+        btnPromote.addEventListener('click', handlePromoteGrades);
+    }
 
     document.getElementById('form-settings').addEventListener('submit', saveSettings);
 
@@ -3669,6 +3675,46 @@ function renderSinglePic(imgUrl, index) {
     }
 
     container.appendChild(picImg);
+}
+
+// ==========================================
+// 🎓 學年升級校對處理函式
+// ==========================================
+function handlePromoteGrades() {
+    if (!confirm("確定要執行學年升級校對嗎？
+
+系統將會比對所有學員的「註冊時間」與「當前時間」，判定是否跨越 8 月份的開學分水嶺，自動將學員年級往上升級（例如大一 ➔ 大二，大四 ➔ 已畢業）並直接寫入試算表資料庫中。")) {
+        return;
+    }
+    
+    showToast("正在執行年級升級校對...", "fa-arrows-spin");
+    
+    google.script.run
+        .withSuccessHandler(function(res) {
+            if (res.success) {
+                if (res.updatedCount === 0) {
+                    showToast("校對完成！所有學籍皆為最新年級，無須更新。", "fa-circle-check");
+                } else {
+                    showToast(res.message, "fa-circle-check");
+                    // 以詳細對話框展示升級清單
+                    let logStr = `🎉 學年升級校對成功！共更新 ${res.updatedCount} 位學員：
+
+`;
+                    res.logs.forEach(log => {
+                        logStr += `• ${log.name} (${log.uid}): ${log.oldGrade} ➔ ${log.newGrade}
+`;
+                    });
+                    alert(logStr);
+                    loadCaseList(); // 重新載入案件列表
+                }
+            } else {
+                showToast(res.message, "fa-triangle-exclamation");
+            }
+        })
+        .withFailureHandler(function(err) {
+            showToast("伺服器連線失敗，學年升級校對執行失敗！", "fa-triangle-exclamation");
+        })
+        .adminPromoteStudentGrades(ADMIN_TOKEN);
 }
 
 </script>
