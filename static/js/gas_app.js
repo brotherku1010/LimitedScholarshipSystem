@@ -106,19 +106,8 @@ function initLiff() {
 function showIframeLoginNotice() {
     const loginModal = document.getElementById('modal-login');
     if (loginModal) {
-        loginModal.querySelector('.modal-header h2').innerHTML = `<i class="fa-brands fa-line" style="color: #06C755;"></i> 請使用 LINE 驗證登入`;
-        loginModal.querySelector('.modal-body').innerHTML = `
-            <div style="text-align: center; padding: 20px 10px;">
-                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>
-                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥獎學金挑戰計畫</p>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">
-                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。
-                </p>
-                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">
-                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入
-                </a>
-            </div>
-        `;
+        loginModal.querySelector('.modal-header h2').innerHTML = '<i class="fa-brands fa-line" style="color: #06C755;"></i> 請使用 LINE 驗證登入';
+        loginModal.querySelector('.modal-body').innerHTML = '\n            <div style="text-align: center; padding: 20px 10px;">\n                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>\n                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥獎學金挑戰計畫</p>\n                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">\n                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。\n                </p>\n                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">\n                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入\n                </a>\n            </div>\n        ';
         const footer = loginModal.querySelector('.modal-footer');
         if (footer) footer.style.display = 'none';
         openModal('modal-login');
@@ -185,7 +174,7 @@ function onLiffLoginSuccess(data) {
         if (mainApp) mainApp.style.display = 'block';
         if (loadingOverlay) loadingOverlay.classList.add('hidden');
         
-        showToast(`登入成功！歡迎進入計畫，${data.name}同學。`, "fa-circle-check");
+        showToast('登入成功！歡迎進入計畫，' + (data.name) + '同學。', "fa-circle-check");
     } else if (data.code === 'NOT_REGISTERED') {
         // First time login: Open registration form and prefill nickname with LINE name
         if (loadingOverlay) loadingOverlay.classList.add('hidden');
@@ -196,14 +185,7 @@ function onLiffLoginSuccess(data) {
     } else {
         // 身分驗證被拒絕或發生錯誤
         if (loadingOverlay) {
-            loadingOverlay.innerHTML = `
-                <div class="global-loading-card" style="border-color: var(--neon-red);">
-                    <i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
-                    <h2 style="color: var(--neon-red);">身分驗證失敗</h2>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">${data.message || "未知的系統錯誤"}</p>
-                    <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
-                </div>
-            `;
+            loadingOverlay.innerHTML = '\n                <div class="global-loading-card" style="border-color: var(--neon-red);">\n                    <i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>\n                    <h2 style="color: var(--neon-red);">身分驗證失敗</h2>\n                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">' + (data.message || "未知的系統錯誤") + '</p>\n                    <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>\n                </div>\n            ';
         }
         showToast(data.message || "身分驗證失敗！", "fa-circle-xmark");
     }
@@ -218,14 +200,7 @@ function onLiffLoginFailure(err) {
     // 展示伺服器連線失敗畫面，提供重新整理按鈕
     const loadingOverlay = document.getElementById('global-loading-screen');
     if (loadingOverlay) {
-        loadingOverlay.innerHTML = `
-            <div class="global-loading-card" style="border-color: var(--neon-red);">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
-                <h2 style="color: var(--neon-red);">系統連線失敗</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">無法與伺服器取得同步，請確認網路連線狀態。</p>
-                <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
-            </div>
-        `;
+        loadingOverlay.innerHTML = '\n            <div class="global-loading-card" style="border-color: var(--neon-red);">\n                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>\n                <h2 style="color: var(--neon-red);">系統連線失敗</h2>\n                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">無法與伺服器取得同步，請確認網路連線狀態。</p>\n                <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>\n            </div>\n        ';
     }
     showToast("伺服器連線失敗，請稍後重試！", "fa-circle-xmark");
 }
@@ -252,10 +227,10 @@ function updateStudentUI() {
     const infoPanel = document.getElementById('student-info-panel');
     if (infoPanel) {
         infoPanel.style.display = 'block';
-        document.getElementById('student-display-name').innerText = currentUser.name + " 同學";
+        document.getElementById('student-display-name').innerText = (currentUser.nickname || currentUser.name) + " 同學";
         
         const schoolText = currentUser.school + " " + currentUser.department + " (" + currentUser.grade + ")";
-        document.getElementById('student-display-meta').innerHTML = `<i class="fa-solid fa-graduation-cap"></i> ${schoolText}`;
+        document.getElementById('student-display-meta').innerHTML = '<i class="fa-solid fa-graduation-cap"></i> ' + (schoolText);
         document.getElementById('student-display-attempts').innerText = currentUser.approvedAttempts || 0;
     }
     
@@ -302,20 +277,20 @@ function updateStudentUI() {
     if (currentUser.grade === '大一') {
         cardProgress.classList.add('locked');
         badgeProgress.className = "status-badge lock-badge";
-        badgeProgress.innerHTML = `<i class="fa-solid fa-lock"></i> 鎖定中`;
+        badgeProgress.innerHTML = '<i class="fa-solid fa-lock"></i> 鎖定中';
         descProgress.innerText = "在大一期間為鎖定預告狀態，大二上學期將會正式解鎖。此方案鼓勵挑戰自我極限，突破往期成績！";
         if (overlayProgress) overlayProgress.style.display = 'block';
-        if (titleCalc) titleCalc.innerHTML = `<i class="fa-solid fa-calculator"></i> 獎金模擬試算器 (大一體驗版)`;
-        btnApplyProgress.innerHTML = `<i class="fa-solid fa-ban"></i> 大一學生暫無申請權限`;
+        if (titleCalc) titleCalc.innerHTML = '<i class="fa-solid fa-calculator"></i> 獎金模擬試算器 (大一體驗版)';
+        btnApplyProgress.innerHTML = '<i class="fa-solid fa-ban"></i> 大一學生暫無申請權限';
         btnApplyProgress.className = "btn btn-secondary btn-full btn-disabled";
     } else {
         cardProgress.classList.remove('locked');
         badgeProgress.className = "status-badge hot";
-        badgeProgress.innerHTML = `<i class="fa-solid fa-unlock-keyhole"></i> 已解鎖可申請`;
+        badgeProgress.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> 已解鎖可申請';
         descProgress.innerText = "學期進步獎已解鎖！只要本學期平均分數高於上一學期，即可申請高額進步獎金。";
         if (overlayProgress) overlayProgress.style.display = 'none';
-        if (titleCalc) titleCalc.innerHTML = `<i class="fa-solid fa-calculator"></i> 成績進步試算與申請`;
-        btnApplyProgress.innerHTML = `<i class="fa-solid fa-arrow-up-right-dots"></i> 填寫匯款資料，送出申請`;
+        if (titleCalc) titleCalc.innerHTML = '<i class="fa-solid fa-calculator"></i> 成績進步試算與申請';
+        btnApplyProgress.innerHTML = '<i class="fa-solid fa-arrow-up-right-dots"></i> 填寫匯款資料，送出申請';
         btnApplyProgress.className = "btn btn-secondary btn-full";
     }
 
@@ -341,15 +316,15 @@ function updateStudentUI() {
     // Apply active settings values to UI text
     const formulaDesc = document.getElementById('calc-formula-desc');
     if (formulaDesc && activeSettings) {
-        formulaDesc.innerText = `試算公式：${activeSettings.progressBase} (底金) + 學分級距加給 + [ (進步分數 × 難度係數 × 學分權重) × ${activeSettings.progressConversionRate}元 ]`;
+        formulaDesc.innerText = '試算公式：' + (activeSettings.progressBase) + ' (底金) + 學分級距加給 + [ (進步分數 × 難度係數 × 學分權重) × ' + (activeSettings.progressConversionRate) + '元 ]';
     }
     const blueprintBtn = document.getElementById('btn-apply-blueprint-modal');
     if (blueprintBtn && activeSettings && activeSettings.blueprintAmount) {
-        blueprintBtn.innerHTML = `<i class="fa-solid fa-rocket"></i> 上傳圓夢企劃書 ➔ 啟動募資 (最高 NT$ ${activeSettings.blueprintAmount.toLocaleString()})`;
+        blueprintBtn.innerHTML = '<i class="fa-solid fa-rocket"></i> 上傳圓夢企劃書 ➔ 啟動募資 (最高 NT$ ' + (activeSettings.blueprintAmount.toLocaleString()) + ')';
     }
     const modalBlueprintAmount = document.querySelector('#modal-apply-blueprint .target-left strong');
     if (modalBlueprintAmount && activeSettings && activeSettings.blueprintAmount) {
-        modalBlueprintAmount.innerText = `最高 NT$ ${activeSettings.blueprintAmount.toLocaleString()}`;
+        modalBlueprintAmount.innerText = '最高 NT$ ' + (activeSettings.blueprintAmount.toLocaleString());
     }
 
     // Render Shields
@@ -408,7 +383,7 @@ function renderLadder() {
         if (amountSpan && activeSettings && activeSettings.challengeAmounts) {
             const amt = activeSettings.challengeAmounts[level - 1];
             if (amt !== undefined) {
-                amountSpan.innerText = `NT$ ${amt.toLocaleString()}`;
+                amountSpan.innerText = 'NT$ ' + (amt.toLocaleString());
             }
         }
         
@@ -509,7 +484,7 @@ function initEventListeners() {
             item.classList.add('selected');
             selectedChallengeTarget = parseFloat(item.getAttribute('data-target'));
             
-            showToast(`已選擇防線門檻：${selectedChallengeTarget}分，請點擊下方按鈕送出成績！`, "fa-bullseye");
+            showToast('已選擇防線門檻：' + (selectedChallengeTarget) + '分，請點擊下方按鈕送出成績！', "fa-bullseye");
         });
     });
 
@@ -529,7 +504,7 @@ function initEventListeners() {
         if (activeSettings && activeSettings.challengeAmounts && activeSettings.challengeAmounts[currentLevel - 1] !== undefined) {
             assignedAmt = activeSettings.challengeAmounts[currentLevel - 1];
         }
-        document.getElementById('form-challenge-target-amount').innerText = `NT$ ${assignedAmt.toLocaleString()}`;
+        document.getElementById('form-challenge-target-amount').innerText = 'NT$ ' + (assignedAmt.toLocaleString());
         
         openModal('modal-apply-challenge');
     });
@@ -608,7 +583,7 @@ function initEventListeners() {
         if (input && display) {
             input.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
-                    display.innerText = `已選取: ${e.target.files[0].name} (${(e.target.files[0].size/1024).toFixed(1)} KB)`;
+                    display.innerText = '已選取: ' + (e.target.files[0].name) + ' (' + ((e.target.files[0].size/1024).toFixed(1)) + ' KB)';
                 } else {
                     display.innerText = '';
                 }
@@ -649,7 +624,7 @@ function initEventListeners() {
         document.getElementById('progress-credits').value = credits;
         
         // Fill badge
-        document.getElementById('form-progress-diff').innerText = `+${diff.toFixed(2)} 分`;
+        document.getElementById('form-progress-diff').innerText = '+' + (diff.toFixed(2)) + ' 分';
         
         // 1. Credits tier bonus
         let creditsBonus = 0;
@@ -683,18 +658,18 @@ function initEventListeners() {
         // 5. Total
         const total = activeSettings.progressBase + creditsBonus + Math.round(conversion);
         
-        document.getElementById('form-progress-amount').innerText = `NT$ ${total.toLocaleString()}`;
+        document.getElementById('form-progress-amount').innerText = 'NT$ ' + (total.toLocaleString());
         
         // Fill modal breakdown details
-        document.getElementById('modal-breakdown-base').innerText = `NT$ ${activeSettings.progressBase.toLocaleString()}`;
-        document.getElementById('modal-breakdown-tier').innerText = `NT$ ${creditsBonus.toLocaleString()}`;
+        document.getElementById('modal-breakdown-base').innerText = 'NT$ ' + (activeSettings.progressBase.toLocaleString());
+        document.getElementById('modal-breakdown-tier').innerText = 'NT$ ' + (creditsBonus.toLocaleString());
         document.getElementById('modal-breakdown-coeff').innerText = difficultyCoeff.toFixed(2);
         document.getElementById('modal-breakdown-weight').innerText = creditWeight.toFixed(2);
-        document.getElementById('modal-breakdown-points').innerText = `${points.toFixed(2)} 點`;
-        document.getElementById('modal-breakdown-cash').innerText = `NT$ ${Math.round(conversion).toLocaleString()}`;
+        document.getElementById('modal-breakdown-points').innerText = (points.toFixed(2)) + ' 點';
+        document.getElementById('modal-breakdown-cash').innerText = 'NT$ ' + (Math.round(conversion).toLocaleString());
         
         // Update modal title to official mode
-        document.querySelector('#modal-apply-progress h2').innerHTML = `<i class="fa-solid fa-chart-line-up"></i> 送出學期進步獎申請`;
+        document.querySelector('#modal-apply-progress h2').innerHTML = '<i class="fa-solid fa-chart-line-up"></i> 送出學期進步獎申請';
         document.querySelector('#modal-apply-progress .target-left span').innerText = '進步幅度';
         document.querySelector('#modal-apply-progress .target-right span').innerText = '預計獎金';
         
@@ -947,16 +922,16 @@ function initProgressCalculator() {
         const total = activeSettings.progressBase + creditsBonus + Math.round(conversion);
         
         // Update UI result
-        resultBox.innerText = `NT$ ${total.toLocaleString()}`;
+        resultBox.innerText = 'NT$ ' + (total.toLocaleString());
         
         // Show breakdown
         if (breakdownBox) {
-            document.getElementById('breakdown-base').innerText = `NT$ ${activeSettings.progressBase.toLocaleString()}`;
-            document.getElementById('breakdown-tier').innerText = `NT$ ${creditsBonus.toLocaleString()}`;
+            document.getElementById('breakdown-base').innerText = 'NT$ ' + (activeSettings.progressBase.toLocaleString());
+            document.getElementById('breakdown-tier').innerText = 'NT$ ' + (creditsBonus.toLocaleString());
             document.getElementById('breakdown-coeff').innerText = difficultyCoeff.toFixed(2);
             document.getElementById('breakdown-weight').innerText = creditWeight.toFixed(2);
-            document.getElementById('breakdown-points').innerText = `${points.toFixed(2)} 點`;
-            document.getElementById('breakdown-cash').innerText = `NT$ ${Math.round(conversion).toLocaleString()}`;
+            document.getElementById('breakdown-points').innerText = (points.toFixed(2)) + ' 點';
+            document.getElementById('breakdown-cash').innerText = 'NT$ ' + (Math.round(conversion).toLocaleString());
             breakdownBox.style.display = 'block';
         }
     };
@@ -1001,7 +976,7 @@ function showToast(text, iconClass = "fa-circle-info") {
     
     if (toast && toastText && toastIcon) {
         toastText.innerText = text;
-        toastIcon.className = `fa-solid ${iconClass} toast-icon`;
+        toastIcon.className = 'fa-solid ' + (iconClass) + ' toast-icon';
         
         toast.classList.add('show');
         if (toastTimer) clearTimeout(toastTimer);
@@ -1147,17 +1122,7 @@ function renderHistoryList(apps) {
         
         const row = document.createElement('div');
         row.className = 'history-item';
-        row.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        `;
+        row.style.cssText = '\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            padding: 12px 15px;\n            background: rgba(255,255,255,0.03);\n            border: 1px solid rgba(255,255,255,0.06);\n            border-radius: 8px;\n            cursor: pointer;\n            transition: all 0.2s ease;\n        ';
         
         row.onmouseenter = () => {
             row.style.background = 'rgba(255,255,255,0.06)';
@@ -1170,16 +1135,7 @@ function renderHistoryList(apps) {
         
         row.onclick = () => showApplicationDetail(app);
         
-        row.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
-                <i class="fa-solid ${iconClass}" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>
-                <div>
-                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">${typeLabel}</span>
-                    <small style="color: var(--text-muted); font-size: 0.8rem;">${app.academicYear} | NT$ ${parseInt(app.amount).toLocaleString()}</small>
-                </div>
-            </div>
-            <span class="status-badge ${badgeClass}" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">${badgeText}</span>
-        `;
+        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | NT$ ' + (parseInt(app.amount).toLocaleString()) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>\n        ';
         
         container.appendChild(row);
     });
@@ -1198,23 +1154,23 @@ function showApplicationDetail(app) {
     
     if (app.status === 'pending') {
         statusText = "審查中";
-        badgeHtml = `<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        badgeHtml = '<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "資料已送出，後台管理團隊審核中。請耐心等待 LINE 通知。";
     } else if (app.status === 'approved') {
         statusText = "審核通過";
-        badgeHtml = `<span class="status-badge badge-approved" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        badgeHtml = '<span class="status-badge badge-approved" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "審核已通過！目前已送交網銀進行撥款流程。請於近日注意您的收款帳戶變動。";
     } else if (app.status === 'rejected') {
         statusText = "退回修正";
-        badgeHtml = `<span class="status-badge badge-rejected" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        badgeHtml = '<span class="status-badge badge-rejected" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "審核未通過（已被退回）。請確認您的申請資料填寫是否正確，或者上傳之證明文件是否清晰。您可以隨時重新送出申請。";
     } else if (app.status === 'destroyed') {
         statusText = "已撥款結案";
-        badgeHtml = `<span class="status-badge badge-destroyed" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        badgeHtml = '<span class="status-badge badge-destroyed" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "已完成撥款！本申請案已正式結案。依照隱私安全承諾，您的真實姓名、收款銀行帳戶及成績單檔案均已【物理銷毀】並完成去識別化，感謝您的參與！";
     } else {
         statusText = app.status || "核定中";
-        badgeHtml = `<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">${statusText}</span>`;
+        badgeHtml = '<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "本案正在審理中。";
     }
     
@@ -1274,7 +1230,7 @@ function initDragAndDropUpload() {
             fileInput.files = files;
             // Update display text
             if (display) {
-                display.innerText = `已選取: ${files[0].name} (${(files[0].size/1024).toFixed(1)} KB)`;
+                display.innerText = '已選取: ' + (files[0].name) + ' (' + ((files[0].size/1024).toFixed(1)) + ' KB)';
             }
         }
     });

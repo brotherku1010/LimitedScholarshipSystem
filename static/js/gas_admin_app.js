@@ -610,19 +610,7 @@ function renderCaseList() {
 
 
 
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 40px; color: var(--text-muted); font-size: 0.95rem;">
-
-
-
-            <i class="fa-solid fa-folder-open" style="font-size: 2.2rem; margin-bottom: 10px; display: block;"></i>
-
-
-
-            目前尚無符合該篩選狀態的申請案件。
-
-
-
-        </td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="padding: 40px; color: var(--text-muted); font-size: 0.95rem;">\n\n\n\n            <i class="fa-solid fa-folder-open" style="font-size: 2.2rem; margin-bottom: 10px; display: block;"></i>\n\n\n\n            目前尚無符合該篩選狀態的申請案件。\n\n\n\n        </td></tr>';
 
 
 
@@ -646,7 +634,7 @@ function renderCaseList() {
 
 
 
-        tr.className = `case-row ${selectedCase && selectedCase.id === c.id ? 'active-row' : ''}`;
+        tr.className = 'case-row ' + (selectedCase && selectedCase.id === c.id ? 'active-row' : '');
 
 
 
@@ -686,7 +674,7 @@ function renderCaseList() {
 
 
 
-        if (c.type === 'challenge') targetText = c.challenge_target ? `${parseFloat(c.challenge_target).toFixed(2)} 分` : '--';
+        if (c.type === 'challenge') targetText = c.challenge_target ? (parseFloat(c.challenge_target).toFixed(2)) + ' 分' : '--';
 
 
 
@@ -698,7 +686,7 @@ function renderCaseList() {
 
 
 
-            targetText = `+${diffVal.toFixed(2)} 分`;
+            targetText = '+' + (diffVal.toFixed(2)) + ' 分';
 
 
 
@@ -730,19 +718,19 @@ function renderCaseList() {
 
 
 
-        let statusBadge = `<span class="badge pending">待審核</span>`;
+        let statusBadge = '<span class="badge pending">待審核</span>';
 
 
 
-        if (c.status === 'approved') statusBadge = `<span class="badge approved">已核准</span>`;
+        if (c.status === 'approved') statusBadge = '<span class="badge approved">已核准</span>';
 
 
 
-        if (c.status === 'rejected') statusBadge = `<span class="badge rejected">已拒絕</span>`;
+        if (c.status === 'rejected') statusBadge = '<span class="badge rejected">已拒絕</span>';
 
 
 
-        if (c.status === 'destroyed') statusBadge = `<span class="badge destroyed">已銷毀結案</span>`;
+        if (c.status === 'destroyed') statusBadge = '<span class="badge destroyed">已銷毀結案</span>';
 
 
 
@@ -750,43 +738,7 @@ function renderCaseList() {
 
 
 
-        tr.innerHTML = `
-
-
-
-            <td>${c.created_at}</td>
-
-
-
-            <td class="font-tech" style="font-size: 0.85rem;">${c.school || ''} ${c.department || ''} (${c.grade || ''})</td>
-
-
-
-            <td>${c.name || '已銷毀'}</td>
-
-
-
-            <td><span style="color: var(--neon-blue); font-weight: bold; font-family: monospace;">${c.academic_year || '--'}</span></td>
-
-
-
-            <td>${typeText}</td>
-
-
-
-            <td>${targetText}</td>
-
-
-
-            <td class="font-tech text-gold font-bold">NT$ ${(c.amount || 0).toLocaleString()}</td>
-
-
-
-            <td>${statusBadge}</td>
-
-
-
-        `;
+        tr.innerHTML = '\n\n\n\n            <td>' + (c.created_at) + '</td>\n\n\n\n            <td class="font-tech" style="font-size: 0.85rem;">' + (c.school || '') + ' ' + (c.department || '') + ' (' + (c.grade || '') + ')</td>\n\n\n\n            <td>' + (c.name || '已銷毀') + '</td>\n\n\n\n            <td><span style="color: var(--neon-blue); font-weight: bold; font-family: monospace;">' + (c.academic_year || '--') + '</span></td>\n\n\n\n            <td>' + (typeText) + '</td>\n\n\n\n            <td>' + (targetText) + '</td>\n\n\n\n            <td class="font-tech text-gold font-bold">NT$ ' + ((c.amount || 0).toLocaleString()) + '</td>\n\n\n\n            <td>' + (statusBadge) + '</td>\n\n\n\n        ';
 
 
 
@@ -862,7 +814,7 @@ function selectCase(c) {
 
 
 
-    document.getElementById('audit-school-dept').innerText = `${c.school || '--'} ${c.department || '--'}`;
+    document.getElementById('audit-school-dept').innerText = (c.school || '--') + ' ' + (c.department || '--');
 
 
 
@@ -874,7 +826,7 @@ function selectCase(c) {
 
 
 
-    document.getElementById('audit-amount').innerText = `NT$ ${(c.amount || 0).toLocaleString()}`;
+    document.getElementById('audit-amount').innerText = 'NT$ ' + ((c.amount || 0).toLocaleString());
 
 
 
@@ -962,11 +914,11 @@ function selectCase(c) {
 
 
 
-        document.getElementById('audit-gpa').innerText = c.gpa ? `${parseFloat(c.gpa).toFixed(2)} 分` : '--';
+        document.getElementById('audit-gpa').innerText = c.gpa ? (parseFloat(c.gpa).toFixed(2)) + ' 分' : '--';
 
 
 
-        document.getElementById('audit-target').innerText = c.challenge_target ? `${parseFloat(c.challenge_target).toFixed(2)} 分` : '--';
+        document.getElementById('audit-target').innerText = c.challenge_target ? (parseFloat(c.challenge_target).toFixed(2)) + ' 分' : '--';
 
 
 
@@ -998,11 +950,11 @@ function selectCase(c) {
 
 
 
-        document.getElementById('audit-prev-gpa').innerText = c.prev_gpa ? `${parseFloat(c.prev_gpa).toFixed(2)} 分` : '--';
+        document.getElementById('audit-prev-gpa').innerText = c.prev_gpa ? (parseFloat(c.prev_gpa).toFixed(2)) + ' 分' : '--';
 
 
 
-        document.getElementById('audit-gpa').innerText = c.curr_gpa ? `${parseFloat(c.curr_gpa).toFixed(2)} 分` : '--';
+        document.getElementById('audit-gpa').innerText = c.curr_gpa ? (parseFloat(c.curr_gpa).toFixed(2)) + ' 分' : '--';
 
 
 
@@ -1204,7 +1156,7 @@ function updateStats() {
 
 
 
-    document.getElementById('stat-total-amount').innerText = `NT$ ${totalPayout.toLocaleString()}`;
+    document.getElementById('stat-total-amount').innerText = 'NT$ ' + (totalPayout.toLocaleString());
 
 
 
@@ -1228,11 +1180,7 @@ function approveCase() {
 
 
 
-    if (confirm(`確定要「核准」學生 ${selectedCase.name} 的這筆獎學金申請嗎？
-
-
-
-核准金額：NT$ ${selectedCase.amount.toLocaleString()} 元`)) {
+    if (confirm('確定要「核准」學生 ' + (selectedCase.name) + ' 的這筆獎學金申請嗎？\n\n\n\n核准金額：NT$ ' + (selectedCase.amount.toLocaleString()) + ' 元')) {
 
 
 
@@ -1320,7 +1268,7 @@ function rejectCase() {
 
 
 
-    if (confirm(`確定要「拒絕」這筆申請案件嗎？`)) {
+    if (confirm('確定要「拒絕」這筆申請案件嗎？')) {
 
 
 
@@ -1404,39 +1352,7 @@ function destroyPIICase() {
 
 
 
-    const msg = `【🚨 警告：個資銷毀安全機制】
-
-
-
-
-
-
-
-確定此筆案件已撥款，並執行「一鍵物理銷毀」？
-
-
-
-此動作將進行以下作業：
-
-
-
-1. 刪除該學生的成績單/企劃書圖檔
-
-
-
-2. 抹除資料庫中該筆申請的戶名與收款銀行帳號
-
-
-
-3. 姓名去識別化遮罩 (例如 ${selectedCase.name} -> 遮罩處理)
-
-
-
-
-
-
-
-※ 此物理刪除動作永久無法撤回！※`;
+    const msg = '【🚨 警告：個資銷毀安全機制】\n\n\n\n\n\n\n\n確定此筆案件已撥款，並執行「一鍵物理銷毀」？\n\n\n\n此動作將進行以下作業：\n\n\n\n1. 刪除該學生的成績單/企劃書圖檔\n\n\n\n2. 抹除資料庫中該筆申請的戶名與收款銀行帳號\n\n\n\n3. 姓名去識別化遮罩 (例如 ' + (selectedCase.name) + ' -> 遮罩處理)\n\n\n\n\n\n\n\n※ 此物理刪除動作永久無法撤回！※';
 
 
 
@@ -1556,7 +1472,7 @@ function exportApprovedCases() {
 
 
 
-            link.setAttribute("download", `guge_scholarship_export_${new Date().toISOString().slice(0,10).replace(/-/g,"")}.csv`);
+            link.setAttribute("download", 'guge_scholarship_export_' + (new Date().toISOString().slice(0,10).replace(/-/g,"")) + '.csv');
 
 
 
@@ -1664,7 +1580,7 @@ function openSettingsModal() {
             // Fill challenge level inputs
             if (data.challenge_amounts) {
                 for (let i = 0; i < 8; i++) {
-                    const inp = document.getElementById(`settings-challenge-${i+1}`);
+                    const inp = document.getElementById('settings-challenge-' + (i+1));
                     if (inp) {
                         inp.value = data.challenge_amounts[i] !== undefined ? data.challenge_amounts[i] : '';
                     }
@@ -1718,7 +1634,7 @@ function saveSettings(e) {
     
     const challengeAmounts = [];
     for (let i = 0; i < 8; i++) {
-        const val = parseInt(document.getElementById(`settings-challenge-${i+1}`).value);
+        const val = parseInt(document.getElementById('settings-challenge-' + (i+1)).value);
         if (isNaN(val)) {
             showToast("所有挑戰級距獎金均為必填！", "fa-triangle-exclamation");
             return;
@@ -2018,7 +1934,7 @@ function showToast(text, iconClass = "fa-circle-info") {
 
 
 
-        toastIcon.className = `fa-solid ${iconClass} toast-icon`;
+        toastIcon.className = 'fa-solid ' + (iconClass) + ' toast-icon';
 
 
 
@@ -2137,23 +2053,12 @@ function renderFilePreview(c) {
     if (!docViewer) return;
 
     if (c.status === 'destroyed') {
-        docViewer.innerHTML = `
-            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color);">
-                <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>
-                <p style="font-weight: bold; margin-bottom: 5px;">🔒 個資與證明文件已物理銷毀</p>
-                <small>依照隱私切結安全承諾，本案已完成匯款。成績單與個資已徹底刪除，不可復原。</small>
-            </div>
-        `;
+        docViewer.innerHTML = '\n            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color);">\n                <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>\n                <p style="font-weight: bold; margin-bottom: 5px;">🔒 個資與證明文件已物理銷毀</p>\n                <small>依照隱私切結安全承諾，本案已完成匯款。成績單與個資已徹底刪除，不可復原。</small>\n            </div>\n        ';
         return;
     }
 
     if (!c.file_path) {
-        docViewer.innerHTML = `
-            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">
-                <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
-                未上傳任何證明文件。
-            </div>
-        `;
+        docViewer.innerHTML = '\n            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">\n                <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>\n                未上傳任何證明文件。\n            </div>\n        ';
         return;
     }
 
@@ -2162,13 +2067,7 @@ function renderFilePreview(c) {
     
     // Check if we need to fetch metadata for file1 (file_path)
     if (isDriveUrl && c._mimeType === undefined) {
-        docViewer.innerHTML = `
-            <div style="padding: 80px 20px; text-align: center; color: var(--text-muted);">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>
-                <p style="font-weight: bold; margin-bottom: 5px;">雲端安全驗證中...</p>
-                <small>正在自 Google Drive 取得證明文件資訊...</small>
-            </div>
-        `;
+        docViewer.innerHTML = '\n            <div style="padding: 80px 20px; text-align: center; color: var(--text-muted);">\n                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>\n                <p style="font-weight: bold; margin-bottom: 5px;">雲端安全驗證中...</p>\n                <small>正在自 Google Drive 取得證明文件資訊...</small>\n            </div>\n        ';
         
         google.script.run
             .withSuccessHandler(function(data) {
@@ -2211,12 +2110,7 @@ function renderFilePreview(c) {
 
     // Check if we have file2 but it's not yet fetched
     if (c.prev_file_path && (c.prev_file_path.includes('drive.google.com') || c.prev_file_path.includes('docs.google.com')) && c._prevMimeType === undefined) {
-        docViewer.innerHTML = `
-            <div style="padding: 80px 20px; text-align: center; color: var(--text-muted);">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>
-                <p style="font-weight: bold; margin-bottom: 5px;">載入第二證明文件...</p>
-            </div>
-        `;
+        docViewer.innerHTML = '\n            <div style="padding: 80px 20px; text-align: center; color: var(--text-muted);">\n                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 3rem; color: var(--neon-blue); margin-bottom: 15px; display: block;"></i>\n                <p style="font-weight: bold; margin-bottom: 5px;">載入第二證明文件...</p>\n            </div>\n        ';
         google.script.run
             .withSuccessHandler(function(data2) {
                 if (data2 && data2.success) {
@@ -2250,48 +2144,24 @@ function renderFilePreview(c) {
     // Build UI for preview
     if (isPdf1) {
         const embedPdfUrl = getGoogleDriveEmbedUrl(c.file_path, 'pdf');
-        docViewer.innerHTML = `
-            <div style="display:flex; flex-direction:column; gap:10px; height: 100%;">
-                <div style="margin-bottom:10px; display:flex; gap:10px;">
-                    <a href="${c.file_path}" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟 PDF</a>
-                </div>
-                <iframe src="${embedPdfUrl}" class="audit-iframe" style="width:100%; height:550px; border:1px solid var(--border-color); border-radius:8px; background:#fff;"></iframe>
-            </div>
-        `;
+        docViewer.innerHTML = '\n            <div style="display:flex; flex-direction:column; gap:10px; height: 100%;">\n                <div style="margin-bottom:10px; display:flex; gap:10px;">\n                    <a href="' + (c.file_path) + '" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟 PDF</a>\n                </div>\n                <iframe src="' + (embedPdfUrl) + '" class="audit-iframe" style="width:100%; height:550px; border:1px solid var(--border-color); border-radius:8px; background:#fff;"></iframe>\n            </div>\n        ';
     } else {
         // Render as image preview
         const embedImgUrl1 = getGoogleDriveEmbedUrl(c.file_path, 'image');
         const embedImgUrl2 = c.prev_file_path ? getGoogleDriveEmbedUrl(c.prev_file_path, 'image') : '';
         
-        let imgHTML = `
-            <div style="display:flex; flex-direction:column; gap:15px; width:100%;">
-                <div style="margin-bottom:10px; display:flex; gap:10px;">
-                    <a href="${c.file_path}" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案一</a>
-                    ${c.prev_file_path ? `<a href="${c.prev_file_path}" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案二</a>` : ''}
-                </div>
-                <div style="text-align:center;">
-                    <img src="${embedImgUrl1}" alt="證明文件一" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                </div>
-        `;
+        let imgHTML = '\n            <div style="display:flex; flex-direction:column; gap:15px; width:100%;">\n                <div style="margin-bottom:10px; display:flex; gap:10px;">\n                    <a href="' + (c.file_path) + '" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案一</a>\n                    ${c.prev_file_path ? '<a href="${c.prev_file_path}" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案二</a>' : \'\'}\n                </div>\n                <div style="text-align:center;">\n                    <img src="' + (embedImgUrl1) + '" alt="證明文件一" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">\n                </div>\n        ';
 
         if (c.prev_file_path) {
             if (isPdf2) {
                 const embedPdfUrl2 = getGoogleDriveEmbedUrl(c.prev_file_path, 'pdf');
-                imgHTML += `
-                    <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
-                        <iframe src="${embedPdfUrl2}" class="audit-iframe" style="width:100%; height:400px; border:1px solid var(--border-color); border-radius:8px; background:#fff;"></iframe>
-                    </div>
-                `;
+                imgHTML += '\n                    <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">\n                        <iframe src="' + (embedPdfUrl2) + '" class="audit-iframe" style="width:100%; height:400px; border:1px solid var(--border-color); border-radius:8px; background:#fff;"></iframe>\n                    </div>\n                ';
             } else {
-                imgHTML += `
-                    <div style="margin-top: 15px; text-align:center; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
-                        <img src="${embedImgUrl2}" alt="證明文件二" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                    </div>
-                `;
+                imgHTML += '\n                    <div style="margin-top: 15px; text-align:center; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">\n                        <img src="' + (embedImgUrl2) + '" alt="證明文件二" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">\n                    </div>\n                ';
             }
         }
         
-        imgHTML += `</div>`;
+        imgHTML += '</div>';
         docViewer.innerHTML = imgHTML;
     }
 }
@@ -2366,9 +2236,9 @@ function handlePromoteGrades() {
                 } else {
                     showToast(res.message, "fa-circle-check");
                     // 以詳細對話框展示升級清單
-                    let logStr = `🎉 學年升級校對成功！共更新 ${res.updatedCount} 位學員：\n\n`;
+                    let logStr = '🎉 學年升級校對成功！共更新 ' + (res.updatedCount) + ' 位學員：\n\n';
                     res.logs.forEach(log => {
-                        logStr += `• ${log.name} (${log.uid}): ${log.oldGrade} ➔ ${log.newGrade}\n`;
+                        logStr += '• ' + (log.name) + ' (' + (log.uid) + '): ' + (log.oldGrade) + ' ➔ ' + (log.newGrade) + '\n';
                     });
                     alert(logStr);
                     loadCaseList(); // 重新載入案件列表

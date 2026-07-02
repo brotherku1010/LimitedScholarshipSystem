@@ -367,6 +367,8 @@ function studentLiffLogin(lineUid) {
     attempts: attempts,
     approved_attempts: approvedAttempts,
     applications: applications,
+    bankCode: student.bankCode,
+    bankAccount: student.bankAccount,
     settings: settings
   };
 }
