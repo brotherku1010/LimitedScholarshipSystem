@@ -59,9 +59,19 @@ function initLiff() {
     
     const isMissingUid = (!window.lineUid || window.lineUid.indexOf("<" + "?=") === 0 || window.lineUid.trim() === "");
     
+    // 設定全域載入畫面提示文字
+    const loadingText = document.getElementById('global-loading-text');
+    if (loadingText) {
+        loadingText.innerText = "正在驗證 LINE 安全憑證...";
+    }
+    
     if (isMissingUid) {
         logDebug("[WARNING] LINE UID is missing. User needs to authorize LINE Login.");
         toggleLoading(false);
+        
+        // 隱藏全域載入畫面
+        const loadingOverlay = document.getElementById('global-loading-screen');
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
         
         // Hide main application and display the secure LINE Login redirect card
         const mainApp = document.getElementById('main-app-container');
@@ -74,12 +84,16 @@ function initLiff() {
         
         showToast("請點選 LINE 驗證登入以進入計畫！", "fa-circle-exmark");
     } else {
-        // Hide redirect card and show main app
+        // 保持主畫面隱藏，更新全域載入文字，非同步與伺服器進行學籍比對
         const mainApp = document.getElementById('main-app-container');
         const loginRedirectCard = document.getElementById('app-login-redirect-card');
         
-        if (mainApp) mainApp.style.display = 'block';
+        if (mainApp) mainApp.style.display = 'none'; // 保持隱藏直至載入完成
         if (loginRedirectCard) loginRedirectCard.style.display = 'none';
+        
+        if (loadingText) {
+            loadingText.innerText = "正在讀取您的學籍與挑戰進度...";
+        }
         
         logDebug("[INFO] LINE UID verified! Calling studentLiffLogin on GAS server...");
         google.script.run
@@ -118,6 +132,10 @@ function onLiffLoginSuccess(data) {
         logDebug("[INFO] Error code: " + data.code + ", Message: " + data.message);
     }
     toggleLoading(false);
+    
+    // 取得全域載入中遮罩
+    const loadingOverlay = document.getElementById('global-loading-screen');
+    
     if (data.success) {
         currentUser.name = data.name;
         currentUser.birthday = data.birthday;
@@ -161,13 +179,32 @@ function onLiffLoginSuccess(data) {
         
         // Load data to UI
         updateStudentUI();
+        
+        // 顯示主程式畫面並隱藏全域載入遮罩！
+        const mainApp = document.getElementById('main-app-container');
+        if (mainApp) mainApp.style.display = 'block';
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        
         showToast(`登入成功！歡迎進入計畫，${data.name}同學。`, "fa-circle-check");
     } else if (data.code === 'NOT_REGISTERED') {
         // First time login: Open registration form and prefill nickname with LINE name
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        
         openModal('modal-login');
         document.getElementById('login-student-nickname').value = window.lineDisplayName || "";
         showToast("首次登入，請填寫真實資料以完成註冊！", "fa-user-plus");
     } else {
+        // 身分驗證被拒絕或發生錯誤
+        if (loadingOverlay) {
+            loadingOverlay.innerHTML = `
+                <div class="global-loading-card" style="border-color: var(--neon-red);">
+                    <i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
+                    <h2 style="color: var(--neon-red);">身分驗證失敗</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">${data.message || "未知的系統錯誤"}</p>
+                    <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
+                </div>
+            `;
+        }
         showToast(data.message || "身分驗證失敗！", "fa-circle-xmark");
     }
 }
@@ -177,6 +214,19 @@ function onLiffLoginFailure(err) {
     toggleLoading(false);
     logDebug("❌ studentLiffLogin backend failed: " + (err ? err.toString() : "Unknown Error"));
     console.error("LIFF Login backend error:", err);
+    
+    // 展示伺服器連線失敗畫面，提供重新整理按鈕
+    const loadingOverlay = document.getElementById('global-loading-screen');
+    if (loadingOverlay) {
+        loadingOverlay.innerHTML = `
+            <div class="global-loading-card" style="border-color: var(--neon-red);">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
+                <h2 style="color: var(--neon-red);">系統連線失敗</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">無法與伺服器取得同步，請確認網路連線狀態。</p>
+                <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
+            </div>
+        `;
+    }
     showToast("伺服器連線失敗，請稍後重試！", "fa-circle-xmark");
 }
 

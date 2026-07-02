@@ -23,6 +23,20 @@
 
 <body>
 
+    <!-- 🌌 全域載入中轉介畫面 (Global Loading Overlay Screen) -->
+    <div id="global-loading-screen" class="global-loading-overlay">
+        <div class="global-loading-card">
+            <div class="global-loading-logo">
+                <i class="fa-solid fa-compass-drafting fa-spin-pulse"></i>
+            </div>
+            <h2>古哥獎學金系統</h2>
+            <div class="global-loading-status">
+                <span class="spinner-dot"></span>
+                <span id="global-loading-text">正在建立安全連線...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Full-screen LINE Login Card when not authorized -->
     <div id="app-login-redirect-card"
         style="display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
