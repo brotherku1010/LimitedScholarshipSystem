@@ -864,8 +864,8 @@ def api_admin_destroy():
     # Simulated email sending
     email_notification = {
         'to': 'student_registered_email@example.com',
-        'subject': '【古哥獎學金】已撥款暨個人隱私資料銷毀通知',
-        'body': f"親愛的同學您好：您所申請的【古哥獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計數據。祝您學業更上一層樓！"
+        'subject': '【古哥挑戰獎學金】已撥款暨個人隱私資料銷毀通知',
+        'body': f"親愛的同學您好：您所申請的【古哥挑戰獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計數據。祝您學業更上一層樓！"
     }
     
     return jsonify({
@@ -899,7 +899,7 @@ def api_admin_export():
         bank_account = c['bank_account'] or ''
         amount = c['amount'] or 0
         name = c['name'] or ''
-        writer.writerow([bank_code, bank_account, amount, f"{name}-古哥獎學金"])
+        writer.writerow([bank_code, bank_account, amount, f"{name}-古哥挑戰獎學金"])
         
     csv_data = output.getvalue()
     output.close()
@@ -913,7 +913,7 @@ def api_admin_export():
 if __name__ == '__main__':
     init_db()
     print("----------------------------------------")
-    print("【古哥獎學金審查系統】本地端 Flask 伺服器啟動中...")
+    print("【古哥挑戰獎學金審查系統】本地端 Flask 伺服器啟動中...")
     print("前台請訪問: http://127.0.0.1:5000")
     print("後台管理請訪問: http://127.0.0.1:5000/admin")
     print("----------------------------------------")

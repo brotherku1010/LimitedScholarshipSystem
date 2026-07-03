@@ -1,5 +1,5 @@
 /* ==========================================================================
-   【古哥獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
+   【古哥挑戰獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
    ========================================================================== */
 
 // Global State
@@ -107,7 +107,7 @@ function showIframeLoginNotice() {
     const loginModal = document.getElementById('modal-login');
     if (loginModal) {
         loginModal.querySelector('.modal-header h2').innerHTML = '<i class="fa-brands fa-line" style="color: #06C755;"></i> 請使用 LINE 驗證登入';
-        loginModal.querySelector('.modal-body').innerHTML = '\n            <div style="text-align: center; padding: 20px 10px;">\n                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>\n                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥獎學金挑戰計畫</p>\n                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">\n                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。\n                </p>\n                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">\n                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入\n                </a>\n            </div>\n        ';
+        loginModal.querySelector('.modal-body').innerHTML = '\n            <div style="text-align: center; padding: 20px 10px;">\n                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>\n                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥挑戰獎學金挑戰計畫</p>\n                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">\n                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。\n                </p>\n                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">\n                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入\n                </a>\n            </div>\n        ';
         const footer = loginModal.querySelector('.modal-footer');
         if (footer) footer.style.display = 'none';
         openModal('modal-login');

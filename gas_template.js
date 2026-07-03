@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * 【古哥獎學金】成績挑戰計畫 - Google Apps Script (GAS) 雲端對接範例範本
+ * 【古哥挑戰獎學金】成績挑戰計畫 - Google Apps Script (GAS) 雲端對接範例範本
  * 說明：
  * 本檔案提供如何將此系統部署於 GAS + Google Sheets + Google Drive 雲端環境之核心程式碼。
  * 可直接複製本段程式，於 Google Apps Script 編輯器內配合您的試算表與雲端硬碟資料夾使用。
@@ -18,7 +18,7 @@ function doGet(e) {
   // 如果需要直接以 GAS 託管前端 HTML (以 index.html 檔案為例)
   return HtmlService.createTemplateFromFile("index")
     .evaluate()
-    .setTitle("【古哥獎學金】成績挑戰計畫")
+    .setTitle("【古哥挑戰獎學金】成績挑戰計畫")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -270,8 +270,8 @@ function sendGDPRNotificationEmail(maskedName) {
   /*
   MailApp.sendEmail({
     to: "student_registered_email@example.com",
-    subject: "【古哥獎學金】已撥款暨個人隱私資料銷毀通知",
-    body: "親愛的 " + maskedName + " 同學您好：您所申請的【古哥獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計紀錄。祝您學業更上一層樓！"
+    subject: "【古哥挑戰獎學金】已撥款暨個人隱私資料銷毀通知",
+    body: "親愛的 " + maskedName + " 同學您好：您所申請的【古哥挑戰獎學金】已成功匯入您的收款帳戶。為保障個人穩私，您的帳戶資訊、真實姓名與成績單圖檔已依個資銷毀切結，由本系統資料庫與儲存空間中徹底刪除且永久無法復原。系統僅留存去識別化統計紀錄。祝您學業更上一層樓！"
   });
   */
 }

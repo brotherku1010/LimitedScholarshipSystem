@@ -14,7 +14,7 @@
     <!-- Custom Style Sheet -->
     <style>
 /* ==========================================================================
-   【古哥獎學金】成績挑戰計畫 - 樣式系統 (Style System)
+   【古哥挑戰獎學金】成績挑戰計畫 - 樣式系統 (Style System)
    Theme: 電競遊戲與金融信任感的雙結合 (Gaming & Trust Theme)
    ========================================================================== */
 
@@ -2783,7 +2783,7 @@ body {
     <!-- Script imports -->
     <script>
 /* ==========================================================================
-   【古哥獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
+   【古哥挑戰獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
    ========================================================================== */
 
 // Global State
@@ -2891,18 +2891,7 @@ function showIframeLoginNotice() {
     const loginModal = document.getElementById('modal-login');
     if (loginModal) {
         loginModal.querySelector('.modal-header h2').innerHTML = '<i class="fa-brands fa-line" style="color: #06C755;"></i> 請使用 LINE 驗證登入';
-        loginModal.querySelector('.modal-body').innerHTML = '
-            <div style="text-align: center; padding: 20px 10px;">
-                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>
-                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥獎學金挑戰計畫</p>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">
-                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。
-                </p>
-                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">
-                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入
-                </a>
-            </div>
-        ';
+        loginModal.querySelector('.modal-body').innerHTML = '\n            <div style="text-align: center; padding: 20px 10px;">\n                <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>\n                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥挑戰獎學金挑戰計畫</p>\n                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">\n                    由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。\n                </p>\n                <a href="https://liff.line.me/2010560500-s1V0QyLa" target="_top" class="btn btn-primary btn-full" style="display: block; text-decoration: none; text-align: center; line-height: 24px;">\n                    <i class="fa-solid fa-right-to-bracket"></i> 經由 LINE 授權登入\n                </a>\n            </div>\n        ';
         const footer = loginModal.querySelector('.modal-footer');
         if (footer) footer.style.display = 'none';
         openModal('modal-login');
@@ -2980,14 +2969,7 @@ function onLiffLoginSuccess(data) {
     } else {
         // 身分驗證被拒絕或發生錯誤
         if (loadingOverlay) {
-            loadingOverlay.innerHTML = '
-                <div class="global-loading-card" style="border-color: var(--neon-red);">
-                    <i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
-                    <h2 style="color: var(--neon-red);">身分驗證失敗</h2>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">' + (data.message || "未知的系統錯誤") + '</p>
-                    <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
-                </div>
-            ';
+            loadingOverlay.innerHTML = '\n                <div class="global-loading-card" style="border-color: var(--neon-red);">\n                    <i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>\n                    <h2 style="color: var(--neon-red);">身分驗證失敗</h2>\n                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">' + (data.message || "未知的系統錯誤") + '</p>\n                    <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>\n                </div>\n            ';
         }
         showToast(data.message || "身分驗證失敗！", "fa-circle-xmark");
     }
@@ -3002,14 +2984,7 @@ function onLiffLoginFailure(err) {
     // 展示伺服器連線失敗畫面，提供重新整理按鈕
     const loadingOverlay = document.getElementById('global-loading-screen');
     if (loadingOverlay) {
-        loadingOverlay.innerHTML = '
-            <div class="global-loading-card" style="border-color: var(--neon-red);">
-                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>
-                <h2 style="color: var(--neon-red);">系統連線失敗</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">無法與伺服器取得同步，請確認網路連線狀態。</p>
-                <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>
-            </div>
-        ';
+        loadingOverlay.innerHTML = '\n            <div class="global-loading-card" style="border-color: var(--neon-red);">\n                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--neon-red); margin-bottom: 20px;"></i>\n                <h2 style="color: var(--neon-red);">系統連線失敗</h2>\n                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">無法與伺服器取得同步，請確認網路連線狀態。</p>\n                <button onclick="window.location.reload();" class="btn btn-primary btn-full" style="background: var(--neon-red); border-color: var(--neon-red);">重新整理</button>\n            </div>\n        ';
     }
     showToast("伺服器連線失敗，請稍後重試！", "fa-circle-xmark");
 }
@@ -3931,17 +3906,7 @@ function renderHistoryList(apps) {
         
         const row = document.createElement('div');
         row.className = 'history-item';
-        row.style.cssText = '
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        ';
+        row.style.cssText = '\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            padding: 12px 15px;\n            background: rgba(255,255,255,0.03);\n            border: 1px solid rgba(255,255,255,0.06);\n            border-radius: 8px;\n            cursor: pointer;\n            transition: all 0.2s ease;\n        ';
         
         row.onmouseenter = () => {
             row.style.background = 'rgba(255,255,255,0.06)';
@@ -3954,16 +3919,7 @@ function renderHistoryList(apps) {
         
         row.onclick = () => showApplicationDetail(app);
         
-        row.innerHTML = '
-            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
-                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>
-                <div>
-                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>
-                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | NT$ ' + (parseInt(app.amount).toLocaleString()) + '</small>
-                </div>
-            </div>
-            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>
-        ';
+        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | NT$ ' + (parseInt(app.amount).toLocaleString()) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>\n        ';
         
         container.appendChild(row);
     });

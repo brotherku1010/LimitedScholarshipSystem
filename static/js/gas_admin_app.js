@@ -14,7 +14,7 @@
 
 
 
-   【古哥獎學金】後台審查系統 - 互動邏輯 (Apps Script Admin JS)
+   【古哥挑戰獎學金】後台審查系統 - 互動邏輯 (Apps Script Admin JS)
 
 
 

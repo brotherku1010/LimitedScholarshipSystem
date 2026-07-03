@@ -10,7 +10,7 @@
 
 
 /* ==========================================================================
-   【古哥獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
+   【古哥挑戰獎學金】成績挑戰計畫 - 互動邏輯 (Apps Script JS)
    ========================================================================== */
 
 // Global State
@@ -110,7 +110,7 @@ function showIframeLoginNotice() {
         loginModal.querySelector('.modal-body').innerHTML = `
             <div style="text-align: center; padding: 20px 10px;">
                 <i class="fa-brands fa-line" style="font-size: 4rem; color: #06C755; margin-bottom: 15px;"></i>
-                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥獎學金挑戰計畫</p>
+                <p style="color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">歡迎加入古哥挑戰獎學金挑戰計畫</p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px;">
                     由於瀏覽器安全限制，無法在 Google 框架內直接進行 LINE 登入。請點選下方按鈕跳出框架進行授權。
                 </p>
