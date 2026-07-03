@@ -2150,7 +2150,11 @@ function renderFilePreview(c) {
         const embedImgUrl1 = getGoogleDriveEmbedUrl(c.file_path, 'image');
         const embedImgUrl2 = c.prev_file_path ? getGoogleDriveEmbedUrl(c.prev_file_path, 'image') : '';
         
-        let imgHTML = '\n            <div style="display:flex; flex-direction:column; gap:15px; width:100%;">\n                <div style="margin-bottom:10px; display:flex; gap:10px;">\n                    <a href="' + (c.file_path) + '" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案一</a>\n                    ${c.prev_file_path ? '<a href="${c.prev_file_path}" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案二</a>' : \'\'}\n                </div>\n                <div style="text-align:center;">\n                    <img src="' + (embedImgUrl1) + '" alt="證明文件一" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">\n                </div>\n        ';
+        let imgHTML = '\n            <div style="display:flex; flex-direction:column; gap:15px; width:100%;">\n                <div style="margin-bottom:10px; display:flex; gap:10px;">\n                    <a href="' + (c.file_path) + '" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案一</a>\n';
+        if (c.prev_file_path) {
+            imgHTML += '                    <a href="' + c.prev_file_path + '" target="_blank" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem;"><i class="fa-solid fa-external-link"></i> 新視窗開啟檔案二</a>\n';
+        }
+        imgHTML += '                </div>\n                <div style="text-align:center;">\n                    <img src="' + (embedImgUrl1) + '" alt="證明文件一" class="audit-img" style="max-width:100%; border-radius:8px; border:1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">\n                </div>\n        ';
 
         if (c.prev_file_path) {
             if (isPdf2) {
