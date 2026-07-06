@@ -346,7 +346,7 @@
                     </div>
                     <div class="apply-action-zone mt-2">
                         <button class="btn btn-secondary btn-full" id="btn-apply-progress-demo">
-                            <i class="fa-solid fa-arrow-up-right-dots"></i> 體驗上傳申請 (Demo Mode)
+                            <i class="fa-solid fa-arrow-up-right-dots"></i> 立即送出成績進步獎申請
                         </button>
                     </div>
                 </div>
@@ -751,11 +751,11 @@
         </div>
     </div>
 
-    <!-- Modal 4: Scheme 2 (Progress Award) Application Form (Demo Mode) -->
+    <!-- Modal 4: Scheme 2 (Progress Award) Application Form -->
     <div class="modal" id="modal-apply-progress">
         <div class="modal-content glass">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-chart-line-up"></i> 學期進步獎申請 (模擬體驗)</h2>
+                <h2><i class="fa-solid fa-chart-line-up"></i> 學期進步獎申請</h2>
                 <button class="modal-close" onclick="closeModal('modal-apply-progress')">&times;</button>
             </div>
             <form id="form-apply-progress">
@@ -763,7 +763,7 @@
                     <!-- Calculated Badge Display -->
                     <div class="target-summary-badge progress-theme">
                         <div class="target-left">
-                            <span>模擬進步幅度</span>
+                            <span>進步幅度</span>
                             <strong id="form-progress-diff">+0.00 分</strong>
                         </div>
                         <div class="target-arrow">➔</div>
@@ -841,16 +841,18 @@
                         <div class="form-group">
                             <label class="required-label">上學期成績單圖檔</label>
                             <input type="file" name="prev_file" id="progress-prev-file" required accept="image/*,.pdf">
+                            <div class="file-preview-name" id="progress-prev-file-display" style="font-size: 0.8rem; color: var(--neon-blue); margin-top: 5px;"></div>
                         </div>
                         <div class="form-group">
                             <label class="required-label">本學期成績單圖檔</label>
                             <input type="file" name="curr_file" id="progress-curr-file" required accept="image/*,.pdf">
+                            <div class="file-preview-name" id="progress-curr-file-display" style="font-size: 0.8rem; color: var(--neon-blue); margin-top: 5px;"></div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-secondary btn-full">
-                        <i class="fa-solid fa-circle-check"></i> 模擬送出進步獎申請 (寫入資料庫)
+                        <i class="fa-solid fa-circle-check"></i> 送出學期進步獎申請
                     </button>
                 </div>
             </form>
@@ -920,6 +922,7 @@
                     <div class="form-group">
                         <label class="required-label">上傳企劃書 (PDF 格式或壓縮包)</label>
                         <input type="file" name="file" id="blueprint-file" required accept=".pdf,.zip,.rar">
+                        <div class="file-preview-name" id="blueprint-file-display" style="font-size: 0.8rem; color: var(--gold); margin-top: 5px;"></div>
                         <small class="form-help">請包含：專案背景、預期購置書單/課程/硬體、執行時程與預估產出。</small>
                     </div>
                 </div>

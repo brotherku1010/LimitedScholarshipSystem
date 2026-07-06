@@ -673,6 +673,45 @@ function initEventListeners() {
         document.querySelector('#modal-apply-progress .target-left span').innerText = '進步幅度';
         document.querySelector('#modal-apply-progress .target-right span').innerText = '預計獎金';
         
+        // Filter and disable already applied semesters
+        const displayTexts = {
+            '114-1': '114 學年度 第一學期',
+            '114-2': '114 學年度 第二學期',
+            '115-1': '115 學年度 第一學期',
+            '115-2': '115 學年度 第二學期'
+        };
+        const progressApps = (currentUser.applications || []).filter(app => app.type === 'progress' && (app.status === 'pending' || app.status === 'approved'));
+        const appliedYears = progressApps.map(app => app.academicYear);
+        
+        const semesterSelect = document.querySelector('#form-apply-progress [name="academic_year"]');
+        if (semesterSelect) {
+            let options = semesterSelect.options;
+            let firstEnabledIndex = -1;
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const baseText = displayTexts[opt.value] || opt.value;
+                if (appliedYears.includes(opt.value)) {
+                    opt.disabled = true;
+                    opt.style.color = 'rgba(255, 255, 255, 0.3)';
+                    opt.text = baseText + ' (已申請)';
+                } else {
+                    opt.disabled = false;
+                    opt.style.color = '#fff';
+                    opt.text = baseText;
+                    if (firstEnabledIndex === -1) {
+                        firstEnabledIndex = i;
+                    }
+                }
+            }
+            if (firstEnabledIndex !== -1) {
+                semesterSelect.selectedIndex = firstEnabledIndex;
+            } else {
+                semesterSelect.selectedIndex = -1;
+                showToast("您已申請過所有可選學期（審查中或已核准），無法重複申請！", "fa-ban");
+                return;
+            }
+        }
+        
         openModal('modal-apply-progress');
     });
 
@@ -719,8 +758,10 @@ function initEventListeners() {
                     if (data.success) {
                         closeModal('modal-apply-progress');
                         e.target.reset();
-                        document.getElementById('progress-prev-file-display').innerText = '';
-                        document.getElementById('progress-curr-file-display').innerText = '';
+                        const elPrev = document.getElementById('progress-prev-file-display');
+                        const elCurr = document.getElementById('progress-curr-file-display');
+                        if (elPrev) elPrev.innerText = '';
+                        if (elCurr) elCurr.innerText = '';
                         showToast(data.message, "fa-circle-check");
                         refreshUserStatusLiff();
                     } else {
@@ -779,7 +820,8 @@ function initEventListeners() {
                     if (data.success) {
                         closeModal('modal-apply-blueprint');
                         e.target.reset();
-                        document.getElementById('blueprint-file-display').innerText = '';
+                        const elBlueprint = document.getElementById('blueprint-file-display');
+                        if (elBlueprint) elBlueprint.innerText = '';
                         showToast(data.message, "fa-circle-check");
                         refreshUserStatusLiff();
                     } else {

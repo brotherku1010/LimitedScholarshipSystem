@@ -761,6 +761,20 @@ function submitProgress(payload) {
   const studentUid = student[0];
   const folderId = student[8];
   
+  // Verify if already applied for this academic semester
+  const appRows = getSafeValues(appSheet);
+  for (let i = 1; i < appRows.length; i++) {
+    const appType = appRows[i][1];
+    const appStatus = appRows[i][2];
+    const appStudentUid = appRows[i][3];
+    const appAcademicYear = appRows[i][6];
+    if (appStudentUid === studentUid && appType === 'progress' && appAcademicYear === academicYear) {
+      if (appStatus === 'pending' || appStatus === 'approved') {
+        return { success: false, message: `您已申請過 ${academicYear} 的學期進步獎，且該申請目前為審查中或已核准，不可重複申請！` };
+      }
+    }
+  }
+  
   // Calculate reward amount
   const settings = getSafeSettings(ss);
   const base = settings.progress_base;
