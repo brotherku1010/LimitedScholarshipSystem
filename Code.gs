@@ -683,6 +683,13 @@ function submitChallenge(payload) {
     }
   }
   
+  // Verify if already applied for this academic semester
+  for (let j = 1; j < appRows.length; j++) {
+    if (appRows[j][3] === studentUid && appRows[j][1] === 'challenge' && appRows[j][6] === academicYear && appRows[j][2] !== 'rejected') {
+      return { success: false, message: `您已申請過 ${academicYear} 的成績挑戰，且該申請目前為審查中或已核准，不可重複申請！` };
+    }
+  }
+  
   // Calculate reward amount
   const settings = getSafeSettings(ss);
   const rewards = settings.challenge_amounts;

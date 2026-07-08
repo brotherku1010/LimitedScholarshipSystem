@@ -506,6 +506,101 @@ function initEventListeners() {
         }
         document.getElementById('form-challenge-target-amount').innerText = 'NT$ ' + (assignedAmt.toLocaleString());
         
+        // Helper to calculate the latest eligible semester
+        const getLatestEligibleSemester = (date = new Date()) => {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const rocYear = year - 1911;
+
+            const currentVal = month * 100 + day;
+            
+            if (currentVal >= 223 && currentVal <= 731) {
+                // Period 2/23 to 7/31 (Y-2, where Y = rocYear - 1). Latest eligible is Y-1.
+                const Y = rocYear - 1;
+                return `${Y}-1`;
+            } else {
+                // Period 8/1 to 2/22.
+                let Y;
+                if (currentVal < 223) {
+                    Y = rocYear - 1;
+                } else {
+                    Y = rocYear;
+                }
+                // Latest eligible is (Y-1)-2.
+                return `${Y - 1}-2`;
+            }
+        };
+
+        // Helper to generate semesters from startSem to latestSem
+        const generateSemesters = (startSem = '112-1', latestSem) => {
+            const list = [];
+            const [startYear, startTerm] = startSem.split('-').map(Number);
+            const [endYear, endTerm] = latestSem.split('-').map(Number);
+
+            let currYear = startYear;
+            let currTerm = startTerm;
+
+            while (currYear < endYear || (currYear === endYear && currTerm <= endTerm)) {
+                list.push(`${currYear}-${currTerm}`);
+                if (currTerm === 1) {
+                    currTerm = 2;
+                } else {
+                    currYear++;
+                    currTerm = 1;
+                }
+            }
+            return list.reverse(); // Newest first
+        };
+
+        // Helper to format displaying text
+        const getSemesterDisplayText = (semCode) => {
+            const [year, term] = semCode.split('-');
+            const termName = term === '1' ? '第一學期' : '第二學期';
+            return `${year} 學年度 ${termName}`;
+        };
+
+        const latestSem = getLatestEligibleSemester();
+        const semesterList = generateSemesters('112-1', latestSem);
+        
+        const challengeApps = (currentUser.applications || []).filter(app => app.type === 'challenge' && (app.status === 'pending' || app.status === 'approved'));
+        const appliedYears = challengeApps.map(app => app.academicYear);
+        
+        const semesterSelect = document.querySelector('#form-apply-challenge [name="academic_year"]');
+        if (semesterSelect) {
+            semesterSelect.innerHTML = ''; // Clear existing options
+            let firstEnabledIndex = -1;
+            
+            semesterList.forEach((semCode, index) => {
+                const opt = document.createElement('option');
+                opt.value = semCode;
+                const baseText = getSemesterDisplayText(semCode);
+                
+                if (appliedYears.includes(semCode)) {
+                    opt.disabled = true;
+                    opt.style.color = 'rgba(255, 255, 255, 0.3)';
+                    opt.text = baseText + ' (已申請)';
+                } else {
+                    opt.disabled = false;
+                    opt.style.color = '#fff';
+                    opt.text = baseText;
+                    if (firstEnabledIndex === -1) {
+                        firstEnabledIndex = index;
+                    }
+                }
+                semesterSelect.appendChild(opt);
+            });
+            
+            if (firstEnabledIndex !== -1) {
+                // By default select the newest enabled option (which will be at the smallest index since it is reversed)
+                semesterSelect.selectedIndex = firstEnabledIndex;
+            } else {
+                semesterSelect.selectedIndex = -1;
+                showToast("您已申請過所有可選學期的成績挑戰（審查中或已核准），無法重複申請！", "fa-ban");
+                return;
+            }
+        }
+        
         openModal('modal-apply-challenge');
     });
 
