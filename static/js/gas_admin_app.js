@@ -95,6 +95,140 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('btn-admin-logout').addEventListener('click', logoutAdmin);
 
+    // Bind Scheme 3 (Future Blueprint) review buttons
+    document.getElementById('btn-bp-approve-proposal').addEventListener('click', () => {
+        const amt = document.getElementById('bp-approved-amount-input').value.trim();
+        const midtermDl = document.getElementById('bp-midterm-deadline-input').value;
+        const finalDl = document.getElementById('bp-final-deadline-input').value;
+        
+        if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
+            showToast("請輸入核定的專案總金額！", "fa-triangle-exclamation");
+            return;
+        }
+        if (!midtermDl || !finalDl) {
+            showToast("請選擇期中與期末的報告繳交截止日！", "fa-triangle-exclamation");
+            return;
+        }
+        
+        if (confirm(`確定核准此未來藍圖計畫？\n核定金額：NT$ ${parseFloat(amt).toLocaleString()} 元\n期中截止日：${midtermDl}\n期末截止日：${finalDl}`)) {
+            toggleLoading(true, "核准未來藍圖提案中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，核准提案失敗！", "fa-triangle-exclamation");
+                })
+                .adminApproveBlueprint(ADMIN_TOKEN, selectedCase.id, amt, midtermDl, finalDl);
+        }
+    });
+
+    document.getElementById('btn-bp-reject-proposal').addEventListener('click', () => {
+        if (confirm("確定退回此未來藍圖計畫提案？")) {
+            toggleLoading(true, "退回提案中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，退回失敗！", "fa-triangle-exclamation");
+                })
+                .adminRejectCase(ADMIN_TOKEN, selectedCase.id);
+        }
+    });
+
+    document.getElementById('btn-bp-approve-midterm').addEventListener('click', () => {
+        if (confirm("確定核准該期中報告？核准後將開放中期款 (40%) 撥發。")) {
+            toggleLoading(true, "審定通過期中報告中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，審定失敗！", "fa-triangle-exclamation");
+                })
+                .adminReviewMidterm(ADMIN_TOKEN, selectedCase.id, true);
+        }
+    });
+
+    document.getElementById('btn-bp-reject-midterm').addEventListener('click', () => {
+        if (confirm("確定退回該期中報告並請學生修正重傳？")) {
+            toggleLoading(true, "退回期中報告中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，操作失敗！", "fa-triangle-exclamation");
+                })
+                .adminReviewMidterm(ADMIN_TOKEN, selectedCase.id, false);
+        }
+    });
+
+    document.getElementById('btn-bp-approve-final').addEventListener('click', () => {
+        if (confirm("確定核准該期末報告？核准後將開放期末款 (30%) 撥發並進入結案。")) {
+            toggleLoading(true, "審定通過期末報告中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，審定失敗！", "fa-triangle-exclamation");
+                })
+                .adminReviewFinal(ADMIN_TOKEN, selectedCase.id, true);
+        }
+    });
+
+    document.getElementById('btn-bp-reject-final').addEventListener('click', () => {
+        if (confirm("確定退回該期末報告並請學生修正重傳？")) {
+            toggleLoading(true, "退回期末報告中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，操作失敗！", "fa-triangle-exclamation");
+                })
+                .adminReviewFinal(ADMIN_TOKEN, selectedCase.id, false);
+        }
+    });
+
 
 
     
@@ -2044,6 +2178,8 @@ function getGoogleDriveEmbedUrl(url, type) {
 
     }
 
+    // Handle specialized Blueprint Audit and Milestones panel
+    renderBlueprintAudit(c);
 }
 
 
@@ -2256,3 +2392,137 @@ function handlePromoteGrades() {
         })
         .adminPromoteStudentGrades(ADMIN_TOKEN);
 }
+
+// specialized Blueprint Audit and Milestones panel display
+function renderBlueprintAudit(c) {
+    const bpSection = document.getElementById('blueprint-audit-section');
+    if (!bpSection) return;
+    
+    if (c.type !== 'blueprint') {
+        bpSection.style.display = 'none';
+        return;
+    }
+    
+    // Hide standard buttons
+    document.getElementById('actions-pending-group').style.display = 'none';
+    document.getElementById('actions-approved-group').style.display = 'none';
+    document.getElementById('actions-destroyed-banner').style.display = 'none';
+    
+    bpSection.style.display = 'block';
+    
+    const proposalBox = document.getElementById('bp-proposal-review-box');
+    const midtermBox = document.getElementById('bp-midterm-review-box');
+    const finalBox = document.getElementById('bp-final-review-box');
+    const payoutBoard = document.getElementById('bp-payout-board');
+    
+    proposalBox.style.display = 'none';
+    midtermBox.style.display = 'none';
+    finalBox.style.display = 'none';
+    payoutBoard.style.display = 'none';
+    
+    const phase = c.phase || 1;
+    const phase1Status = c.phase_1_status || c.status;
+    const midtermStatus = c.midterm_status || '';
+    const finalStatus = c.final_status || '';
+    
+    // Proposal Box (Stage 1 pending review)
+    if (c.status === 'pending' || phase1Status === 'rejected') {
+        proposalBox.style.display = 'block';
+        document.getElementById('bp-approved-amount-input').value = '';
+        document.getElementById('bp-midterm-deadline-input').value = '';
+        document.getElementById('bp-final-deadline-input').value = '';
+    } else {
+        // Show payout board if proposal approved
+        payoutBoard.style.display = 'block';
+        const approvedAmt = c.approved_amount || 0;
+        
+        const stage1Amt = Math.round(approvedAmt * 0.3);
+        const stage2Amt = Math.round(approvedAmt * 0.4);
+        const stage3Amt = Math.round(approvedAmt * 0.3);
+        
+        document.getElementById('bp-stage-1-amt').innerText = `NT$ ${stage1Amt.toLocaleString()}`;
+        document.getElementById('bp-stage-2-amt').innerText = `NT$ ${stage2Amt.toLocaleString()}`;
+        document.getElementById('bp-stage-3-amt').innerText = `NT$ ${stage3Amt.toLocaleString()}`;
+        
+        // Stage 1 status
+        const s1Container = document.getElementById('bp-stage-1-status-container');
+        if (phase1Status === 'approved') {
+            s1Container.innerHTML = `<button class="btn btn-approve" style="padding: 4px 8px; font-size: 0.75rem;" onclick="disburseStage('${c.id}', 1)">確認首款撥發 (30%)</button>`;
+        } else if (phase1Status === 'paid') {
+            s1Container.innerHTML = `<span class="badge approved">已撥發首款</span>`;
+        } else {
+            s1Container.innerHTML = `<span class="badge pending">未核准</span>`;
+        }
+        
+        // Stage 2 status
+        const s2Container = document.getElementById('bp-stage-2-status-container');
+        if (midtermStatus === 'approved') {
+            s2Container.innerHTML = `<button class="btn btn-approve" style="padding: 4px 8px; font-size: 0.75rem;" onclick="disburseStage('${c.id}', 2)">確認中期撥發 (40%)</button>`;
+        } else if (midtermStatus === 'paid') {
+            s2Container.innerHTML = `<span class="badge approved">已撥發中期款</span>`;
+        } else if (midtermStatus === 'pending') {
+            s2Container.innerHTML = `<span class="badge pending">待審查</span>`;
+        } else if (midtermStatus === 'rejected') {
+            s2Container.innerHTML = `<span class="badge rejected">已退回</span>`;
+        } else {
+            s2Container.innerHTML = `<span class="badge pending" style="opacity: 0.5;">未達進度</span>`;
+        }
+        
+        // Stage 3 status
+        const s3Container = document.getElementById('bp-stage-3-status-container');
+        if (finalStatus === 'approved') {
+            s3Container.innerHTML = `<button class="btn btn-approve" style="padding: 4px 8px; font-size: 0.75rem;" onclick="disburseStage('${c.id}', 3)">確認尾款撥發 (30%結案)</button>`;
+        } else if (finalStatus === 'paid') {
+            s3Container.innerHTML = `<span class="badge approved">已結案</span>`;
+        } else if (finalStatus === 'pending') {
+            s3Container.innerHTML = `<span class="badge pending">待審查</span>`;
+        } else if (finalStatus === 'rejected') {
+            s3Container.innerHTML = `<span class="badge rejected">已退回</span>`;
+        } else {
+            s3Container.innerHTML = `<span class="badge pending" style="opacity: 0.5;">未達進度</span>`;
+        }
+        
+        // Show midterm report review box if pending
+        if (midtermStatus === 'pending') {
+            midtermBox.style.display = 'block';
+            document.getElementById('bp-midterm-file-link').href = c.midterm_file || '#';
+            document.getElementById('bp-midterm-overtime-badge').style.display = c.midterm_overtime ? 'inline-block' : 'none';
+        }
+        
+        // Show final report review box if pending
+        if (finalStatus === 'pending') {
+            finalBox.style.display = 'block';
+            document.getElementById('bp-final-file-link').href = c.final_file || '#';
+            document.getElementById('bp-final-overtime-badge').style.display = c.final_overtime ? 'inline-block' : 'none';
+        }
+        
+        // If final_status === 'paid' (or phase === 4), enable GDPR Shred button!
+        if (phase === 4 && c.status !== 'destroyed') {
+            // Show approvedActions (which contains GDPR Shred button)
+            document.getElementById('actions-approved-group').style.display = 'block';
+        } else if (c.status === 'destroyed') {
+            document.getElementById('actions-destroyed-banner').style.display = 'block';
+        }
+    }
+}
+
+window.disburseStage = function(appId, stageNum) {
+    let pct = stageNum === 1 ? '30%' : stageNum === 2 ? '40%' : '30%';
+    if (confirm(`確認該筆計畫第 ${stageNum} 階段款項 (${pct}) 已成功入帳撥發？\n\n撥發完成後，系統將移轉至下一執行階段並自動發送 Line 撥款通知給學員！`)) {
+        toggleLoading(true, "變更撥款進度中...");
+        google.script.run
+            .withSuccessHandler(function(res) {
+                toggleLoading(false);
+                showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                if (res.success) {
+                    loadCaseList();
+                    document.getElementById('auditor-pane').style.display = 'none';
+                }
+            })
+            .withFailureHandler(function(err) {
+                toggleLoading(false);
+                showToast("網路錯誤，撥發確認失敗！", "fa-triangle-exclamation");
+            })
+            .adminDisburseStage(ADMIN_TOKEN, appId, stageNum);
+    }
+};

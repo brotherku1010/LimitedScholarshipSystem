@@ -333,6 +333,9 @@ function updateStudentUI() {
     // Render Progress Ladder Steps
     renderLadder();
 
+    // Render Future Blueprint Milestones dynamically
+    updateBlueprintUI();
+
     // Trigger tab restore
     const activeTab = sessionStorage.getItem('guge_active_tab') || 'challenge';
     switchTab(activeTab);
@@ -1328,7 +1331,14 @@ function renderHistoryList(apps) {
         
         row.onclick = () => showApplicationDetail(app);
         
-        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | NT$ ' + (parseInt(app.amount).toLocaleString()) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>\n        ';
+        let amountText = "";
+        if (app.type === 'blueprint' && app.status === 'pending') {
+            amountText = "待審核核定";
+        } else {
+            amountText = 'NT$ ' + (parseInt(app.amount || 0).toLocaleString());
+        }
+
+        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | ' + (amountText) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>\n        ';
         
         container.appendChild(row);
     });
@@ -1370,7 +1380,13 @@ function showApplicationDetail(app) {
     document.getElementById('detail-app-id').innerText = app.id || "N/A";
     document.getElementById('detail-app-type').innerText = typeLabel;
     document.getElementById('detail-app-year').innerText = app.academicYear || "N/A";
-    document.getElementById('detail-app-amount').innerText = "NT$ " + parseInt(app.amount).toLocaleString();
+    
+    if (app.type === 'blueprint' && app.status === 'pending') {
+        document.getElementById('detail-app-amount').innerText = "待審核核定";
+    } else {
+        document.getElementById('detail-app-amount').innerText = "NT$ " + parseInt(app.amount || 0).toLocaleString();
+    }
+    
     document.getElementById('detail-app-date').innerText = app.createdAt ? app.createdAt.substring(0, 16) : "--";
     document.getElementById('detail-app-status-badge').innerHTML = badgeHtml;
     document.getElementById('detail-app-feedback').innerText = feedbackText;
@@ -1583,3 +1599,331 @@ function handleEditProfileSubmit() {
         })
         .studentUpdateProfile(window.lineUid, payload);
 }
+
+// Dynamic Scheme 3 helper functions
+function populateBlueprintSemesterSelect() {
+    const getLatestEligibleSemester = (date = new Date()) => {
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const rocYear = year - 1911;
+
+        const currentVal = month * 100 + day;
+        
+        if (currentVal >= 223 && currentVal <= 731) {
+            const Y = rocYear - 1;
+            return `${Y}-1`;
+        } else {
+            let Y;
+            if (currentVal < 223) {
+                Y = rocYear - 1;
+            } else {
+                Y = rocYear;
+            }
+            return `${Y - 1}-2`;
+        }
+    };
+
+    const generateSemesters = (startSem = '112-1', latestSem) => {
+        const list = [];
+        const [startYear, startTerm] = startSem.split('-').map(Number);
+        const [endYear, endTerm] = latestSem.split('-').map(Number);
+
+        let currYear = startYear;
+        let currTerm = startTerm;
+
+        while (currYear < endYear || (currYear === endYear && currTerm <= endTerm)) {
+            list.push(`${currYear}-${currTerm}`);
+            if (currTerm === 1) {
+                currTerm = 2;
+            } else {
+                currYear++;
+                currTerm = 1;
+            }
+        }
+        return list.reverse();
+    };
+
+    const getSemesterDisplayText = (semCode) => {
+        const [year, term] = semCode.split('-');
+        const termName = term === '1' ? '第一學期' : '第二學期';
+        return `${year} 學年度 ${termName}`;
+    };
+
+    const latestSem = getLatestEligibleSemester();
+    const semesterList = generateSemesters('112-1', latestSem);
+    
+    const bpApps = (currentUser.applications || []).filter(app => app.type === 'blueprint' && (app.status === 'pending' || app.status === 'approved' || app.status === 'destroyed'));
+    const appliedYears = bpApps.map(app => app.academicYear);
+    
+    const semesterSelect = document.querySelector('#form-apply-blueprint [name="academic_year"]');
+    if (semesterSelect) {
+        semesterSelect.innerHTML = '';
+        let firstEnabledIndex = -1;
+        
+        semesterList.forEach((semCode, index) => {
+            const opt = document.createElement('option');
+            opt.value = semCode;
+            const baseText = getSemesterDisplayText(semCode);
+            
+            if (appliedYears.includes(semCode)) {
+                opt.disabled = true;
+                opt.style.color = 'rgba(255, 255, 255, 0.3)';
+                opt.text = baseText + ' (已申請)';
+            } else {
+                opt.disabled = false;
+                opt.style.color = '#fff';
+                opt.text = baseText;
+                if (firstEnabledIndex === -1) {
+                    firstEnabledIndex = index;
+                }
+            }
+            semesterSelect.appendChild(opt);
+        });
+        
+        if (firstEnabledIndex !== -1) {
+            semesterSelect.selectedIndex = firstEnabledIndex;
+        } else {
+            semesterSelect.selectedIndex = -1;
+        }
+    }
+}
+
+function updateBlueprintUI() {
+    const apps = currentUser.applications || [];
+    const bpApp = apps.find(a => a.type === 'blueprint');
+    
+    const actionContainer = document.getElementById('blueprint-action-container');
+    const lineProgress = document.getElementById('blueprint-line-progress');
+    const node1 = document.getElementById('blueprint-node-1');
+    const node2 = document.getElementById('blueprint-node-2');
+    const node3 = document.getElementById('blueprint-node-3');
+    
+    if (node1) node1.className = 'milestone-node';
+    if (node2) node2.className = 'milestone-node';
+    if (node3) node3.className = 'milestone-node';
+    if (lineProgress) lineProgress.style.width = '0%';
+    
+    if (!bpApp) {
+        if (actionContainer) {
+            actionContainer.innerHTML = `
+                <button class="btn btn-glow-gold btn-large btn-full" id="btn-apply-blueprint-modal">
+                    <i class="fa-solid fa-rocket"></i> 上傳圓夢企劃書 ➔ 啟動募資
+                </button>
+            `;
+            document.getElementById('btn-apply-blueprint-modal').addEventListener('click', () => {
+                populateBlueprintSemesterSelect();
+                openModal('modal-apply-blueprint');
+            });
+        }
+        return;
+    }
+    
+    let details = {};
+    try {
+        if (bpApp.details) {
+            details = typeof bpApp.details === 'string' ? JSON.parse(bpApp.details) : bpApp.details;
+        }
+    } catch (e) {
+        console.error("Failed to parse blueprint details", e);
+    }
+    
+    const phase = details.phase || 1;
+    const phase1Status = details.phase_1_status || bpApp.status;
+    const midtermStatus = details.midterm_status || '';
+    const finalStatus = details.final_status || '';
+    
+    if (phase1Status === 'approved' || phase1Status === 'paid') {
+        if (node1) node1.classList.add('done');
+        if (lineProgress) lineProgress.style.width = '30%';
+    } else if (phase1Status === 'pending') {
+        if (node1) node1.classList.add('active');
+        if (lineProgress) lineProgress.style.width = '15%';
+    } else if (phase1Status === 'rejected') {
+        if (node1) node1.classList.add('active');
+    }
+    
+    if (midtermStatus === 'approved' || midtermStatus === 'paid') {
+        if (node2) node2.classList.add('done');
+        if (lineProgress) lineProgress.style.width = '70%';
+    } else if (midtermStatus === 'pending') {
+        if (node2) node2.classList.add('active');
+        if (lineProgress) lineProgress.style.width = '50%';
+    } else if (phase1Status === 'paid' && !midtermStatus) {
+        if (node2) node2.classList.add('active');
+        if (lineProgress) lineProgress.style.width = '30%';
+    }
+    
+    if (finalStatus === 'approved' || finalStatus === 'paid') {
+        if (node3) node3.classList.add('done');
+        if (lineProgress) lineProgress.style.width = '100%';
+    } else if (finalStatus === 'pending') {
+        if (node3) node3.classList.add('active');
+        if (lineProgress) lineProgress.style.width = '85%';
+    } else if (midtermStatus === 'paid' && !finalStatus) {
+        if (node3) node3.classList.add('active');
+        if (lineProgress) lineProgress.style.width = '70%';
+    }
+    
+    if (actionContainer) {
+        if (bpApp.status === 'pending') {
+            actionContainer.innerHTML = `
+                <button class="btn btn-glow-gold btn-large btn-full" style="background: rgba(255,193,7,0.1); border-color: #ffc107; color: #ffc107;" disabled>
+                    <i class="fa-solid fa-hourglass-half"></i> 圓夢企劃提案審核中...
+                </button>
+            `;
+        } else if (bpApp.status === 'rejected') {
+            actionContainer.innerHTML = `
+                <button class="btn btn-glow-gold btn-large btn-full" id="btn-apply-blueprint-modal" style="background: rgba(220,53,69,0.15); border-color: #dc3545; color: #dc3545;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 提案退回修正，點此重新提交
+                </button>
+            `;
+            document.getElementById('btn-apply-blueprint-modal').addEventListener('click', () => {
+                populateBlueprintSemesterSelect();
+                openModal('modal-apply-blueprint');
+            });
+        } else if (bpApp.status === 'approved' || bpApp.status === 'destroyed') {
+            if (phase === 1) {
+                actionContainer.innerHTML = `
+                    <button class="btn btn-glow-gold btn-large btn-full" style="background: rgba(40,167,69,0.1); border-color: #28a745; color: #28a745;" disabled>
+                        <i class="fa-solid fa-money-bill-1-wave"></i> 企劃已核准，首期撥款 (30%) 準備中...
+                    </button>
+                `;
+            } else if (phase === 2) {
+                if (midtermStatus === 'pending') {
+                    actionContainer.innerHTML = `
+                        <button class="btn btn-glow-gold btn-large btn-full" style="background: rgba(255,193,7,0.1); border-color: #ffc107; color: #ffc107;" disabled>
+                            <i class="fa-solid fa-hourglass-half"></i> 期中報告審核中...
+                        </button>
+                    `;
+                } else {
+                    const dl = details.midterm_deadline || '';
+                    const dlText = dl ? ` (截止日：${dl})` : '';
+                    actionContainer.innerHTML = `
+                        <button class="btn btn-glow-gold btn-large btn-full" id="btn-blueprint-midterm">
+                            <i class="fa-solid fa-upload"></i> 上傳期中報告${dlText}
+                        </button>
+                    `;
+                    document.getElementById('btn-blueprint-midterm').addEventListener('click', () => {
+                        openModal('modal-blueprint-midterm');
+                    });
+                }
+            } else if (phase === 3) {
+                if (finalStatus === 'pending') {
+                    actionContainer.innerHTML = `
+                        <button class="btn btn-glow-gold btn-large btn-full" style="background: rgba(255,193,7,0.1); border-color: #ffc107; color: #ffc107;" disabled>
+                            <i class="fa-solid fa-hourglass-half"></i> 期末報告審核中...
+                        </button>
+                    `;
+                } else {
+                    const dl = details.final_deadline || '';
+                    const dlText = dl ? ` (截止日：${dl})` : '';
+                    actionContainer.innerHTML = `
+                        <button class="btn btn-glow-gold btn-large btn-full" id="btn-blueprint-final">
+                            <i class="fa-solid fa-upload"></i> 上傳期末報告${dlText}
+                        </button>
+                    `;
+                    document.getElementById('btn-blueprint-final').addEventListener('click', () => {
+                        openModal('modal-blueprint-final');
+                    });
+                }
+            } else if (phase === 4 || bpApp.status === 'destroyed') {
+                actionContainer.innerHTML = `
+                    <button class="btn btn-glow-gold btn-large btn-full" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: var(--text-secondary);" disabled>
+                        <i class="fa-solid fa-circle-check"></i> 計畫已結案，撥款圓滿完成！
+                    </button>
+                `;
+            }
+        }
+    }
+}
+
+// Bind file display feedback for Midterm & Final files
+setupFileFeedback('blueprint-midterm-file', 'blueprint-midterm-file-display');
+setupFileFeedback('blueprint-final-file', 'blueprint-final-file-display');
+
+// Form Submit: Scheme 3 Midterm Report
+document.getElementById('form-blueprint-midterm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const file = document.getElementById('blueprint-midterm-file').files[0];
+    if (!file) {
+        showToast("請選擇上傳您的期中進度報告 PDF！", "fa-triangle-exclamation");
+        return;
+    }
+    
+    const bpApp = (currentUser.applications || []).find(a => a.type === 'blueprint');
+    if (!bpApp) return;
+    
+    toggleLoading(true, "期中報告編碼並上傳中...");
+    
+    try {
+        const fileBase64 = await getBase64(file);
+        const fileName = file.name;
+        
+        google.script.run
+            .withSuccessHandler(function(data) {
+                toggleLoading(false);
+                if (data.success) {
+                    closeModal('modal-blueprint-midterm');
+                    e.target.reset();
+                    const elDisp = document.getElementById('blueprint-midterm-file-display');
+                    if (elDisp) elDisp.innerText = '';
+                    showToast(data.message, "fa-circle-check");
+                    refreshUserStatusLiff();
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .withFailureHandler(function(err) {
+                toggleLoading(false);
+                showToast("網路錯誤，期中報告上傳失敗！", "fa-triangle-exclamation");
+            })
+            .studentSubmitMidterm(window.lineUid, bpApp.id, fileBase64, fileName);
+    } catch (err) {
+        toggleLoading(false);
+        showToast("檔案處理錯誤，上傳失敗！", "fa-triangle-exclamation");
+    }
+});
+
+// Form Submit: Scheme 3 Final Report
+document.getElementById('form-blueprint-final').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const file = document.getElementById('blueprint-final-file').files[0];
+    if (!file) {
+        showToast("請選擇上傳您的期末成果報告 PDF！", "fa-triangle-exclamation");
+        return;
+    }
+    
+    const bpApp = (currentUser.applications || []).find(a => a.type === 'blueprint');
+    if (!bpApp) return;
+    
+    toggleLoading(true, "期末報告編碼並上傳中...");
+    
+    try {
+        const fileBase64 = await getBase64(file);
+        const fileName = file.name;
+        
+        google.script.run
+            .withSuccessHandler(function(data) {
+                toggleLoading(false);
+                if (data.success) {
+                    closeModal('modal-blueprint-final');
+                    e.target.reset();
+                    const elDisp = document.getElementById('blueprint-final-file-display');
+                    if (elDisp) elDisp.innerText = '';
+                    showToast(data.message, "fa-circle-check");
+                    refreshUserStatusLiff();
+                } else {
+                    showToast(data.message, "fa-circle-xmark");
+                }
+            })
+            .withFailureHandler(function(err) {
+                toggleLoading(false);
+                showToast("網路錯誤，期末報告上傳失敗！", "fa-triangle-exclamation");
+            })
+            .studentSubmitFinal(window.lineUid, bpApp.id, fileBase64, fileName);
+    } catch (err) {
+        toggleLoading(false);
+        showToast("檔案處理錯誤，上傳失敗！", "fa-triangle-exclamation");
+    }
+});

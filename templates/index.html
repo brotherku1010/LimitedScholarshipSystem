@@ -407,28 +407,44 @@
                     </ul>
                 </div>
 
+                <!-- Template Download Block -->
+                <div class="blueprint-download-box" style="margin-top: 15px; margin-bottom: 25px; padding: 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--border-radius-sm); font-size: 0.9rem; text-align: center;">
+                    <h3 style="color: var(--neon-blue); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold;">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> 企劃書/進度報告範本下載
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">在撰寫與上傳您的報告前，建議先下載官方規範範本檔案進行編輯：</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <a href="https://example.com/blueprint_template.docx" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6;" target="_blank">
+                            <i class="fa-solid fa-file-word"></i> 企劃書範本 (Word 檔)
+                        </a>
+                        <a href="https://example.com/blueprint_template.pdf" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" target="_blank">
+                            <i class="fa-solid fa-file-pdf"></i> 企劃書範本 (PDF 檔)
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Crowdfunding style Milestones -->
                 <div class="blueprint-milestone-panel">
                     <h3><i class="fa-solid fa-diagram-project"></i> 階段性里程碑追蹤流程</h3>
 
                     <div class="milestone-track-container">
-                        <div class="milestone-line-progress" style="width: 30%;"></div>
+                        <div class="milestone-line-progress" id="blueprint-line-progress" style="width: 0%;"></div>
                         <div class="milestone-steps-wrap">
-                            <div class="milestone-node done">
+                            <div class="milestone-node" id="blueprint-node-1">
                                 <div class="node-circle"><i class="fa-solid fa-file-invoice"></i></div>
                                 <div class="node-text-content">
                                     <span class="node-title">階段一：提案通過</span>
                                     <span class="node-percent">撥付首款 30%</span>
                                 </div>
                             </div>
-                            <div class="milestone-node active">
+                            <div class="milestone-node" id="blueprint-node-2">
                                 <div class="node-circle"><i class="fa-solid fa-receipt"></i></div>
                                 <div class="node-text-content">
                                     <span class="node-title">階段二：中期報告</span>
                                     <span class="node-percent">審核通過撥付 40%</span>
                                 </div>
                             </div>
-                            <div class="milestone-node">
+                            <div class="milestone-node" id="blueprint-node-3">
                                 <div class="node-circle"><i class="fa-solid fa-images"></i></div>
                                 <div class="node-text-content">
                                     <span class="node-title">階段三：期末報告</span>
@@ -439,7 +455,7 @@
                     </div>
                 </div>
 
-                <div class="apply-action-zone">
+                <div class="apply-action-zone" id="blueprint-action-container">
                     <button class="btn btn-glow-gold btn-large btn-full" id="btn-apply-blueprint-modal">
                         <i class="fa-solid fa-rocket"></i> 上傳圓夢企劃書 ➔ 啟動募資
                     </button>
@@ -893,10 +909,7 @@
                     <div class="form-group">
                         <label class="required-label">申請學年度學期</label>
                         <select name="academic_year" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;" required>
-                            <option value="114-2">114 學年度 第二學期</option>
-                            <option value="114-1">114 學年度 第一學期</option>
-                            <option value="115-1">115 學年度 第一學期</option>
-                            <option value="115-2">115 學年度 第二學期</option>
+                            <!-- Dynamically populated from 112-1 to latest eligible semester -->
                         </select>
                     </div>
 
@@ -971,6 +984,60 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-full" onclick="closeModal('modal-history-detail')">關閉視窗</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal: Upload Midterm Report -->
+    <div class="modal" id="modal-blueprint-midterm">
+        <div class="modal-content glass" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-receipt"></i> 提交期中進度報告</h2>
+                <button class="modal-close" onclick="closeModal('modal-blueprint-midterm')">&times;</button>
+            </div>
+            <form id="form-blueprint-midterm">
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">
+                        請依據您的未來藍圖計畫，上傳您目前的執行進度報告與相關經費憑證 (PDF 格式)。
+                    </p>
+                    <div class="form-group">
+                        <label class="required-label">上傳期中報告 (PDF 檔)</label>
+                        <input type="file" name="file" id="blueprint-midterm-file" required accept=".pdf">
+                        <div class="file-preview-name" id="blueprint-midterm-file-display" style="font-size: 0.8rem; color: var(--gold); margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-glow-gold btn-full">
+                        <i class="fa-solid fa-paper-plane"></i> 提交期中報告
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Upload Final Report -->
+    <div class="modal" id="modal-blueprint-final">
+        <div class="modal-content glass" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-images"></i> 提交期末成果報告</h2>
+                <button class="modal-close" onclick="closeModal('modal-blueprint-final')">&times;</button>
+            </div>
+            <form id="form-blueprint-final">
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">
+                        計畫執行完成！請上傳您的最終成果報告書、心得以及執行成果照片/文件 (PDF 格式)。
+                    </p>
+                    <div class="form-group">
+                        <label class="required-label">上傳期末成果報告 (PDF 檔)</label>
+                        <input type="file" name="file" id="blueprint-final-file" required accept=".pdf">
+                        <div class="file-preview-name" id="blueprint-final-file-display" style="font-size: 0.8rem; color: var(--gold); margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-glow-gold btn-full">
+                        <i class="fa-solid fa-paper-plane"></i> 提交期末成果報告
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

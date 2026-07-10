@@ -212,6 +212,116 @@
                                 </div>
                             </div>
 
+                            <!-- Specialized Blueprint Audit and Progress Section -->
+                            <div id="blueprint-audit-section" style="display: none; margin-top: 15px; margin-bottom: 15px; padding: 15px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--border-radius-sm);">
+                                <h4 style="color: var(--neon-blue); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-diagram-project"></i> 未來藍圖里程碑與審定面板
+                                </h4>
+                                
+                                <!-- Proposal Approval Form (Visible only when phase_1_status is pending/rejected/empty) -->
+                                <div id="bp-proposal-review-box" style="display: none; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.06);">
+                                    <div class="form-group" style="margin-top: 5px; margin-bottom: 10px;">
+                                        <label style="font-size: 0.8rem; color: var(--gold); display: block; margin-bottom: 5px;">核定專案總金額 (元)</label>
+                                        <input type="number" id="bp-approved-amount-input" placeholder="請輸入核定總金額 (例如 25000)" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff;">
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">期中報告截止日</label>
+                                            <input type="date" id="bp-midterm-deadline-input" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-size: 0.85rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 5px;">期末報告截止日</label>
+                                            <input type="date" id="bp-final-deadline-input" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-size: 0.85rem;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-approve btn-full" id="btn-bp-approve-proposal" style="padding: 8px 12px;">
+                                            <i class="fa-solid fa-circle-check"></i> 核准提案並核定首款
+                                        </button>
+                                        <button class="btn btn-reject" id="btn-bp-reject-proposal" style="padding: 8px 12px;">
+                                            <i class="fa-solid fa-circle-xmark"></i> 拒絕
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Midterm Report Review Box (Visible only when midterm status is pending) -->
+                                <div id="bp-midterm-review-box" style="display: none; margin-bottom: 15px; padding: 12px; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 6px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-weight: bold; color: #3b82f6;"><i class="fa-solid fa-receipt"></i> 學生已上傳期中報告</span>
+                                        <span id="bp-midterm-overtime-badge" style="display: none;" class="badge rejected">已超時</span>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <a href="#" id="bp-midterm-file-link" target="_blank" class="text-neon-blue" style="font-size: 0.85rem;"><i class="fa-solid fa-file-pdf"></i> 開啟預覽期中報告 (PDF) ➔</a>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-approve btn-full" id="btn-bp-approve-midterm" style="padding: 6px 12px; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-check"></i> 核准期中報告
+                                        </button>
+                                        <button class="btn btn-reject" id="btn-bp-reject-midterm" style="padding: 6px 12px; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-xmark"></i> 退回
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Final Report Review Box (Visible only when final status is pending) -->
+                                <div id="bp-final-review-box" style="display: none; margin-bottom: 15px; padding: 12px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); border-radius: 6px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-weight: bold; color: #10b981;"><i class="fa-solid fa-images"></i> 學生已上傳期末報告</span>
+                                        <span id="bp-final-overtime-badge" style="display: none;" class="badge rejected">已超時</span>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <a href="#" id="bp-final-file-link" target="_blank" class="text-neon-blue" style="font-size: 0.85rem;"><i class="fa-solid fa-file-pdf"></i> 開啟預覽期末成果報告 (PDF) ➔</a>
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="btn btn-approve btn-full" id="btn-bp-approve-final" style="padding: 6px 12px; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-check"></i> 核准期末報告
+                                        </button>
+                                        <button class="btn btn-reject" id="btn-bp-reject-final" style="padding: 6px 12px; font-size: 0.85rem;">
+                                            <i class="fa-solid fa-xmark"></i> 退回
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Staged Payouts Control Board -->
+                                <div id="bp-payout-board" style="display: none;">
+                                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 8px; font-weight: bold;">各階段金流核發追蹤 (30% / 40% / 30%)：</span>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <!-- Stage 1 Payout row -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 4px; font-size: 0.85rem;">
+                                            <div>
+                                                <span style="color: #fff; font-weight: bold;">階段一首款 (30%)：</span>
+                                                <span id="bp-stage-1-amt" style="color: var(--gold);">NT$ --</span>
+                                            </div>
+                                            <div id="bp-stage-1-status-container">
+                                                <!-- Action button or status badge -->
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Stage 2 Payout row -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 4px; font-size: 0.85rem;">
+                                            <div>
+                                                <span style="color: #fff; font-weight: bold;">階段二中期款 (40%)：</span>
+                                                <span id="bp-stage-2-amt" style="color: var(--gold);">NT$ --</span>
+                                            </div>
+                                            <div id="bp-stage-2-status-container">
+                                                <!-- Action button or status badge -->
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Stage 3 Payout row -->
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 4px; font-size: 0.85rem;">
+                                            <div>
+                                                <span style="color: #fff; font-weight: bold;">階段三尾款 (30%)：</span>
+                                                <span id="bp-stage-3-amt" style="color: var(--gold);">NT$ --</span>
+                                            </div>
+                                            <div id="bp-stage-3-status-container">
+                                                <!-- Action button or status badge -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Action buttons -->
                             <div class="auditor-actions-zone">
                                 <div class="audit-status-actions" id="actions-pending-group">

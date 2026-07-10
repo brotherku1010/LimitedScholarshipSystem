@@ -1074,6 +1074,21 @@ function adminGetList(token) {
     let bankCode = sInfo.bank_code;
     let bankAccount = sInfo.bank_account;
     
+    // Scheme 3 Milestones details fields
+    let approvedAmount = "";
+    let midtermDeadline = "";
+    let finalDeadline = "";
+    let midtermFile = "";
+    let midtermSubmittedAt = "";
+    let midtermStatus = "";
+    let midtermOvertime = false;
+    let finalFile = "";
+    let finalSubmittedAt = "";
+    let finalStatus = "";
+    let finalOvertime = false;
+    let phase = 1;
+    let phase1Status = "";
+    
     const detailsStr = appData[j][7];
     const type = appData[j][1];
     
@@ -1092,6 +1107,19 @@ function adminGetList(token) {
         } else if (type === 'blueprint') {
           projectName = detailsObj.project_name || "";
           projectMonth = detailsObj.project_month || "";
+          approvedAmount = detailsObj.approved_amount || "";
+          midtermDeadline = detailsObj.midterm_deadline || "";
+          finalDeadline = detailsObj.final_deadline || "";
+          midtermFile = detailsObj.midterm_file || "";
+          midtermSubmittedAt = detailsObj.midterm_submitted_at || "";
+          midtermStatus = detailsObj.midterm_status || "";
+          midtermOvertime = detailsObj.midterm_overtime || false;
+          finalFile = detailsObj.final_file || "";
+          finalSubmittedAt = detailsObj.final_submitted_at || "";
+          finalStatus = detailsObj.final_status || "";
+          finalOvertime = detailsObj.final_overtime || false;
+          phase = detailsObj.phase || 1;
+          phase1Status = detailsObj.phase_1_status || "";
         }
       }
     } catch(e) {}
@@ -1122,7 +1150,20 @@ function adminGetList(token) {
       nickname: sInfo.nickname,
       school: sInfo.school,
       department: sInfo.department,
-      grade: sInfo.grade
+      grade: sInfo.grade,
+      approved_amount: approvedAmount,
+      midterm_deadline: midtermDeadline,
+      final_deadline: finalDeadline,
+      midterm_file: midtermFile,
+      midterm_submitted_at: midtermSubmittedAt,
+      midterm_status: midtermStatus,
+      midterm_overtime: midtermOvertime,
+      final_file: finalFile,
+      final_submitted_at: finalSubmittedAt,
+      final_status: finalStatus,
+      final_overtime: finalOvertime,
+      phase: phase,
+      phase_1_status: phase1Status
     });
   }
   
@@ -1152,6 +1193,9 @@ function adminApproveCase(token, appId) {
   
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === appId) {
+      if (rows[i][1] === 'blueprint') {
+        return { success: false, message: '未來藍圖計畫具有專屬的多階段里程碑審查區，請使用該專用面板進行核定！' };
+      }
       appSheet.getRange(i + 1, 3).setValue(safeWriteVal('approved')); // Set status to approved
       
       // Get student's LineUID and send notification
@@ -1314,7 +1358,19 @@ function adminExportApproved(token) {
   }
   const ss = getDbSpreadsheet();
   const appSheet = ss.getSheetByName('applications');
+  const studentSheet = ss.getSheetByName('students');
   const rows = getSafeValues(appSheet);
+  const studentRows = getSafeValues(studentSheet);
+  
+  // Build student bank info index
+  const studentIndex = {};
+  for (let i = 1; i < studentRows.length; i++) {
+    const uid = studentRows[i][0];
+    studentIndex[uid] = {
+      bank_code: studentRows[i][10] ? studentRows[i][10].toString() : "",
+      bank_account: studentRows[i][11] ? studentRows[i][11].toString() : ""
+    };
+  }
   
   const csvLines = [];
   // Write UTF-8 BOM
@@ -1324,22 +1380,47 @@ function adminExportApproved(token) {
   for (let i = 1; i < rows.length; i++) {
     const status = rows[i][2];
     const type = rows[i][1];
+    const studentUid = rows[i][3];
+    const sInfo = studentIndex[studentUid] || { bank_code: "", bank_account: "" };
     
     if (status === 'approved') {
       const name = rows[i][4];
-      const amount = rows[i][5];
+      let amount = parseFloat(rows[i][5] || "0");
       const detailsStr = rows[i][7];
       
-      let bankCode = "";
-      let bankAccount = "";
+      let bankCode = sInfo.bank_code;
+      let bankAccount = sInfo.bank_account;
       
-      if (type === 'progress') {
-        try {
+      // Override/fallback from details
+      try {
+        if (detailsStr) {
           const details = JSON.parse(detailsStr);
-          bankCode = details.bank_code || "";
-          bankAccount = details.bank_account || "";
-        } catch(e) {}
-      }
+          if (details.bank_code) bankCode = details.bank_code;
+          if (details.bank_account) bankAccount = details.bank_account;
+          
+          // Scheme 3 Staged Payout logic
+          if (type === 'blueprint') {
+            const approvedTotal = parseFloat(details.approved_amount || "0");
+            const phase1Status = details.phase_1_status || "";
+            const midtermStatus = details.midterm_status || "";
+            const finalStatus = details.final_status || "";
+            
+            let blueprintPayout = 0;
+            // Check active approved stage for payout
+            if (phase1Status === 'approved') {
+              blueprintPayout = Math.round(approvedTotal * 0.3);
+            } else if (midtermStatus === 'approved') {
+              blueprintPayout = Math.round(approvedTotal * 0.4);
+            } else if (finalStatus === 'approved') {
+              blueprintPayout = Math.round(approvedTotal * 0.3);
+            }
+            amount = blueprintPayout;
+          }
+        }
+      } catch(e) {}
+      
+      // Skip exporting if amount is 0 (e.g. blueprint case where no stage is active for payout)
+      if (amount <= 0) continue;
       
       // Escape CSV values
       const line = `"${bankCode}","${bankAccount}",${amount},"${name}-古哥挑戰獎學金"`;
@@ -1689,4 +1770,318 @@ function calculateCurrentGrade(initialGrade, registrationDateStr, currentDate) {
 function getChineseNumber(num) {
   const ch = ["", "一", "二", "三", "四", "五", "六"];
   return ch[num] || num.toString();
+}
+
+// ==========================================
+// 10. Scheme 3 (Future Blueprint) Backend APIs
+// ==========================================
+
+// Approve the initial proposal and set amount and deadlines
+function adminApproveBlueprint(token, appId, approvedAmount, midtermDeadline, finalDeadline) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      details.approved_amount = parseFloat(approvedAmount);
+      details.midterm_deadline = midtermDeadline;
+      details.final_deadline = finalDeadline;
+      details.phase = 1;
+      details.phase_1_status = "approved"; // waiting for first payout
+      
+      appSheet.getRange(i + 1, 3).setValue(safeWriteVal('approved')); // update status to approved
+      appSheet.getRange(i + 1, 6).setValue(safeWriteVal(approvedAmount)); // set核定金額 in amount column
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details))); // save details JSON
+      
+      // Notify student
+      const studentUid = rows[i][3];
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        const msg = `🔔 恭喜！您的【未來藍圖計畫】提案企劃書已審核「核准」！\n💰 核定專案總額：NT$ ${parseFloat(approvedAmount).toLocaleString()} 元。\n首期首款 (30% = NT$ ${(Math.round(approvedAmount * 0.3)).toLocaleString()} 元) 將進入撥款準備！\n請於時限內繳交期中期末進度報告：\n* 期中截止日：${midtermDeadline}\n* 期末截止日：${finalDeadline}`;
+        sendLinePushNotification(lineUid, msg);
+      }
+      
+      return { success: true, message: '未來藍圖計畫提案已成功核准！' };
+    }
+  }
+  return { success: false, message: '找不到該申請案件！' };
+}
+
+// Mark a specific stage payment as disbursed
+function adminDisburseStage(token, appId, stageNum) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      const approvedAmount = parseFloat(details.approved_amount || "0");
+      let msg = "";
+      
+      if (stageNum === 1) {
+        details.phase_1_status = "paid";
+        details.phase = 2; // move to phase 2 (midterm pending submission)
+        msg = `💰 首款 30% (NT$ ${(Math.round(approvedAmount * 0.3)).toLocaleString()} 元) 已發放完成！\n專案正式啟動，請開始執行圓夢計畫，並在 ${details.midterm_deadline} 前上傳期中報告！`;
+      } else if (stageNum === 2) {
+        details.midterm_status = "paid";
+        details.phase = 3; // move to phase 3 (final pending submission)
+        msg = `💰 中期款 40% (NT$ ${(Math.round(approvedAmount * 0.4)).toLocaleString()} 元) 已發放完成！\n請接續完成您的圓夢計畫，並在 ${details.final_deadline} 前上傳期末成果報告！`;
+      } else if (stageNum === 3) {
+        details.final_status = "paid";
+        details.phase = 4; // completed!
+        msg = `🎉 尾款 30% (NT$ ${(Math.round(approvedAmount * 0.3)).toLocaleString()} 元) 已發放完成，計畫順利結案！\n感謝您的參與，所有隱私資料即將執行物理銷毀！`;
+      }
+      
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+      
+      // Notify student
+      const studentUid = rows[i][3];
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        sendLinePushNotification(lineUid, `🔔 撥款通知：【未來藍圖計畫】\n` + msg);
+      }
+      
+      return { success: true, message: `階段 ${stageNum} 撥款已確認，進度已更新！` };
+    }
+  }
+  return { success: false, message: '找不到該申請案件！' };
+}
+
+// Approve or reject midterm report
+function adminReviewMidterm(token, appId, isApprove) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      if (isApprove) {
+        details.midterm_status = "approved"; // triggers payout Stage 2
+        appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+        
+        // Notify student
+        const studentUid = rows[i][3];
+        const lineUid = getStudentLineUid(ss, studentUid);
+        if (lineUid) {
+          const approvedAmount = parseFloat(details.approved_amount || "0");
+          const msg = `🔔 通知：您的【未來藍圖計畫】期中報告已審查「通過」！\n💰 中期款 (40% = NT$ ${(Math.round(approvedAmount * 0.4)).toLocaleString()} 元) 將進入撥款準備！`;
+          sendLinePushNotification(lineUid, msg);
+        }
+        return { success: true, message: '期中報告審查通過！' };
+      } else {
+        details.midterm_status = "rejected";
+        // Reset phase/state to let student re-upload
+        details.midterm_file = "";
+        details.midterm_submitted_at = "";
+        appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+        
+        // Notify student
+        const studentUid = rows[i][3];
+        const lineUid = getStudentLineUid(ss, studentUid);
+        if (lineUid) {
+          const msg = `🔔 通知：您的【未來藍圖計畫】期中報告被退回修正。\n請重新確認內容並重新上傳。`;
+          sendLinePushNotification(lineUid, msg);
+        }
+        return { success: true, message: '期中報告已被退回修正！' };
+      }
+    }
+  }
+  return { success: false, message: '找不到該申請案件！' };
+}
+
+// Approve or reject final report
+function adminReviewFinal(token, appId, isApprove) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      if (isApprove) {
+        details.final_status = "approved"; // triggers payout Stage 3
+        appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+        
+        // Notify student
+        const studentUid = rows[i][3];
+        const lineUid = getStudentLineUid(ss, studentUid);
+        if (lineUid) {
+          const approvedAmount = parseFloat(details.approved_amount || "0");
+          const msg = `🔔 恭喜！您的【未來藍圖計畫】期末報告已審查「通過」！\n💰 尾款 (30% = NT$ ${(Math.round(approvedAmount * 0.3)).toLocaleString()} 元) 將進入撥款準備，本計畫即將結案！`;
+          sendLinePushNotification(lineUid, msg);
+        }
+        return { success: true, message: '期末報告審查通過！' };
+      } else {
+        details.final_status = "rejected";
+        // Reset state to let student re-upload
+        details.final_file = "";
+        details.final_submitted_at = "";
+        appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+        
+        // Notify student
+        const studentUid = rows[i][3];
+        const lineUid = getStudentLineUid(ss, studentUid);
+        if (lineUid) {
+          const msg = `🔔 通知：您的【未來藍圖計畫】期末報告被退回修正。\n請重新確認內容並重新上傳。`;
+          sendLinePushNotification(lineUid, msg);
+        }
+        return { success: true, message: '期末報告已被退回修正！' };
+      }
+    }
+  }
+  return { success: false, message: '找不到該申請案件！' };
+}
+
+// Student uploads midterm report
+function studentSubmitMidterm(lineUid, appId, fileBase64, fileName) {
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const studentSheet = ss.getSheetByName('students');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const studentUid = rows[i][3];
+      
+      // Verify LINE identity matches
+      const studentRows = findRows(studentSheet, 1, studentUid);
+      if (studentRows.length === 0 || studentRows[0].rowData[7] !== lineUid) {
+        return { success: false, message: '身份驗證不符！' };
+      }
+      
+      const folderId = studentRows[0].rowData[8];
+      const academicYear = rows[i][6];
+      
+      // Upload Drive file
+      const ext = fileName.substring(fileName.lastIndexOf('.'));
+      const finalFilename = `${studentUid}-${academicYear}期中報告${ext}`;
+      const fileUrl = saveBase64File(folderId, fileBase64, finalFilename);
+      
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      // Overtime check
+      let overtime = false;
+      if (details.midterm_deadline) {
+        const today = new Date();
+        const deadline = new Date(details.midterm_deadline + " 23:59:59");
+        if (today > deadline) {
+          overtime = true;
+        }
+      }
+      
+      details.midterm_file = fileUrl;
+      details.midterm_submitted_at = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
+      details.midterm_status = "pending";
+      details.midterm_overtime = overtime;
+      
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+      
+      return { 
+        success: true, 
+        message: overtime 
+          ? '您的期中報告已成功提交（狀態：已超時），將由管理團隊核備審查！'
+          : '您的期中報告已成功提交，已進入管理團隊審查！' 
+      };
+    }
+  }
+  return { success: false, message: '找不到對應的計畫案！' };
+}
+
+// Student uploads final report
+function studentSubmitFinal(lineUid, appId, fileBase64, fileName) {
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const studentSheet = ss.getSheetByName('students');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const studentUid = rows[i][3];
+      
+      // Verify LINE identity matches
+      const studentRows = findRows(studentSheet, 1, studentUid);
+      if (studentRows.length === 0 || studentRows[0].rowData[7] !== lineUid) {
+        return { success: false, message: '身份驗證不符！' };
+      }
+      
+      const folderId = studentRows[0].rowData[8];
+      const academicYear = rows[i][6];
+      
+      // Upload Drive file
+      const ext = fileName.substring(fileName.lastIndexOf('.'));
+      const finalFilename = `${studentUid}-${academicYear}期末報告${ext}`;
+      const fileUrl = saveBase64File(folderId, fileBase64, finalFilename);
+      
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      // Overtime check
+      let overtime = false;
+      if (details.final_deadline) {
+        const today = new Date();
+        const deadline = new Date(details.final_deadline + " 23:59:59");
+        if (today > deadline) {
+          overtime = true;
+        }
+      }
+      
+      details.final_file = fileUrl;
+      details.final_submitted_at = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
+      details.final_status = "pending";
+      details.final_overtime = overtime;
+      
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+      
+      return { 
+        success: true, 
+        message: overtime 
+          ? '您的期末成果報告已成功提交（狀態：已超時），將由管理團隊核備審查！'
+          : '您的期末成果報告已成功提交，已進入管理團隊審查！' 
+      };
+    }
+  }
+  return { success: false, message: '找不到對應的計畫案！' };
 }
