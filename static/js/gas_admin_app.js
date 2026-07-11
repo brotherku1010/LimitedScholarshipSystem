@@ -293,41 +293,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // Bind Tab Click events
-
-
-
     const tabPending = document.getElementById('tab-pending');
-
-
-
     const tabApproved = document.getElementById('tab-approved');
-
-
-
     const tabDestroyed = document.getElementById('tab-destroyed');
-
-
-
+    const tabBlueprint = document.getElementById('tab-blueprint');
     const tabTotal = document.getElementById('tab-total');
-
-
-
     
-
-
-
     if (tabPending) tabPending.addEventListener('click', () => switchTab('pending'));
-
-
-
     if (tabApproved) tabApproved.addEventListener('click', () => switchTab('approved'));
-
-
-
     if (tabDestroyed) tabDestroyed.addEventListener('click', () => switchTab('destroyed'));
-
-
-
+    if (tabBlueprint) tabBlueprint.addEventListener('click', () => switchTab('blueprint'));
     if (tabTotal) tabTotal.addEventListener('click', () => switchTab('all'));
 
 
@@ -733,38 +708,21 @@ function renderCaseList() {
 
 
 
-    // Filter cases based on selected tab
-
-
-
     let filteredCases = currentCases;
 
-
-
     if (currentFilter === 'pending') {
-
-
-
-        filteredCases = currentCases.filter(c => c.status === 'pending');
-
-
-
+        filteredCases = currentCases.filter(c => c.status === 'pending' && c.type !== 'blueprint');
     } else if (currentFilter === 'approved') {
-
-
-
-        filteredCases = currentCases.filter(c => c.status === 'approved');
-
-
-
+        filteredCases = currentCases.filter(c => c.status === 'approved' && c.type !== 'blueprint');
     } else if (currentFilter === 'destroyed') {
-
-
-
-        filteredCases = currentCases.filter(c => c.status === 'destroyed');
-
-
-
+        filteredCases = currentCases.filter(c => {
+            if (c.type === 'blueprint') {
+                return getPaidAmount(c) > 0;
+            }
+            return c.status === 'destroyed';
+        });
+    } else if (currentFilter === 'blueprint') {
+        filteredCases = currentCases.filter(c => c.type === 'blueprint');
     }
 
 
@@ -882,31 +840,64 @@ function renderCaseList() {
 
 
         // Format status badge
-
-
-
         let statusBadge = '<span class="badge pending">待審核</span>';
-
-
-
         if (c.status === 'approved') statusBadge = '<span class="badge approved">已核准</span>';
-
-
-
         if (c.status === 'rejected') statusBadge = '<span class="badge rejected">已拒絕</span>';
-
-
-
         if (c.status === 'destroyed') statusBadge = '<span class="badge destroyed">已銷毀結案</span>';
-
-
-
         
+        // Blueprint state status badge
+        if (c.type === 'blueprint') {
+            if (c.status === 'pending') {
+                statusBadge = '<span class="badge pending">提案待審核</span>';
+            } else if (c.status === 'approved') {
+                const phase = c.phase || 1;
+                if (phase === 1) {
+                    statusBadge = '<span class="badge approved" style="background: rgba(245,158,11,0.2); color: #f59e0b; border-color: #f59e0b;">首款待撥付</span>';
+                } else if (phase === 2) {
+                    if (c.midterm_status === 'pending') {
+                        statusBadge = '<span class="badge pending">期中待審查</span>';
+                    } else if (c.midterm_status === 'rejected') {
+                        statusBadge = '<span class="badge rejected">期中已退回</span>';
+                    } else {
+                        statusBadge = '<span class="badge approved" style="background: rgba(59,130,246,0.2); color: #3b82f6; border-color: #3b82f6;">期中執行中</span>';
+                    }
+                } else if (phase === 3) {
+                    if (c.final_status === 'pending') {
+                        statusBadge = '<span class="badge pending">期末待審查</span>';
+                    } else if (c.final_status === 'rejected') {
+                        statusBadge = '<span class="badge rejected">期末已退回</span>';
+                    } else {
+                        statusBadge = '<span class="badge approved" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">期末執行中</span>';
+                    }
+                } else if (phase === 4) {
+                    statusBadge = '<span class="badge approved" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">已完成/待結案</span>';
+                }
+            } else if (c.status === 'destroyed') {
+                statusBadge = '<span class="badge destroyed">已結案銷毀</span>';
+            }
+        }
+        
+        // Show correct amount: overall approved for blueprint tab, paid amount for destroyed tab
+        let showAmt = c.amount || 0;
+        if (c.type === 'blueprint') {
+            if (currentFilter === 'blueprint' || currentFilter === 'all') {
+                showAmt = c.approved_amount || c.amount || 0;
+            } else {
+                showAmt = getPaidAmount(c);
+            }
+        }
 
-
-
-        tr.innerHTML = '\n\n\n\n            <td>' + (c.created_at) + '</td>\n\n\n\n            <td class="font-tech" style="font-size: 0.85rem;">' + (c.school || '') + ' ' + (c.department || '') + ' (' + (c.grade || '') + ')</td>\n\n\n\n            <td>' + (c.name || '已銷毀') + '</td>\n\n\n\n            <td><span style="color: var(--neon-blue); font-weight: bold; font-family: monospace;">' + (c.academic_year || '--') + '</span></td>\n\n\n\n            <td>' + (typeText) + '</td>\n\n\n\n            <td>' + (targetText) + '</td>\n\n\n\n            <td class="font-tech text-gold font-bold">NT$ ' + ((c.amount || 0).toLocaleString()) + '</td>\n\n\n\n            <td>' + (statusBadge) + '</td>\n\n\n\n        ';
-
+        tr.innerHTML = `
+            <td>${c.created_at}</td>
+            <td class="font-tech" style="font-size: 0.85rem;">${c.school || ''} ${c.department || ''} (${c.grade || ''})</td>
+            <td>${c.name || '已銷毀'}</td>
+            <td><span style="color: var(--neon-blue); font-weight: bold; font-family: monospace;">${c.academic_year || '--'}</span></td>
+            <td>${typeText}</td>
+            <td>${targetText}</td>
+            <td class="font-tech text-gold font-bold">NT$ ${parseInt(showAmt).toLocaleString()}</td>
+            <td>${statusBadge}</td>
+        `;
+        
 
 
         
@@ -1243,90 +1234,50 @@ function selectCase(c) {
 
 
 
-// Update upper dashboard counters
-
-
+function getPaidAmount(c) {
+    if (c.type !== 'blueprint') {
+        return c.status === 'destroyed' ? (c.amount || 0) : 0;
+    }
+    const approvedAmt = parseFloat(c.approved_amount || "0");
+    let paid = 0;
+    if (c.phase_1_status === 'paid') paid += Math.round(approvedAmt * 0.3);
+    if (c.midterm_status === 'paid') paid += Math.round(approvedAmt * 0.4);
+    if (c.final_status === 'paid') paid += Math.round(approvedAmt * 0.3);
+    return paid;
+}
 
 function updateStats() {
-
-
-
     let pendingCount = 0;
-
-
-
     let approvedCount = 0;
-
-
-
     let destroyedCount = 0;
-
-
-
+    let blueprintCount = 0;
     let totalPayout = 0;
-
-
-
     
-
-
-
     currentCases.forEach(c => {
-
-
-
-        if (c.status === 'pending') pendingCount++;
-
-
-
-        else if (c.status === 'approved') approvedCount++;
-
-
-
-        else if (c.status === 'destroyed') destroyedCount++;
-
-
-
-        
-
-
-
-        if (c.status === 'approved' || c.status === 'destroyed') {
-
-
-
-            totalPayout += c.amount;
-
-
-
+        if (c.type === 'blueprint') {
+            blueprintCount++;
+            const paidAmt = getPaidAmount(c);
+            if (paidAmt > 0) {
+                destroyedCount++;
+            }
+            totalPayout += paidAmt;
+        } else {
+            if (c.status === 'pending') pendingCount++;
+            else if (c.status === 'approved') approvedCount++;
+            else if (c.status === 'destroyed') destroyedCount++;
+            
+            if (c.status === 'approved' || c.status === 'destroyed') {
+                totalPayout += c.amount;
+            }
         }
-
-
-
     });
-
-
-
     
-
-
-
     document.getElementById('stat-pending').innerText = pendingCount;
-
-
-
     document.getElementById('stat-approved').innerText = approvedCount;
-
-
-
     document.getElementById('stat-destroyed').innerText = destroyedCount;
-
-
-
+    const statBp = document.getElementById('stat-blueprint');
+    if (statBp) statBp.innerText = blueprintCount;
     document.getElementById('stat-total-amount').innerText = 'NT$ ' + (totalPayout.toLocaleString());
-
-
-
 }
 
 
@@ -1970,57 +1921,21 @@ function switchTab(filter) {
 
 
     // Add active-tab to selected tab
-
-
-
     if (filter === 'pending') {
-
-
-
         const tab = document.getElementById('tab-pending');
-
-
-
         if (tab) tab.classList.add('active-tab');
-
-
-
     } else if (filter === 'approved') {
-
-
-
         const tab = document.getElementById('tab-approved');
-
-
-
         if (tab) tab.classList.add('active-tab');
-
-
-
     } else if (filter === 'destroyed') {
-
-
-
         const tab = document.getElementById('tab-destroyed');
-
-
-
         if (tab) tab.classList.add('active-tab');
-
-
-
+    } else if (filter === 'blueprint') {
+        const tab = document.getElementById('tab-blueprint');
+        if (tab) tab.classList.add('active-tab');
     } else if (filter === 'all') {
-
-
-
         const tab = document.getElementById('tab-total');
-
-
-
         if (tab) tab.classList.add('active-tab');
-
-
-
     }
 
 
