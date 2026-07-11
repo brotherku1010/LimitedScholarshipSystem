@@ -2085,3 +2085,41 @@ function studentSubmitFinal(lineUid, appId, fileBase64, fileName) {
   }
   return { success: false, message: '找不到對應的計畫案！' };
 }
+
+// Update Scheme 3 approved settings (amount & deadlines) retroactively
+function adminUpdateBlueprintSettings(token, appId, approvedAmount, midtermDeadline, finalDeadline) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      details.approved_amount = parseFloat(approvedAmount);
+      details.midterm_deadline = midtermDeadline;
+      details.final_deadline = finalDeadline;
+      
+      appSheet.getRange(i + 1, 6).setValue(safeWriteVal(approvedAmount));
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+      
+      // Send update push notification
+      const studentUid = rows[i][3];
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        const msg = `🔔 通知：您的【未來藍圖計畫】已更新設定：\n💰 核定專案總額：NT$ ${parseFloat(approvedAmount).toLocaleString()} 元。\n* 期中截止日：${midtermDeadline}\n* 期末截止日：${finalDeadline}`;
+        sendLinePushNotification(lineUid, msg);
+      }
+      
+      return { success: true, message: '已成功更新核定金額與報告截止日！' };
+    }
+  }
+  return { success: false, message: '找不到該申請案件！' };
+}

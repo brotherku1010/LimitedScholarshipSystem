@@ -234,12 +234,17 @@
                                             <input type="date" id="bp-final-deadline-input" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-size: 0.85rem;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 10px;">
+                                    <div style="display: flex; gap: 10px;" id="bp-proposal-actions-pending">
                                         <button class="btn btn-approve btn-full" id="btn-bp-approve-proposal" style="padding: 8px 12px;">
                                             <i class="fa-solid fa-circle-check"></i> 核准提案並核定首款
                                         </button>
                                         <button class="btn btn-reject" id="btn-bp-reject-proposal" style="padding: 8px 12px;">
                                             <i class="fa-solid fa-circle-xmark"></i> 拒絕
+                                        </button>
+                                    </div>
+                                    <div style="display: none; gap: 10px;" id="bp-proposal-actions-approved">
+                                        <button class="btn btn-approve btn-full" id="btn-bp-update-settings" style="padding: 8px 12px; background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #3b82f6;">
+                                            <i class="fa-solid fa-arrows-rotate"></i> 更新核定金額與截止日
                                         </button>
                                     </div>
                                 </div>

@@ -1171,12 +1171,17 @@ body {
                                             <input type="date" id="bp-final-deadline-input" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 8px; color: #fff; font-size: 0.85rem;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 10px;">
+                                    <div style="display: flex; gap: 10px;" id="bp-proposal-actions-pending">
                                         <button class="btn btn-approve btn-full" id="btn-bp-approve-proposal" style="padding: 8px 12px;">
                                             <i class="fa-solid fa-circle-check"></i> 核准提案並核定首款
                                         </button>
                                         <button class="btn btn-reject" id="btn-bp-reject-proposal" style="padding: 8px 12px;">
                                             <i class="fa-solid fa-circle-xmark"></i> 拒絕
+                                        </button>
+                                    </div>
+                                    <div style="display: none; gap: 10px;" id="bp-proposal-actions-approved">
+                                        <button class="btn btn-approve btn-full" id="btn-bp-update-settings" style="padding: 8px 12px; background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #3b82f6;">
+                                            <i class="fa-solid fa-arrows-rotate"></i> 更新核定金額與截止日
                                         </button>
                                     </div>
                                 </div>
@@ -1665,6 +1670,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     showToast("網路錯誤，操作失敗！", "fa-triangle-exclamation");
                 })
                 .adminReviewFinal(ADMIN_TOKEN, selectedCase.id, false);
+        }
+    });
+
+    document.getElementById('btn-bp-update-settings').addEventListener('click', () => {
+        const amt = document.getElementById('bp-approved-amount-input').value.trim();
+        const midtermDl = document.getElementById('bp-midterm-deadline-input').value;
+        const finalDl = document.getElementById('bp-final-deadline-input').value;
+        
+        if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
+            showToast("請輸入核定的專案總金額！", "fa-triangle-exclamation");
+            return;
+        }
+        if (!midtermDl || !finalDl) {
+            showToast("請選擇期中與期末的報告繳交截止日！", "fa-triangle-exclamation");
+            return;
+        }
+        
+        if (confirm(`確定更新此未來藍圖計畫的金額與截止日？\n\n更新後核定總金額將改為：NT$ ${parseFloat(amt).toLocaleString()} 元\n期中截止日：${midtermDl}\n期末截止日：${finalDl}`)) {
+            toggleLoading(true, "更新未來藍圖設定中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，更新設定失敗！", "fa-triangle-exclamation");
+                })
+                .adminUpdateBlueprintSettings(ADMIN_TOKEN, selectedCase.id, amt, midtermDl, finalDl);
         }
     });
 
@@ -3864,13 +3902,24 @@ function renderBlueprintAudit(c) {
     const midtermStatus = c.midterm_status || '';
     const finalStatus = c.final_status || '';
     
-    // Proposal Box (Stage 1 pending review)
+    // Proposal Settings Box (always visible unless destroyed)
     if (c.status === 'pending' || phase1Status === 'rejected') {
         proposalBox.style.display = 'block';
+        document.getElementById('bp-proposal-actions-pending').style.display = 'flex';
+        document.getElementById('bp-proposal-actions-approved').style.display = 'none';
         document.getElementById('bp-approved-amount-input').value = '';
         document.getElementById('bp-midterm-deadline-input').value = '';
         document.getElementById('bp-final-deadline-input').value = '';
-    } else {
+    } else if (c.status === 'approved') {
+        proposalBox.style.display = 'block';
+        document.getElementById('bp-proposal-actions-pending').style.display = 'none';
+        document.getElementById('bp-proposal-actions-approved').style.display = 'flex';
+        document.getElementById('bp-approved-amount-input').value = c.approved_amount || '';
+        document.getElementById('bp-midterm-deadline-input').value = c.midterm_deadline || '';
+        document.getElementById('bp-final-deadline-input').value = c.final_deadline || '';
+    }
+
+    if (c.status === 'approved' || c.status === 'destroyed') {
         // Show payout board if proposal approved
         payoutBoard.style.display = 'block';
         const approvedAmt = c.approved_amount || 0;

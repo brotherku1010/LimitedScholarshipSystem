@@ -229,6 +229,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    document.getElementById('btn-bp-update-settings').addEventListener('click', () => {
+        const amt = document.getElementById('bp-approved-amount-input').value.trim();
+        const midtermDl = document.getElementById('bp-midterm-deadline-input').value;
+        const finalDl = document.getElementById('bp-final-deadline-input').value;
+        
+        if (!amt || isNaN(amt) || parseFloat(amt) <= 0) {
+            showToast("請輸入核定的專案總金額！", "fa-triangle-exclamation");
+            return;
+        }
+        if (!midtermDl || !finalDl) {
+            showToast("請選擇期中與期末的報告繳交截止日！", "fa-triangle-exclamation");
+            return;
+        }
+        
+        if (confirm(`確定更新此未來藍圖計畫的金額與截止日？\n\n更新後核定總金額將改為：NT$ ${parseFloat(amt).toLocaleString()} 元\n期中截止日：${midtermDl}\n期末截止日：${finalDl}`)) {
+            toggleLoading(true, "更新未來藍圖設定中...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
+                    if (res.success) {
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("網路錯誤，更新設定失敗！", "fa-triangle-exclamation");
+                })
+                .adminUpdateBlueprintSettings(ADMIN_TOKEN, selectedCase.id, amt, midtermDl, finalDl);
+        }
+    });
+
 
 
     
@@ -2425,13 +2458,24 @@ function renderBlueprintAudit(c) {
     const midtermStatus = c.midterm_status || '';
     const finalStatus = c.final_status || '';
     
-    // Proposal Box (Stage 1 pending review)
+    // Proposal Settings Box (always visible unless destroyed)
     if (c.status === 'pending' || phase1Status === 'rejected') {
         proposalBox.style.display = 'block';
+        document.getElementById('bp-proposal-actions-pending').style.display = 'flex';
+        document.getElementById('bp-proposal-actions-approved').style.display = 'none';
         document.getElementById('bp-approved-amount-input').value = '';
         document.getElementById('bp-midterm-deadline-input').value = '';
         document.getElementById('bp-final-deadline-input').value = '';
-    } else {
+    } else if (c.status === 'approved') {
+        proposalBox.style.display = 'block';
+        document.getElementById('bp-proposal-actions-pending').style.display = 'none';
+        document.getElementById('bp-proposal-actions-approved').style.display = 'flex';
+        document.getElementById('bp-approved-amount-input').value = c.approved_amount || '';
+        document.getElementById('bp-midterm-deadline-input').value = c.midterm_deadline || '';
+        document.getElementById('bp-final-deadline-input').value = c.final_deadline || '';
+    }
+
+    if (c.status === 'approved' || c.status === 'destroyed') {
         // Show payout board if proposal approved
         payoutBoard.style.display = 'block';
         const approvedAmt = c.approved_amount || 0;
