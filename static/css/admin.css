@@ -910,6 +910,16 @@ body {
     .document-viewer-container {
         min-height: 350px;
     }
+/* ----------------- BLUEPRINT SCHEME 3 FULL WIDTH MODE ----------------- */
+.auditor-split.blueprint-mode {
+    grid-template-columns: 1fr !important;
+}
+.auditor-split.blueprint-mode .audit-document {
+    display: none !important;
+}
+.auditor-split.blueprint-mode .audit-details {
+    border-right: none !important;
+    background: rgba(15, 23, 42, 0.4);
 }
 
 /* ==========================================

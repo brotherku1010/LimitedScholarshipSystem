@@ -945,10 +945,30 @@ function selectCase(c) {
 
 
     // Reveal Split Pane
-
-
-
     document.getElementById('auditor-pane').style.display = 'block';
+    
+    // Toggle full-width mode for blueprint圓夢專案
+    const splitContainer = document.getElementById('auditor-split-container');
+    const paneIcon = document.getElementById('auditor-pane-icon');
+    const paneTitle = document.getElementById('auditor-pane-title');
+    
+    if (c.type === 'blueprint') {
+        if (splitContainer) splitContainer.classList.add('blueprint-mode');
+        if (paneIcon) {
+            paneIcon.className = 'fa-solid fa-diagram-project';
+        }
+        if (paneTitle) {
+            paneTitle.innerText = '未來藍圖計畫圓夢專案審定';
+        }
+    } else {
+        if (splitContainer) splitContainer.classList.remove('blueprint-mode');
+        if (paneIcon) {
+            paneIcon.className = 'fa-solid fa-magnifying-glass-chart';
+        }
+        if (paneTitle) {
+            paneTitle.innerText = '雙螢幕審對視窗';
+        }
+    }
 
 
 
@@ -2357,6 +2377,10 @@ function renderBlueprintAudit(c) {
     document.getElementById('actions-destroyed-banner').style.display = 'none';
     
     bpSection.style.display = 'block';
+    
+    // Set initial proposal file link
+    const propLink = document.getElementById('bp-proposal-file-link');
+    if (propLink) propLink.href = c.file_path || '#';
     
     const proposalBox = document.getElementById('bp-proposal-review-box');
     const midtermBox = document.getElementById('bp-midterm-review-box');

@@ -151,11 +151,11 @@
             <div class="pane-auditor" id="auditor-pane" style="display: none;">
                 <div class="auditor-card">
                     <div class="auditor-header">
-                        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> 雙螢幕審對視窗</h3>
+                        <h3><i class="fa-solid fa-magnifying-glass-chart" id="auditor-pane-icon"></i> <span id="auditor-pane-title">雙螢幕審對視窗</span></h3>
                         <span class="case-id-badge" id="audit-case-id">CASE-ID</span>
                     </div>
 
-                    <div class="auditor-split">
+                    <div class="auditor-split" id="auditor-split-container">
                         
                         <!-- Audit Fields Panel (Left/Top) -->
                         <div class="audit-details">
@@ -224,6 +224,11 @@
                                 <h4 style="color: var(--neon-blue); margin-bottom: 12px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
                                     <i class="fa-solid fa-diagram-project"></i> 未來藍圖里程碑與審定面板
                                 </h4>
+                                
+                                <!-- Proposal file link -->
+                                <div id="bp-proposal-file-box" style="margin-bottom: 15px; padding: 12px; background: rgba(0, 187, 249, 0.05); border: 1px solid rgba(0, 187, 249, 0.2); border-radius: 6px; font-size: 0.85rem;">
+                                    <a href="#" id="bp-proposal-file-link" target="_blank" class="text-neon-blue" style="font-weight: bold; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-file-invoice" style="font-size: 1.1rem;"></i> 開啟學生圓夢企劃提案書 (新分頁開啟) ➔</a>
+                                </div>
                                 
                                 <!-- Proposal Approval Form (Visible only when phase_1_status is pending/rejected/empty) -->
                                 <div id="bp-proposal-review-box" style="display: none; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.06);">
