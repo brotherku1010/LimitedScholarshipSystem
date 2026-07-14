@@ -1263,9 +1263,9 @@ function selectCase(c) {
 
 
     }
-
-
-
+    
+    // Handle specialized Blueprint Audit and Milestones panel
+    renderBlueprintAudit(c);
 }
 
 
@@ -2165,9 +2165,6 @@ function getGoogleDriveEmbedUrl(url, type) {
         return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1000';
 
     }
-
-    // Handle specialized Blueprint Audit and Milestones panel
-    renderBlueprintAudit(c);
 }
 
 
