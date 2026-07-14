@@ -951,9 +951,20 @@ function selectCase(c) {
     const splitContainer = document.getElementById('auditor-split-container');
     const paneIcon = document.getElementById('auditor-pane-icon');
     const paneTitle = document.getElementById('auditor-pane-title');
+    const auditDocPane = document.querySelector('.audit-document');
+    const auditDetailsPane = document.querySelector('.audit-details');
     
     if (c.type === 'blueprint') {
-        if (splitContainer) splitContainer.classList.add('blueprint-mode');
+        if (splitContainer) {
+            splitContainer.classList.add('blueprint-mode');
+            splitContainer.style.gridTemplateColumns = '1fr';
+        }
+        if (auditDocPane) {
+            auditDocPane.style.setProperty('display', 'none', 'important');
+        }
+        if (auditDetailsPane) {
+            auditDetailsPane.style.borderRight = 'none';
+        }
         if (paneIcon) {
             paneIcon.className = 'fa-solid fa-diagram-project';
         }
@@ -961,7 +972,16 @@ function selectCase(c) {
             paneTitle.innerText = '未來藍圖計畫圓夢專案審定';
         }
     } else {
-        if (splitContainer) splitContainer.classList.remove('blueprint-mode');
+        if (splitContainer) {
+            splitContainer.classList.remove('blueprint-mode');
+            splitContainer.style.gridTemplateColumns = '';
+        }
+        if (auditDocPane) {
+            auditDocPane.style.display = '';
+        }
+        if (auditDetailsPane) {
+            auditDetailsPane.style.borderRight = '';
+        }
         if (paneIcon) {
             paneIcon.className = 'fa-solid fa-magnifying-glass-chart';
         }

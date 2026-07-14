@@ -910,6 +910,8 @@ body {
     .document-viewer-container {
         min-height: 350px;
     }
+}
+
 /* ----------------- BLUEPRINT SCHEME 3 FULL WIDTH MODE ----------------- */
 .auditor-split.blueprint-mode {
     grid-template-columns: 1fr !important;
