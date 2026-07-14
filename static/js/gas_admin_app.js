@@ -2170,6 +2170,9 @@ function getGoogleDriveEmbedUrl(url, type) {
 
 // Render file preview in the right pane, querying metadata on-demand if it's a Drive URL and not yet fetched
 function renderFilePreview(c) {
+    if (c.type === 'blueprint') {
+        return; // Skip document preview generation entirely for Blueprint full-width mode
+    }
     const docViewer = document.getElementById('document-viewer');
     if (!docViewer) return;
 
