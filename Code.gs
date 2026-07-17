@@ -194,8 +194,8 @@ function getSafeSettings(ss) {
   return {
     progress_base: parseInt(dict['progress_base'] || '1500'),
     progress_conversion_rate: parseInt(dict['progress_conversion_rate'] || '50'),
-    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,18000,20000,25000').toString().split(',').map(Number),
-    blueprint_amount: parseInt(dict['blueprint_amount'] || '30000'),
+    challenge_amounts: (dict['challenge_amounts'] || '7000,8500,10000,12000,15000,20000,25000,32000').toString().split(',').map(Number),
+    blueprint_amount: parseInt(dict['blueprint_amount'] || '50000'),
     active_bg_folder_id: dict['active_bg_folder_id'] || ""
   };
 }
