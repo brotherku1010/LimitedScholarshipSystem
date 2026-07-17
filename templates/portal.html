@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【古哥挑戰獎學金】這裡就是你挑戰自己的地方</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        /* Top Navigation Bar */
+        .portal-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            font-family: var(--font-primary);
+            font-weight: 900;
+            font-size: 1.3rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-brand i {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue-glow);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 2px solid var(--neon-blue);
+        }
+
+        .btn-nav-enter {
+            padding: 8px 20px !important;
+            font-size: 0.85rem !important;
+            min-width: unset !important;
+            box-shadow: 0 0 15px var(--gold-glow);
+        }
+
+        /* Portal Layout */
+        .portal-body {
+            margin-top: 90px;
+            padding: 20px;
+        }
+
+        .portal-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px 0 60px 0;
+        }
+        
+        .portal-header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        .portal-header h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 30%, #a5f3fc 70%, var(--neon-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            text-shadow: 0 0 40px rgba(0, 187, 249, 0.3);
+        }
+        
+        .portal-header .tagline {
+            font-size: 1.25rem;
+            color: var(--neon-green);
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--neon-green-glow);
+        }
+
+        .section-card {
+            background: rgba(17, 24, 39, 0.65);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            padding: 35px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+        }
+
+        .section-title {
+            font-size: 1.7rem;
+            color: #fff;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+        }
+
+        .section-title i {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue-glow);
+        }
+
+        .purpose-text {
+            font-size: 1.1rem;
+            line-height: 1.85;
+            color: var(--text-primary);
+            text-align: justify;
+        }
+
+        /* 3 Schemes Grid */
+        .schemes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .scheme-card {
+            background: rgba(17, 24, 39, 0.55);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition-smooth);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .scheme-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 245, 212, 0.1);
+            border-color: rgba(0, 245, 212, 0.3);
+        }
+
+        .scheme-badge {
+            align-self: flex-start;
+            font-size: 0.75rem;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 50px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .scheme-card.s1 { border-top: 4px solid var(--neon-blue); }
+        .scheme-card.s1 .scheme-badge { background: rgba(0, 187, 249, 0.15); color: var(--neon-blue); border: 1px solid rgba(0, 187, 249, 0.3); }
+        
+        .scheme-card.s2 { border-top: 4px solid var(--neon-green); }
+        .scheme-card.s2 .scheme-badge { background: rgba(0, 245, 212, 0.15); color: var(--neon-green); border: 1px solid rgba(0, 245, 212, 0.3); }
+        
+        .scheme-card.s3 { border-top: 4px solid var(--gold); }
+        .scheme-card.s3 .scheme-badge { background: rgba(255, 209, 102, 0.15); color: var(--gold); border: 1px solid rgba(255, 209, 102, 0.3); }
+
+        .scheme-card h3 {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .scheme-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .scheme-desc-preview {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .scheme-link-label {
+            font-size: 0.85rem;
+            color: var(--neon-blue);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-portal-enter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            padding: 16px 36px;
+            border-radius: var(--border-radius-md);
+            margin: 30px auto 40px auto;
+            max-width: 350px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 0 30px var(--gold-glow);
+            transition: var(--transition-smooth);
+        }
+
+        .btn-portal-enter:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 45px rgba(255, 209, 102, 0.6);
+        }
+
+        /* Grades Badge grid */
+        .grades-badge-wrap {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 25px 0;
+        }
+
+        .grade-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--neon-blue);
+            font-family: var(--font-tech);
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0, 187, 249, 0.05);
+        }
+
+        .rules-list {
+            list-style: none;
+        }
+
+        .rules-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .rules-list li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green-glow);
+        }
+
+        /* Info protection alert banner */
+        .info-protection-banner {
+            background: rgba(0, 245, 212, 0.04);
+            border: 1px dashed rgba(0, 245, 212, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .info-protection-banner i {
+            font-size: 1.6rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green-glow);
+            margin-top: 2px;
+        }
+
+        .info-protection-banner div h4 {
+            color: var(--neon-green);
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        .info-protection-banner div p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Line Q&A Box */
+        .line-qa-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .line-qa-box i {
+            font-size: 2.2rem;
+            color: #10b981;
+        }
+
+        .line-qa-box div p {
+            margin: 0;
+            font-size: 1.05rem;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .line-qa-box div span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .line-qa-box a {
+            background: #10b981;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .line-qa-box a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .portal-footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        /* Subpage Specific Styles */
+        .subpage {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .subpage.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .scheme-detail-box h4 {
+            color: var(--neon-blue);
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scheme-detail-box h4 i {
+            font-size: 1rem;
+        }
+
+        .scheme-detail-box p {
+            font-size: 1rem;
+            line-height: 1.75;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card strong {
+            color: #fff;
+            font-size: 1.05rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .detail-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* 8 Shields Grid in Detail Page */
+        .shields-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .shield-detail-item {
+            background: rgba(0, 187, 249, 0.03);
+            border: 1px solid rgba(0, 187, 249, 0.15);
+            border-radius: var(--border-radius-sm);
+            padding: 15px;
+            text-align: center;
+            transition: var(--transition-smooth);
+        }
+
+        .shield-detail-item:hover {
+            background: rgba(0, 187, 249, 0.08);
+            border-color: var(--neon-blue);
+        }
+
+        .shield-detail-item i {
+            font-size: 1.8rem;
+            color: var(--neon-blue);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .shield-detail-item span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .shield-detail-item strong {
+            font-size: 1.25rem;
+            color: #fff;
+            font-family: var(--font-tech);
+        }
+
+        /* Table Design */
+        .payout-table-wrap {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .payout-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .payout-table th, .payout-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .payout-table th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .payout-table td {
+            font-size: 0.95rem;
+        }
+
+        .payout-table tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .payout-table td .highlight-amount {
+            color: var(--neon-blue);
+            font-weight: bold;
+        }
+
+        /* Smart calculation detail blocks */
+        .calc-steps {
+            background: rgba(0, 245, 212, 0.02);
+            border-left: 3px solid var(--neon-green);
+            padding: 15px;
+            border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+            margin: 15px 0;
+        }
+
+        .calc-steps li {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .calc-steps li strong {
+            color: var(--neon-green);
+        }
+
+        /* Template Download Box */
+        .download-box {
+            background: rgba(255, 209, 102, 0.02);
+            border: 1px solid rgba(255, 209, 102, 0.15);
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .download-box h5 {
+            color: var(--gold);
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .download-box p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        /* Responsive Mobile adjustments */
+        @media (max-width: 768px) {
+            .portal-nav {
+                padding: 0 15px;
+                height: auto;
+                flex-direction: column;
+                padding-bottom: 10px;
+            }
+            .nav-brand {
+                height: 50px;
+            }
+            .nav-links {
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .nav-link {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+            .btn-nav-enter {
+                display: none; /* Hide top enter button on mobile for space */
+            }
+            .portal-body {
+                margin-top: 130px;
+            }
+            .portal-header h1 {
+                font-size: 2.3rem;
+            }
+            .portal-header .tagline {
+                font-size: 0.95rem;
+                letter-spacing: 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="portal-nav">
+        <div class="nav-brand"><i class="fa-solid fa-gamepad"></i> 古哥挑戰獎學金</div>
+        <div class="nav-links">
+            <a href="#home" class="nav-link active" id="nav-home" onclick="showPage('home')">首頁</a>
+            <a href="#scheme1" class="nav-link" id="nav-scheme1" onclick="showPage('scheme1')">挑戰獎學金 (方案一)</a>
+            <a href="#scheme2" class="nav-link" id="nav-scheme2" onclick="showPage('scheme2')">進步獎 (方案二)</a>
+            <a href="#scheme3" class="nav-link" id="nav-scheme3" onclick="showPage('scheme3')">企劃藍圖 (方案三)</a>
+        </div>
+        <a onclick="enterSystem()" class="btn btn-glow-gold btn-nav-enter">進入系統 ➔</a>
+    </nav>
+
+    <div class="portal-body">
+        <div class="portal-container">
+            <!-- Header -->
+            <header class="portal-header">
+                <span class="badge-new">THE GUGO ALPHA INITIATIVE</span>
+                <h1>古哥挑戰獎學金</h1>
+                <div class="tagline">這裡就是你挑戰自己的地方</div>
+            </header>
+
+            <!-- ========================================== -->
+            <!-- 1. HOME SUBPAGE                            -->
+            <!-- ========================================== -->
+            <div id="page-home" class="subpage active">
+                <!-- 挑戰宗旨 -->
+                <div class="section-card">
+                    <h2 class="section-title"><i class="fa-solid fa-gamepad"></i> 挑戰宗旨</h2>
+                    <p class="purpose-text">
+                        「古哥挑戰獎學金」的核心宗旨是<strong>「用博弈與賽局思維，翻轉傳統教育補助」</strong>。
+                        我們不希望獎學金只是一次性的施捨，而是一場長達四年的「自我闖關遊戲」。我們透過
+                        「頂尖拔萃（方案一）」、「努力成長（方案二）」與「未來潛力（方案三）」三大維度，全面捕捉不同特質人才的光芒。我們鼓勵學生將學習視為一場資源配置與戰略規劃的競賽，在自我挑戰中鍛鍊出強大的自律與策略思維。
+                    </p>
+                </div>
+
+                <!-- 三大方案總覽 -->
+                <div class="schemes-grid">
+                    <!-- 方案一 -->
+                    <div class="scheme-card s1" onclick="showPage('scheme1')">
+                        <div>
+                            <span class="scheme-badge">方案一</span>
+                            <h3>總成績挑戰獎學金</h3>
+                            <div class="scheme-subtitle">（頂尖拔萃・主力戰場）</div>
+                            <p class="scheme-desc-preview">
+                                針對學業金字塔頂端與追求突破者設計的遊戲化挑戰。首次解鎖可領取 <span id="p-s1-base" style="color: var(--neon-blue); font-weight: bold;">$7,000</span>，累計最高可得 <span id="p-s1-total" style="color: var(--neon-blue); font-weight: bold;">$129,500</span> 元！
+                            </p>
+                            <span class="scheme-link-label">閱讀方案詳情與规则 ➔</span>
+                        </div>
+                    </div>
+
+                    <!-- 方案二 -->
+                    <div class="scheme-card s2" onclick="showPage('scheme2')">
+                        <div>
+                            <span class="scheme-badge">方案二</span>
+                            <h3>學期成績進步獎</h3>
+                            <div class="scheme-subtitle">（努力成長・逆襲舞台）</div>
+                            <p class="scheme-desc-preview">
+                                重視向上突破的動能！系統獨創進步精算加權模型，以 <span id="p-s2-base" style="color: var(--neon-green); font-weight: bold;">$1,500</span> 元底金出發，疊加學分負載與難度加權加乘！
+                            </p>
+                            <span class="scheme-link-label">閱讀精算公式與加權 ➔</span>
+                        </div>
+                    </div>
+
+                    <!-- 方案三 -->
+                    <div class="scheme-card s3" onclick="showPage('scheme3')">
+                        <div>
+                            <span class="scheme-badge">方案三</span>
+                            <h3>未來企劃藍圖</h3>
+                            <div class="scheme-subtitle">（未來潛力・造化投資）</div>
+                            <p class="scheme-desc-preview">
+                                完全不看成績的自主學習天使投資方案！最高補助達 <span id="p-s3-total" style="color: var(--gold); font-weight: bold;">$30,000</span> 元，採用創投里程碑階段式支持夢想！
+                            </p>
+                            <span class="scheme-link-label">閱讀里程碑與審查指南 ➔</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 進入系統按鈕 -->
+                <a onclick="enterSystem()" class="btn btn-glow-gold btn-portal-enter">
+                    <i class="fa-solid fa-right-to-bracket"></i> 進入挑戰系統 ➔
+                </a>
+
+                <!-- 初衷 & 期許 -->
+                <div class="section-card">
+                    <h2 class="section-title"><i class="fa-solid fa-signature"></i> 初衷 & 期許</h2>
+                    <div class="grades-badge-wrap">
+                        <span class="grade-badge">88.55</span>
+                        <span class="grade-badge">87.58</span>
+                        <span class="grade-badge">93.09</span>
+                        <span class="grade-badge">91.63</span>
+                        <span class="grade-badge">95.00</span>
+                        <span class="grade-badge">95.15</span>
+                        <span class="grade-badge">93.20</span>
+                        <span class="grade-badge">92.33</span>
+                    </div>
+                    <p class="purpose-text" style="margin-bottom: 20px;">
+                        回首大學生涯中，古哥曾留下了這樣一組的平均總成績。
+                        這組數字背後，是無數個浸泡在圖書館挑燈夜戰的深夜，與無止境自我懷疑和放棄擺爛的拉扯中，最終看見的成果。我們深知，在大學這個充滿誘惑與迷惘的階段，想要維持頂尖、或是從谷底翻身，除了個人的加倍努力，更需要一點適時的「實質鼓勵」與「被看見的成就感」。因此，古哥決定自行設立這座獎金山，不為任何商業利益，只為了給正在這條路上奮鬥的大學生們，一個證明自己、跨越極限，挑戰登頂的山峰。
+                    </p>
+                    <p class="purpose-text">
+                        我們期許「古哥挑戰獎學金」能成為種下改變的種子。希望挑戰成功的學子們，不僅能獲得實質的財務支持，更能內化這份「與過去的自己、與強大的防線競爭」的防線精神。在未來，不論你們走入社會、自行創業或進入各大企業，都能帶著這份自律、執行力與戰略思維，成為各領域中出類拔萃的佼佼者。當未來這套系統更成熟時，它將演變成一個精英互助的生態圈，讓前後輩在這裡碰撞出更多的可能性和更高的挑戰性。
+                    </p>
+                </div>
+
+                <!-- 申明辦法 -->
+                <div class="section-card">
+                    <h2 class="section-title"><i class="fa-solid fa-circle-info"></i> 古哥挑戰獎學金申明辦法</h2>
+                    <ul class="rules-list">
+                        <li>本獎學金每學期設有總發放預算上限。若當期符合資格之申請總金額超出預算上限，將依據「當學期申請分數高低排序」或「核可金額比例折算」進行最終核發，由創辦人保有最終申請審查核准之權利。</li>
+                        <li>本計畫為創辦人個人發起之公益勉勵專案，限獲邀約之特定校系或特定對象參與，創辦人保有最終審查通過與否、規則解釋與方案調整之所有權利。</li>
+                        <li>申請人需保證上傳成績資料之真實性。若經查證有造假、變造成績條目之情事，系統將永久取消其參與資格。</li>
+                    </ul>
+
+                    <!-- 落實資訊保護 -->
+                    <div class="info-protection-banner">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <div>
+                            <h4>落實資訊保護</h4>
+                            <p>本系統嚴格落實「個資最小化蒐集」原則，全流程免提供身分證字號、免留證件影本。所有上傳之成績單圖檔、收款帳戶等隱私資料，均受《個人資料保護法》切結保護，僅用於該期資格審查，於外圍華南帳戶撥款完成後 7 日內，後台數據將手動執行「一鍵徹底銷毀」，確保同學在無安全顧慮的環境下，勇敢發起挑戰！</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 2. SCHEME 1 SUBPAGE                        -->
+            <!-- ========================================== -->
+            <div id="page-scheme1" class="subpage">
+                <div class="section-card scheme-detail-box">
+                    <h2 class="section-title"><i class="fa-solid fa-trophy"></i> 總成績挑戰獎學金 (方案一)</h2>
+                    
+                    <h4>一、 方案定位與核心思維</h4>
+                    <p>
+                        <strong>定位：</strong>針對學業金字塔頂端與追求自我突破的同學，所設立的「遊戲化破關挑戰賽」。
+                    </p>
+                    <div class="detail-card">
+                        <strong>博弈與賽局戰略 (Game Theory)</strong>
+                        <p>打破傳統獎學金「一翻兩瞪眼」的單次給獎模式，將大學四年的課業規劃視為一場戰略遊戲。學生不僅要拼高分，更需要運用智慧「選擇何時、消耗哪一個分數盾牌」才能取得效益最大化。</p>
+                    </div>
+                    <div class="detail-card">
+                        <strong>沉沒成本與連續簽到 (Streak & Retention)</strong>
+                        <p>獎金並非固定數額，而是隨「成功闖關次數」呈指數型遞增。為了領取後期高額的終極獎賞，同學將在大學四年中維持強大的長期自律，杜絕爛尾與中途放棄。</p>
+                    </div>
+
+                    <h4>二、 挑戰標的：創辦人「古哥八大盾牌」防線</h4>
+                    <p>系統內建創辦人「古哥」於大學八個學期的真實平均總成績，轉化為 8 個待解鎖的「分數防線」。申請者當學期總平均分數，只要【高於】或【等於】任一防線分數，即挑戰成功。</p>
+                    
+                    <div class="shields-detail-grid">
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 1 防線</span>
+                            <strong>87.58</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 2 防線</span>
+                            <strong>88.55</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 3 防線</span>
+                            <strong>91.63</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 4 防線</span>
+                            <strong>92.33</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 5 防線</span>
+                            <strong>93.09</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 6 防線</span>
+                            <strong>93.20</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 7 防線</span>
+                            <strong>95.00</strong>
+                        </div>
+                        <div class="shield-detail-item">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Level 8 終極防線</span>
+                            <strong>95.15</strong>
+                        </div>
+                    </div>
+
+                    <h4>三、 獎金階梯結構（指數型遞增模型）</h4>
+                    <p>
+                        <strong>計價核心：</strong>獎金發放依據為申請者的「累積成功解鎖次數」，而非當次平均分數高低。舉例：不論考 88 分去解鎖 87.58 分防線，還是考 96 分解鎖 95.15 分，只要是您生涯中<strong>第 1 次</strong>成功核准，即發放 Level 1 獎金。
+                    </p>
+                    <p>
+                        <strong>極限獲益：</strong>若於大學四年（8 個學期）將 8 關防線全數刷滿，個人累計最高將可獲取 <span style="color: var(--neon-blue); font-weight: bold;" id="p-s1-detail-total">NT$ 115,500</span> 元獎學金。
+                    </p>
+
+                    <div class="payout-table-wrap">
+                        <table class="payout-table" id="p-s1-table-body">
+                            <thead>
+                                <tr>
+                                    <th>累積成功次數</th>
+                                    <th>解鎖稱號</th>
+                                    <th>單次獎金</th>
+                                    <th>成長幅度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>第 1 次</td>
+                                    <td>首戰告捷</td>
+                                    <td><span class="highlight-amount">$ 7,000</span></td>
+                                    <td>起手式</td>
+                                </tr>
+                                <tr>
+                                    <td>第 2 次</td>
+                                    <td>乘勝追擊</td>
+                                    <td><span class="highlight-amount">$ 8,500</span></td>
+                                    <td>+ $ 1,500</td>
+                                </tr>
+                                <tr>
+                                    <td>第 3 次</td>
+                                    <td>漸入佳境</td>
+                                    <td><span class="highlight-amount">$ 10,000</span></td>
+                                    <td>+ $ 1,500</td>
+                                </tr>
+                                <tr>
+                                    <td>第 4 次</td>
+                                    <td>鋒芒畢露</td>
+                                    <td><span class="highlight-amount">$ 12,000</span></td>
+                                    <td>+ $ 2,000</td>
+                                </tr>
+                                <tr>
+                                    <td>第 5 次</td>
+                                    <td>勢如破竹</td>
+                                    <td><span class="highlight-amount">$ 15,000</span></td>
+                                    <td>+ $ 3,000</td>
+                                </tr>
+                                <tr>
+                                    <td>第 6 次</td>
+                                    <td>登峰造極</td>
+                                    <td><span class="highlight-amount">$ 18,000</span></td>
+                                    <td>+ $ 3,000</td>
+                                </tr>
+                                <tr>
+                                    <td>第 7 次</td>
+                                    <td>傲視群雄</td>
+                                    <td><span class="highlight-amount">$ 20,000</span></td>
+                                    <td>+ $ 2,000</td>
+                                </tr>
+                                <tr>
+                                    <td>第 8 次</td>
+                                    <td>👑 反璞歸真</td>
+                                    <td><span class="highlight-amount">$ 25,000</span></td>
+                                    <td>+ $ 5,000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>四、 核心遊戲規則與戰略規範 (Must-Know Rules)</h4>
+                    <ul class="rules-list">
+                        <li><strong>一對一核銷與「策略消分」機制</strong>：一學期僅限挑戰解鎖一次。當學期成績單總分只要滿足多個剩餘防線，可自由指定消滅哪一個盾牌。防線盾牌一旦指定解鎖，即在該生帳號中永久失效，下次挑戰必須選擇剩餘防線。</li>
+                        <li><strong>中斷不重置，接續累積</strong>：大學生活起伏，若某學期失常未達標，累積成功次數不會被清空歸零。未來學期只要成績再度超越剩餘防線，即可繼續申領下一階階梯金額。</li>
+                        <li><strong>時間軸限制</strong>：由於學制常規為四年（8 個學期），越晚參與代表解鎖上限越低。鼓勵學員越早規劃、連續自律，方能激發最大化獎金上限。</li>
+                    </ul>
+                </div>
+                
+                <a onclick="enterSystem()" class="btn btn-glow-gold btn-portal-enter">
+                    <i class="fa-solid fa-right-to-bracket"></i> 進入系統挑戰此方案 ➔
+                </a>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 3. SCHEME 2 SUBPAGE                        -->
+            <!-- ========================================== -->
+            <div id="page-scheme2" class="subpage">
+                <div class="section-card scheme-detail-box">
+                    <h2 class="section-title"><i class="fa-solid fa-chart-line"></i> 學期成績進步獎 (方案二)</h2>
+                    
+                    <h4>一、 方案定位與核心思維</h4>
+                    <p>
+                        <strong>定位：</strong>專為中後段班逆襲、或是修習重磅學分仍努力尋求突破的同學所設立的「量化成長舞台」。
+                    </p>
+                    <div class="detail-card">
+                        <strong>打破傳統進步獎盲點</strong>
+                        <p>傳統進步獎往往只看「進步幾分」，導致「低分者（如從60分到70分）極容易獲獎，高分者（如從90分到92分）難度極大而不受重視」或「刻意修很少學分投機衝高分」的不公平現象。</p>
+                    </div>
+                    <div class="detail-card">
+                        <strong>導入「邊際效應遞減」與「起點難度」精算模型</strong>
+                        <p>在教育統計學中，從 90 分進步到 95 分所耗費的心力與資源，遠高於低分段。本系統獨創「進步點數標準化模型」，將「起點難度係數」與「學分數負載量」納入標準加權，讓每份自律的汗水都得到最公平的定價。</p>
+                    </div>
+
+                    <h4>二、 核心精算模型與加權計分</h4>
+                    <p>本方案之獎學金由三大區塊動態疊加而成，完全根據您的努力程度與課業重擔進行科學精算，無生硬金額上限：</p>
+                    <div style="background: rgba(17, 24, 39, 0.8); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; font-size: 1.15rem; margin-bottom: 25px;">
+                        💰 總獎金 ＝ <span style="color: var(--neon-green);">[ ① 基礎金 ]</span> ＋ <span style="color: var(--neon-blue);">[ ② 學分級距加給 ]</span> ＋ <span style="color: var(--gold);">[ ③ 進步加成獎金 ]</span>
+                    </div>
+
+                    <ul class="rules-list">
+                        <li><strong>① 基礎金 (Base Reward)</strong>：只要前後連續兩學期平均成績有進步，即無條件核發 <span style="color: var(--neon-green); font-weight: bold;" id="p-s2-detail-base">NT$ 1,500</span> 元基礎勉勵金。</li>
+                        <li><strong>② 學分級距加給 (Credit Load Bonus)</strong>：
+                            依當學期修習總學分數，給予課業負擔較重的學員額外加碼：
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px;">
+                                <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; text-align: center;">01 - 09 學分：<strong>+ $300</strong></div>
+                                <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; text-align: center;">10 - 15 學分：<strong>+ $500</strong></div>
+                                <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; text-align: center;">16 - 23 學分：<strong>+ $1,000</strong></div>
+                                <div style="background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; text-align: center;">24 學分以上：<strong>+ $1,800</strong></div>
+                            </div>
+                        </li>
+                        <li><strong>③ 進步加成獎金 (Progress Multiplier)</strong>：
+                            本系統的靈魂。會將你的成績進步幅度換算成「進步點數」，並以 <strong>元/點</strong> 的費率折算變現。
+                            <div class="calc-steps">
+                                <strong>進步點數公式：</strong> 進步分數 × 起點難度係數 × 學分負載權重
+                                <br><br>
+                                <ul>
+                                    <li><strong>起點難度係數 [100 / (100 - 上學期總平均)]</strong>：起點成績越靠近滿分，難度係數越高（例如：上平均 70 分難度為 3.33，而 90 分難度高達 10.00）。</li>
+                                    <li><strong>學分負載權重 [當學期學分數 / 15]</strong>：以標準 15 學分作為基準 1.0，修課越多加乘越大，修課越少則權重降低。</li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <h4>三、 挑戰規則與防禦機制 (Must-Know Rules)</h4>
+                    <ul class="rules-list">
+                        <li><strong>連續學期限定</strong>：申請必須提供「任兩個連續學期」的正式成績單（例如：大一上與大一下；或大二下與大三上），不支援跨學期跳躍對比。</li>
+                        <li><strong>防爆上限（系統保護條款）</strong>：為防止極端分數變化（如 99 分進步到 99.8 分）導致難度係數無限放大，系統設有防護網，難度係數上限鎖定為 <strong>15.0</strong>。</li>
+                    </ul>
+                </div>
+                
+                <a onclick="enterSystem()" class="btn btn-glow-gold btn-portal-enter">
+                    <i class="fa-solid fa-right-to-bracket"></i> 進入系統挑戰此方案 ➔
+                </a>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 4. SCHEME 3 SUBPAGE                        -->
+            <!-- ========================================== -->
+            <div id="page-scheme3" class="subpage">
+                <div class="section-card scheme-detail-box">
+                    <h2 class="section-title"><i class="fa-solid fa-feather-pointed"></i> 未來企劃藍圖 (方案三)</h2>
+                    
+                    <h4>一、 方案定位與核心思維</h4>
+                    <p>
+                        <strong>定位：完全不看分數！</strong>專為擁有具體夢想、明確執行計畫與超強實踐力，但缺乏起始資源的同學設計的「青年天使投資孵化器」。
+                    </p>
+                    <div class="detail-card">
+                        <strong>拒絕紙上談兵 (Execution First)</strong>
+                        <p>真實世界中，無論是企業、創投還是創業，沒有人看您的期末考試考幾分，大家只看你能不能讓專案成功落地。本方案重在訓練大學生規劃、進度掌控與目標自律的能力。</p>
+                    </div>
+                    <div class="detail-card">
+                        <strong>投資你的時間與工具 (Time Buyback)</strong>
+                        <p>大學生在追求目標時，最缺乏的往往是自我進修學習資金，以及為了生活打工而犧牲的時間。本計畫透過企劃資金挹注，實質幫助你「買回專注力」全心衝刺企劃目標。</p>
+                    </div>
+
+                    <h4>二、 資金挹注結構：里程碑撥款法 (Milestone Funding)</h4>
+                    <p>
+                        比對矽谷創投與專案管理模式，本方案經審核通過後，會根據您的目標難易度與執行計畫，核定該專案補助總金額，<strong>最高可獲 <span style="color: var(--gold); font-weight: bold;" id="p-s3-detail-total">NT$ 30,000</span> 元</strong> 全額贊助，並分階段解鎖發發放：
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0;">
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px;">
+                            <h5 style="color: var(--neon-blue); font-weight: bold; margin-bottom: 10px;">階段一：啟動資金 30%</h5>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                                <strong>撥款條件：</strong>企劃書審查通過，雙方確立計畫目標與時程。
+                                <br>
+                                <strong>資金用途：</strong>購買執行計畫必備的硬體材料、專業書籍、線上課程或報名費用（需留存憑證收據）。
+                            </p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px;">
+                            <h5 style="color: var(--neon-green); font-weight: bold; margin-bottom: 10px;">階段二：期中審查 40%</h5>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                                <strong>撥款條件：</strong>時程過半，提交期中進度報告書，呈現目前各項成果（如學習時數截圖、作品雛形、證照考取等）並通過審核。
+                                <br>
+                                <strong>資金用途：</strong>定額發放，作為「時間買回津貼」支持您持續投入。
+                            </p>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 8px;">
+                            <h5 style="color: var(--gold); font-weight: bold; margin-bottom: 10px;">階段三：期末審查 30%</h5>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                                <strong>撥款條件：</strong>企劃順利執行達標，提交期末報告成果（如完賽證明、專案成品、多益高階成績單等）並經審定通過。
+                                <br>
+                                <strong>資金用途：</strong>定額核發尾款，作為順利達標的獎勵金。
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Template Download Box -->
+                    <div class="download-box">
+                        <h5><i class="fa-solid fa-cloud-arrow-down"></i> 企劃書範本檔案下載</h5>
+                        <p>在撰寫並提交您的未來企劃書之前，請務必先下載官方範本格式進行編輯：</p>
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <a href="https://docs.google.com/document/d/1Yy_qwdvWwdM6W4chKDuZnP0tdC7UHvR5/export?format=docx&openExternalBrowser=1" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6;" target="_blank">
+                                <i class="fa-solid fa-file-word"></i> 企劃書範本 (Word 檔)
+                            </a>
+                            <a href="https://drive.google.com/uc?export=download&id=1Kw3AMdIpbVG195r_KKaCx2SrLVJv5WUa&openExternalBrowser=1" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" target="_blank">
+                                <i class="fa-solid fa-file-pdf"></i> 企劃書範本 (PDF 檔)
+                            </a>
+                        </div>
+                    </div>
+
+                    <h4>三、 申請資格與「好企劃」的審查標準</h4>
+                    <p>不限科系、不看成績單，唯一考驗的是你的「夢想規劃力」。好提案需完全符合 <strong>SMART 原則</strong> (具體、可衡量、可達成、相關性、有明確期限)：</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 8px;">
+                            <span style="color: #10b981; font-weight: bold; display: block; margin-bottom: 8px;"><i class="fa-solid fa-circle-check"></i> 合格的具體提案範例</span>
+                            <span style="font-size: 0.85rem; color: var(--text-primary); display: block; margin-bottom: 8px;">「要在半年內自學 Python 並上架記帳 App。資金用於 Udemy 課程與開發者帳號費。」</span>
+                            <span style="font-size: 0.85rem; color: var(--text-primary); display: block;">「要在 4 個月內考取多益 850 分以申請交換學生。資金用於模擬題庫與報名費用。」</span>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 8px;">
+                            <span style="color: #ef4444; font-weight: bold; display: block; margin-bottom: 8px;"><i class="fa-solid fa-circle-xmark"></i> 常見退件提案範例</span>
+                            <span style="font-size: 0.85rem; color: var(--text-primary); display: block; margin-bottom: 8px;">「我想提升我的英文能力，需要錢買書。」（缺乏具體指標與死線）</span>
+                            <span style="font-size: 0.85rem; color: var(--text-primary); display: block;">「我要拿這筆錢去環島尋找人生的方向。」（屬於休閒娛樂，無可量化技能產出）</span>
+                        </div>
+                    </div>
+
+                    <h4>四、 企劃書 6 大核心審查說明</h4>
+                    <p>評審委員會在評估您的提案時，會根據以下六個維度進行嚴格審查：</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                        <div class="detail-card">
+                            <strong>1. 個人自我介紹 (10%)</strong>
+                            <p>告訴我們你是誰？你的優劣勢是什麼？曾做過最瘋狂或最自律的事？為什麼由你執行此專案最合適？(拒絕 AI 模板生成，請呈現真實自己)。</p>
+                        </div>
+                        <div class="detail-card">
+                            <strong>2. 企劃宗旨與初心 (10%)</strong>
+                            <p>為什麼想做這件事？是為了解決什麼痛點？如果是成功了，對你目前的狀態會帶來什麼樣實質的改變與飛躍？</p>
+                        </div>
+                        <div class="detail-card">
+                            <strong>3. 具體執行方向與長短期目標 (20%)</strong>
+                            <p>拒絕空泛。請明確說明 What 與 How，定義近期 (0-3個月) 與長期 (半年以上) 的量化目標與具體查核點。</p>
+                        </div>
+                        <div class="detail-card">
+                            <strong>4. 預定執行進度時程 (10%)</strong>
+                            <p>將大目標拆解成小任務。列出清晰時間軸 (例如第1個月做什麼、第3個月做什麼)，這將是期中審查與下一期款項撥款的重要依據。</p>
+                        </div>
+                        <div class="detail-card">
+                            <strong>5. 預期經費支出明細 (10%)</strong>
+                            <p>整個企劃需要多少預算？具體怎麼使用？列表詳細呈現各階段經費支出，必要性硬體或報名費用需保留收據記錄。</p>
+                        </div>
+                        <div class="detail-card">
+                            <strong>6. 風險評估與 Plan B 備案 (10%)</strong>
+                            <p>真實人生並非完美劇本。若遇考期衝擊、線上課程卡關怎麼辦？請誠實評估最可能導致計畫失敗的風險，並說明您的停損點與替代方案。</p>
+                        </div>
+                    </div>
+                    <div class="detail-card" style="margin-top: 15px;">
+                        <strong>★ 7. 人生未來的走向與終極目標 (25%) (最高權重)</strong>
+                        <p>此專案只是起點。請詳細告訴我們這份企劃將如何銜接您 5 年或 10 年後的人生藍圖？讓我們看見您的野心、自律潛力與未來的期望！</p>
+                    </div>
+                </div>
+                
+                <a onclick="enterSystem()" class="btn btn-glow-gold btn-portal-enter">
+                    <i class="fa-solid fa-right-to-bracket"></i> 進入系統提交此企劃 ➔
+                </a>
+            </div>
+
+            <!-- Footer -->
+            <footer class="portal-footer">
+                <p>The Gugo Alpha Challenge & Fellowship Program</p>
+                <p>Empowering future leaders through strategic self-discipline and breakthrough excellence.</p>
+                <p style="margin-top: 8px;">&copy; 2026 Gugo Challenge Committee & Initiative. All Rights Reserved. | Privacy Protected & End-to-End Data Destruction Compliant.</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Script to redirect / navigate and fetch settings -->
+    <script>
+        // Redirect logic to index dashboard
+        window.gasUrl = "<?= gasUrl ?>";
+        function enterSystem() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const parentUrl = urlParams.get('parent_url');
+            // Default to the GitHub Pages wrapper URL where LINE login is fully configured
+            let targetUrl = parentUrl || "https://brotherku1010.github.io/LimitedScholarshipSystem/";
+            window.open(targetUrl, '_top');
+        }
+
+        // Subpage Switching Logic
+        function showPage(pageId) {
+            // Hide all subpages
+            document.querySelectorAll('.subpage').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show target subpage
+            const targetPage = document.getElementById('page-' + pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // Update nav active link state
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            const activeLink = document.getElementById('nav-' + pageId);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // Update URL hash without reload
+            window.location.hash = pageId;
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Handle URL Hash on load
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && ['home', 'scheme1', 'scheme2', 'scheme3'].includes(hash)) {
+                showPage(hash);
+            }
+        });
+
+        // Handle hashchange event (browser back/forward button support)
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && ['home', 'scheme1', 'scheme2', 'scheme3'].includes(hash)) {
+                // Prevent infinite loop if already active
+                const targetPage = document.getElementById('page-' + hash);
+                if (targetPage && !targetPage.classList.contains('active')) {
+                    showPage(hash);
+                }
+            }
+        });
+
+        // Fetch settings from server to keep values dynamic
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof google !== "undefined" && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(function(settings) {
+                        if (settings) {
+                            // Update Scheme 1 values
+                            if (settings.challenge_amounts && settings.challenge_amounts.length > 0) {
+                                const baseVal = settings.challenge_amounts[0];
+                                const sumVal = settings.challenge_amounts.reduce((a, b) => a + b, 0);
+                                
+                                // Update home page summary card values
+                                document.getElementById('p-s1-base').innerText = "$" + baseVal.toLocaleString();
+                                document.getElementById('p-s1-total').innerText = "$" + sumVal.toLocaleString();
+                                
+                                // Update detail page values
+                                document.getElementById('p-s1-detail-total').innerText = "NT$ " + sumVal.toLocaleString();
+                                
+                                // Re-render the Table with dynamic setting values
+                                const tableBody = document.querySelector('#p-s1-table-body tbody');
+                                if (tableBody) {
+                                    tableBody.innerHTML = '';
+                                    const titles = ["首戰告捷", "乘勝追擊", "漸入佳境", "鋒芒畢露", "勢如破竹", "登峰造極", "傲視群雄", "👑 反璞歸真"];
+                                    settings.challenge_amounts.forEach((amt, index) => {
+                                        const tr = document.createElement('tr');
+                                        const diffText = index === 0 ? '起手式' : "+ $ " + (amt - settings.challenge_amounts[index - 1]).toLocaleString();
+                                        tr.innerHTML = `
+                                            <td>第 ${index + 1} 次</td>
+                                            <td>${titles[index] || '關卡 ' + (index + 1)}</td>
+                                            <td><span class="highlight-amount">$ ${amt.toLocaleString()}</span></td>
+                                            <td>${diffText}</td>
+                                        `;
+                                        tableBody.appendChild(tr);
+                                    });
+                                }
+                            }
+                            // Update Scheme 2 base
+                            if (settings.progress_base) {
+                                document.getElementById('p-s2-base').innerText = "$" + settings.progress_base.toLocaleString();
+                                document.getElementById('p-s2-detail-base').innerText = "NT$ " + settings.progress_base.toLocaleString();
+                            }
+                            // Update Scheme 3 total
+                            if (settings.blueprint_amount) {
+                                document.getElementById('p-s3-total').innerText = "$" + settings.blueprint_amount.toLocaleString();
+                                document.getElementById('p-s3-detail-total').innerText = "NT$ " + settings.blueprint_amount.toLocaleString();
+                            }
+                        }
+                    })
+                    .getPublicSettings();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -136,7 +136,10 @@ function onLiffLoginSuccess(data) {
         currentUser.approvedAttempts = data.approved_attempts;
         currentUser.unlockedChallenges = data.unlocked_challenges;
         currentUser.pendingChallenges = data.pending_challenges || [];
-        currentUser.applications = data.applications || [];
+        currentUser.applications = (data.applications || []).map(app => {
+            try { app.details_obj = app.details ? JSON.parse(app.details) : {}; } catch (e) { app.details_obj = {}; }
+            return app;
+        });
         currentUser.bankCode = data.bankCode || '';
         currentUser.bankAccount = data.bankAccount || '';
         
@@ -214,7 +217,10 @@ function refreshUserStatusLiff() {
                 currentUser.approvedAttempts = data.approved_attempts;
                 currentUser.unlockedChallenges = data.unlocked_challenges;
                 currentUser.pendingChallenges = data.pending_challenges || [];
-                currentUser.applications = data.applications || [];
+                currentUser.applications = (data.applications || []).map(app => {
+                    try { app.details_obj = app.details ? JSON.parse(app.details) : {}; } catch (e) { app.details_obj = {}; }
+                    return app;
+                });
                 updateStudentUI();
             }
         })
@@ -299,17 +305,76 @@ function updateStudentUI() {
     document.getElementById('progress-name').value = currentUser.name;
     document.getElementById('blueprint-name').value = currentUser.name;
 
-    // Toggle Scheme 1 Apply Button based on pending status
+    // Toggle Scheme 1 Apply Button based on pending / patching status
     const hasPendingChallenge = (currentUser.applications || []).some(app => app.type === 'challenge' && app.status === 'pending');
+    const patchingChallenge = (currentUser.applications || []).find(app => app.type === 'challenge' && app.status === 'patching');
     const challengeBtn = document.getElementById('btn-apply-challenge-modal');
     const challengeNotice = document.getElementById('challenge-pending-notice');
     if (challengeBtn && challengeNotice) {
         if (hasPendingChallenge) {
             challengeBtn.style.display = 'none';
             challengeNotice.style.display = 'block';
+            challengeNotice.className = "glass-warning";
+            challengeNotice.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> 您已有一件成績挑戰案正在審核中，請待審核通過或被退回後，再進行下一次挑戰。';
+        } else if (patchingChallenge) {
+            challengeBtn.style.display = 'none';
+            challengeNotice.style.display = 'block';
+            challengeNotice.className = "glass-warning patching-warning";
+            challengeNotice.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+            challengeNotice.style.background = 'rgba(255, 193, 7, 0.05)';
+            challengeNotice.style.color = '#ffc107';
+            challengeNotice.style.textAlign = 'left';
+            challengeNotice.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <span>⚠️ 您的申請資料需要補件：${patchingChallenge.details_obj ? patchingChallenge.details_obj.patch_reason : '請補充清晰文件'}</span>
+                    <small style="color: rgba(255,255,255,0.7);">(截止日：${patchingChallenge.details_obj ? patchingChallenge.details_obj.patch_deadline : '無期限'})</small>
+                    <button class="btn btn-secondary btn-full" id="btn-challenge-patch" style="background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; margin-top: 5px; cursor: pointer;">重新提交補件</button>
+                </div>
+            `;
+            document.getElementById('btn-challenge-patch').addEventListener('click', () => {
+                openModal('modal-apply-challenge');
+            });
         } else {
             challengeBtn.style.display = 'block';
             challengeNotice.style.display = 'none';
+        }
+    }
+
+    // Toggle Scheme 2 Apply Button based on pending / patching status
+    const hasPendingProgress = (currentUser.applications || []).some(app => app.type === 'progress' && app.status === 'pending');
+    const patchingProgress = (currentUser.applications || []).find(app => app.type === 'progress' && app.status === 'patching');
+    const progressBtn = document.getElementById('btn-apply-progress-demo');
+    const progressNotice = document.getElementById('progress-pending-notice');
+    if (progressBtn && progressNotice) {
+        if (currentUser.grade === '大一') {
+            progressBtn.style.display = 'block';
+            progressNotice.style.display = 'none';
+        } else if (hasPendingProgress) {
+            progressBtn.style.display = 'none';
+            progressNotice.style.display = 'block';
+            progressNotice.className = "glass-warning";
+            progressNotice.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> 您已有一件成績進步獎申請案正在審核中，請待審核通過或被退回後，再進行下一次申請。';
+        } else if (patchingProgress) {
+            progressBtn.style.display = 'none';
+            progressNotice.style.display = 'block';
+            progressNotice.className = "glass-warning patching-warning";
+            progressNotice.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+            progressNotice.style.background = 'rgba(255, 193, 7, 0.05)';
+            progressNotice.style.color = '#ffc107';
+            progressNotice.style.textAlign = 'left';
+            progressNotice.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                    <span>⚠️ 您的申請資料需要補件：${patchingProgress.details_obj ? patchingProgress.details_obj.patch_reason : '請補充清晰文件'}</span>
+                    <small style="color: rgba(255,255,255,0.7);">(截止日：${patchingProgress.details_obj ? patchingProgress.details_obj.patch_deadline : '無期限'})</small>
+                    <button class="btn btn-secondary btn-full" id="btn-progress-patch" style="background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; margin-top: 5px; cursor: pointer;">重新提交補件</button>
+                </div>
+            `;
+            document.getElementById('btn-progress-patch').addEventListener('click', () => {
+                openModal('modal-apply-progress');
+            });
+        } else {
+            progressBtn.style.display = 'block';
+            progressNotice.style.display = 'none';
         }
     }
 
@@ -325,6 +390,10 @@ function updateStudentUI() {
     const modalBlueprintAmount = document.querySelector('#modal-apply-blueprint .target-left strong');
     if (modalBlueprintAmount && activeSettings && activeSettings.blueprintAmount) {
         modalBlueprintAmount.innerText = '最高 NT$ ' + (activeSettings.blueprintAmount.toLocaleString());
+    }
+    const bpCardDesc = document.getElementById('blueprint-card-desc');
+    if (bpCardDesc && activeSettings && activeSettings.blueprintAmount) {
+        bpCardDesc.innerText = '提交個人學習、購書、研究或競賽的「未來企劃書」，通過後分階段給予最高 NT$ ' + (activeSettings.blueprintAmount.toLocaleString()) + ' 的圓夢資金支援！';
     }
 
     // Render Shields
@@ -692,6 +761,8 @@ function initEventListeners() {
     setupFileFeedback('progress-prev-file', 'progress-prev-file-display');
     setupFileFeedback('progress-curr-file', 'progress-curr-file-display');
     setupFileFeedback('blueprint-file', 'blueprint-file-display');
+    setupFileFeedback('blueprint-midterm-file', 'blueprint-midterm-file-display');
+    setupFileFeedback('blueprint-final-file', 'blueprint-final-file-display');
 
     // 8. Open Scheme 2 (Progress Award) Application
     document.getElementById('btn-apply-progress-demo').addEventListener('click', () => {
@@ -957,7 +1028,7 @@ function initEventListeners() {
             project_month: document.getElementById('blueprint-project-month').value.trim(),
             bank_code: document.getElementById('blueprint-bank-code').value.trim(),
             bank_account: document.getElementById('blueprint-bank-account').value.trim(),
-            academic_year: document.querySelector('#form-apply-blueprint [name="academic_year"]').value,
+            academic_year: '', // Calculated by backend
             file_base64: '',
             file_name: ''
         };
@@ -1302,12 +1373,15 @@ function renderHistoryList(apps) {
         if (app.status === 'pending') {
             badgeClass = 'badge-pending';
             badgeText = '審查中';
+        } else if (app.status === 'patching') {
+            badgeClass = 'badge-pending';
+            badgeText = '待補件';
         } else if (app.status === 'approved') {
             badgeClass = 'badge-approved';
             badgeText = '審核通過';
         } else if (app.status === 'rejected') {
             badgeClass = 'badge-rejected';
-            badgeText = '退回修正';
+            badgeText = '審核未通過';
         } else if (app.status === 'destroyed') {
             badgeClass = 'badge-destroyed';
             badgeText = '已撥款結案';
@@ -1318,27 +1392,51 @@ function renderHistoryList(apps) {
         
         const row = document.createElement('div');
         row.className = 'history-item';
-        row.style.cssText = '\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            padding: 12px 15px;\n            background: rgba(255,255,255,0.03);\n            border: 1px solid rgba(255,255,255,0.06);\n            border-radius: 8px;\n            cursor: pointer;\n            transition: all 0.2s ease;\n        ';
+        
+        let opacity = '1.0';
+        let rowBg = 'rgba(255,255,255,0.03)';
+        if (app.status === 'rejected') {
+            opacity = '0.6';
+            rowBg = 'rgba(255,255,255,0.015)';
+        }
+        
+        row.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: ${rowBg};
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: ${opacity};
+        `;
         
         row.onmouseenter = () => {
             row.style.background = 'rgba(255,255,255,0.06)';
             row.style.borderColor = 'var(--neon-blue)';
         };
         row.onmouseleave = () => {
-            row.style.background = 'rgba(255,255,255,0.03)';
+            row.style.background = rowBg;
             row.style.borderColor = 'rgba(255,255,255,0.06)';
         };
         
         row.onclick = () => showApplicationDetail(app);
         
         let amountText = "";
-        if (app.type === 'blueprint' && app.status === 'pending') {
+        if (app.type === 'blueprint' && (app.status === 'pending' || app.status === 'patching')) {
             amountText = "待審核核定";
         } else {
             amountText = 'NT$ ' + (parseInt(app.amount || 0).toLocaleString());
         }
 
-        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | ' + (amountText) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;">' + (badgeText) + '</span>\n        ';
+        let badgeStyle = "padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; min-width: 60px; text-align: center;";
+        if (app.status === 'patching') {
+            badgeStyle += " background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3);";
+        }
+
+        row.innerHTML = '\n            <div style="display: flex; align-items: center; gap: 10px; text-align: left;">\n                <i class="fa-solid ' + (iconClass) + '" style="color: var(--neon-blue); font-size: 1.1rem; width: 20px; text-align: center;"></i>\n                <div>\n                    <span style="font-weight: bold; font-size: 0.95rem; display: block; color: #fff;">' + (typeLabel) + '</span>\n                    <small style="color: var(--text-muted); font-size: 0.8rem;">' + (app.academicYear) + ' | ' + (amountText) + '</small>\n                </div>\n            </div>\n            <span class="status-badge ' + (badgeClass) + '" style="' + (badgeStyle) + '">' + (badgeText) + '</span>\n        ';
         
         container.appendChild(row);
     });
@@ -1359,18 +1457,22 @@ function showApplicationDetail(app) {
         statusText = "審查中";
         badgeHtml = '<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "資料已送出，後台管理團隊審核中。請耐心等待 LINE 通知。";
+    } else if (app.status === 'patching') {
+        statusText = "待補件";
+        badgeHtml = '<span class="status-badge" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3);">' + (statusText) + '</span>';
+        feedbackText = "管理團隊已發出補件要求：\n\n• 補件說明：" + (app.details_obj ? (app.details_obj.patch_reason || '無說明') : '無說明') + "\n• 截止日期：" + (app.details_obj ? (app.details_obj.patch_deadline || '無期限') : '無期限') + "\n\n請至前台首頁點擊對應方案的「重新提交補件」以更新申請資料！";
     } else if (app.status === 'approved') {
         statusText = "審核通過";
         badgeHtml = '<span class="status-badge badge-approved" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
         feedbackText = "審核已通過！目前已送交網銀進行撥款流程。請於近日注意您的收款帳戶變動。";
     } else if (app.status === 'rejected') {
-        statusText = "退回修正";
+        statusText = "審核未通過";
         badgeHtml = '<span class="status-badge badge-rejected" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
-        feedbackText = "審核未通過（已被退回）。請確認您的申請資料填寫是否正確，或者上傳之證明文件是否清晰。您可以隨時重新送出申請。";
+        feedbackText = "此筆申請案審定未通過：\n\n• 未通過原因：" + (app.details_obj ? (app.details_obj.reject_reason || '未說明') : '未說明') + "\n• 管理員建議：" + (app.details_obj ? (app.details_obj.reject_suggest || '無建議') : '無建議');
     } else if (app.status === 'destroyed') {
         statusText = "已撥款結案";
         badgeHtml = '<span class="status-badge badge-destroyed" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
-        feedbackText = "已完成撥款！本申請案已正式結案。依照隱私安全承諾，您的真實姓名、收款銀行帳戶及成績單檔案均已【物理銷毀】並完成去識別化，感謝您的參與！";
+        feedbackText = "已完成撥款！本申請案已正式結案。依照隱私安全承諾，您的真實姓名、收款銀行帳戶及成績單檔案均已【物理銷毀】並去識別化，感謝您的參與！";
     } else {
         statusText = app.status || "核定中";
         badgeHtml = '<span class="status-badge badge-pending" style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + (statusText) + '</span>';
@@ -1602,96 +1704,12 @@ function handleEditProfileSubmit() {
 
 // Dynamic Scheme 3 helper functions
 function populateBlueprintSemesterSelect() {
-    const getLatestEligibleSemester = (date = new Date()) => {
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        const rocYear = year - 1911;
-
-        const currentVal = month * 100 + day;
-        
-        if (currentVal >= 223 && currentVal <= 731) {
-            const Y = rocYear - 1;
-            return `${Y}-1`;
-        } else {
-            let Y;
-            if (currentVal < 223) {
-                Y = rocYear - 1;
-            } else {
-                Y = rocYear;
-            }
-            return `${Y - 1}-2`;
-        }
-    };
-
-    const generateSemesters = (startSem = '112-1', latestSem) => {
-        const list = [];
-        const [startYear, startTerm] = startSem.split('-').map(Number);
-        const [endYear, endTerm] = latestSem.split('-').map(Number);
-
-        let currYear = startYear;
-        let currTerm = startTerm;
-
-        while (currYear < endYear || (currYear === endYear && currTerm <= endTerm)) {
-            list.push(`${currYear}-${currTerm}`);
-            if (currTerm === 1) {
-                currTerm = 2;
-            } else {
-                currYear++;
-                currTerm = 1;
-            }
-        }
-        return list.reverse();
-    };
-
-    const getSemesterDisplayText = (semCode) => {
-        const [year, term] = semCode.split('-');
-        const termName = term === '1' ? '第一學期' : '第二學期';
-        return `${year} 學年度 ${termName}`;
-    };
-
-    const latestSem = getLatestEligibleSemester();
-    const semesterList = generateSemesters('112-1', latestSem);
-    
-    const bpApps = (currentUser.applications || []).filter(app => app.type === 'blueprint' && (app.status === 'pending' || app.status === 'approved' || app.status === 'destroyed'));
-    const appliedYears = bpApps.map(app => app.academicYear);
-    
-    const semesterSelect = document.querySelector('#form-apply-blueprint [name="academic_year"]');
-    if (semesterSelect) {
-        semesterSelect.innerHTML = '';
-        let firstEnabledIndex = -1;
-        
-        semesterList.forEach((semCode, index) => {
-            const opt = document.createElement('option');
-            opt.value = semCode;
-            const baseText = getSemesterDisplayText(semCode);
-            
-            if (appliedYears.includes(semCode)) {
-                opt.disabled = true;
-                opt.style.color = 'rgba(255, 255, 255, 0.3)';
-                opt.text = baseText + ' (已申請)';
-            } else {
-                opt.disabled = false;
-                opt.style.color = '#fff';
-                opt.text = baseText;
-                if (firstEnabledIndex === -1) {
-                    firstEnabledIndex = index;
-                }
-            }
-            semesterSelect.appendChild(opt);
-        });
-        
-        if (firstEnabledIndex !== -1) {
-            semesterSelect.selectedIndex = firstEnabledIndex;
-        } else {
-            semesterSelect.selectedIndex = -1;
-        }
-    }
+    return; // No longer needed as backend automatically determines the active semester
 }
 
 function updateBlueprintUI() {
     const apps = currentUser.applications || [];
-    const bpApp = apps.find(a => a.type === 'blueprint');
+    const bpApp = apps.find(a => a.type === 'blueprint' && a.status !== 'rejected' && a.status !== 'destroyed');
     
     const actionContainer = document.getElementById('blueprint-action-container');
     const lineProgress = document.getElementById('blueprint-line-progress');
@@ -1736,7 +1754,7 @@ function updateBlueprintUI() {
     if (phase1Status === 'approved' || phase1Status === 'paid') {
         if (node1) node1.classList.add('done');
         if (lineProgress) lineProgress.style.width = '30%';
-    } else if (phase1Status === 'pending') {
+    } else if (phase1Status === 'pending' || phase1Status === 'patching') {
         if (node1) node1.classList.add('active');
         if (lineProgress) lineProgress.style.width = '15%';
     } else if (phase1Status === 'rejected') {
@@ -1746,7 +1764,7 @@ function updateBlueprintUI() {
     if (midtermStatus === 'approved' || midtermStatus === 'paid') {
         if (node2) node2.classList.add('done');
         if (lineProgress) lineProgress.style.width = '70%';
-    } else if (midtermStatus === 'pending') {
+    } else if (midtermStatus === 'pending' || midtermStatus === 'patching') {
         if (node2) node2.classList.add('active');
         if (lineProgress) lineProgress.style.width = '50%';
     } else if (phase1Status === 'paid' && !midtermStatus) {
@@ -1757,7 +1775,7 @@ function updateBlueprintUI() {
     if (finalStatus === 'approved' || finalStatus === 'paid') {
         if (node3) node3.classList.add('done');
         if (lineProgress) lineProgress.style.width = '100%';
-    } else if (finalStatus === 'pending') {
+    } else if (finalStatus === 'pending' || finalStatus === 'patching') {
         if (node3) node3.classList.add('active');
         if (lineProgress) lineProgress.style.width = '85%';
     } else if (midtermStatus === 'paid' && !finalStatus) {
@@ -1772,6 +1790,20 @@ function updateBlueprintUI() {
                     <i class="fa-solid fa-hourglass-half"></i> 圓夢企劃提案審核中...
                 </button>
             `;
+        } else if (bpApp.status === 'patching') {
+            actionContainer.innerHTML = `
+                <div class="glass-warning patching-warning" style="border-color: rgba(255, 193, 7, 0.3); background: rgba(255, 193, 7, 0.05); color: #ffc107; text-align: left; padding: 15px; border-radius: 8px; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <span>⚠️ 您的企劃提案需要補件：${details.patch_reason || '請補充清晰文件'}</span>
+                        <small style="color: rgba(255,255,255,0.7);">(截止日：${details.patch_deadline || '無期限'})</small>
+                        <button class="btn btn-glow-gold btn-large btn-full" id="btn-blueprint-proposal-patch" style="background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; margin-top: 5px; cursor: pointer;">重新提交補件企劃書</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('btn-blueprint-proposal-patch').addEventListener('click', () => {
+                populateBlueprintSemesterSelect();
+                openModal('modal-apply-blueprint');
+            });
         } else if (bpApp.status === 'rejected') {
             actionContainer.innerHTML = `
                 <button class="btn btn-glow-gold btn-large btn-full" id="btn-apply-blueprint-modal" style="background: rgba(220,53,69,0.15); border-color: #dc3545; color: #dc3545;">
@@ -1796,6 +1828,19 @@ function updateBlueprintUI() {
                             <i class="fa-solid fa-hourglass-half"></i> 期中報告審核中...
                         </button>
                     `;
+                } else if (midtermStatus === 'patching') {
+                    actionContainer.innerHTML = `
+                        <div class="glass-warning patching-warning" style="border-color: rgba(255, 193, 7, 0.3); background: rgba(255, 193, 7, 0.05); color: #ffc107; text-align: left; padding: 15px; border-radius: 8px; width: 100%;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <span>⚠️ 您的期中報告需要補件：${details.midterm_patch_reason || '請補充清晰文件'}</span>
+                                <small style="color: rgba(255,255,255,0.7);">(截止日：${details.midterm_patch_deadline || '無期限'})</small>
+                                <button class="btn btn-glow-gold btn-large btn-full" id="btn-blueprint-midterm-patch" style="background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; margin-top: 5px; cursor: pointer;">重新上傳期中報告</button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('btn-blueprint-midterm-patch').addEventListener('click', () => {
+                        openModal('modal-blueprint-midterm');
+                    });
                 } else {
                     const dl = details.midterm_deadline || '';
                     const dlText = dl ? ` (截止日：${dl})` : '';
@@ -1815,6 +1860,19 @@ function updateBlueprintUI() {
                             <i class="fa-solid fa-hourglass-half"></i> 期末報告審核中...
                         </button>
                     `;
+                } else if (finalStatus === 'patching') {
+                    actionContainer.innerHTML = `
+                        <div class="glass-warning patching-warning" style="border-color: rgba(255, 193, 7, 0.3); background: rgba(255, 193, 7, 0.05); color: #ffc107; text-align: left; padding: 15px; border-radius: 8px; width: 100%;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <span>⚠️ 您的期末報告需要補件：${details.final_patch_reason || '請補充清晰文件'}</span>
+                                <small style="color: rgba(255,255,255,0.7);">(截止日：${details.final_patch_deadline || '無期限'})</small>
+                                <button class="btn btn-glow-gold btn-large btn-full" id="btn-blueprint-final-patch" style="background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; margin-top: 5px; cursor: pointer;">重新上傳期末報告</button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('btn-blueprint-final-patch').addEventListener('click', () => {
+                        openModal('modal-blueprint-final');
+                    });
                 } else {
                     const dl = details.final_deadline || '';
                     const dlText = dl ? ` (截止日：${dl})` : '';
@@ -1838,9 +1896,7 @@ function updateBlueprintUI() {
     }
 }
 
-// Bind file display feedback for Midterm & Final files
-setupFileFeedback('blueprint-midterm-file', 'blueprint-midterm-file-display');
-setupFileFeedback('blueprint-final-file', 'blueprint-final-file-display');
+
 
 // Form Submit: Scheme 3 Midterm Report
 document.getElementById('form-blueprint-midterm').addEventListener('submit', async (e) => {

@@ -51,9 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // Bind buttons
-
-
-
+    document.getElementById('btn-refresh-data').addEventListener('click', () => {
+        loadCaseList();
+        showToast("已重新整理名冊資料！", "fa-circle-check");
+    });
     document.getElementById('btn-approve-case').addEventListener('click', approveCase);
 
 
@@ -129,25 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById('btn-bp-reject-proposal').addEventListener('click', () => {
-        if (confirm("確定退回此未來藍圖計畫提案？")) {
-            toggleLoading(true, "退回提案中...");
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    toggleLoading(false);
-                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
-                    if (res.success) {
-                        loadCaseList();
-                        document.getElementById('auditor-pane').style.display = 'none';
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    toggleLoading(false);
-                    showToast("網路錯誤，退回失敗！", "fa-triangle-exclamation");
-                })
-                .adminRejectCase(ADMIN_TOKEN, selectedCase.id);
-        }
-    });
+    document.getElementById('btn-bp-reject-proposal').addEventListener('click', () => openRejectModal('main'));
+    document.getElementById('btn-bp-patch-proposal').addEventListener('click', () => openPatchModal('main'));
 
     document.getElementById('btn-bp-approve-midterm').addEventListener('click', () => {
         if (confirm("確定核准該期中報告？核准後將開放中期款 (40%) 撥發。")) {
@@ -169,25 +153,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById('btn-bp-reject-midterm').addEventListener('click', () => {
-        if (confirm("確定退回該期中報告並請學生修正重傳？")) {
-            toggleLoading(true, "退回期中報告中...");
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    toggleLoading(false);
-                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
-                    if (res.success) {
-                        loadCaseList();
-                        document.getElementById('auditor-pane').style.display = 'none';
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    toggleLoading(false);
-                    showToast("網路錯誤，操作失敗！", "fa-triangle-exclamation");
-                })
-                .adminReviewMidterm(ADMIN_TOKEN, selectedCase.id, false);
-        }
-    });
+    const btnBpRejectMidterm = document.getElementById('btn-bp-reject-midterm');
+    if (btnBpRejectMidterm) {
+        btnBpRejectMidterm.addEventListener('click', () => openRejectModal('midterm'));
+    }
+    document.getElementById('btn-bp-patch-midterm').addEventListener('click', () => openPatchModal('midterm'));
 
     document.getElementById('btn-bp-approve-final').addEventListener('click', () => {
         if (confirm("確定核准該期末報告？核准後將開放期末款 (30%) 撥發並進入結案。")) {
@@ -209,25 +179,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById('btn-bp-reject-final').addEventListener('click', () => {
-        if (confirm("確定退回該期末報告並請學生修正重傳？")) {
-            toggleLoading(true, "退回期末報告中...");
-            google.script.run
-                .withSuccessHandler(function(res) {
-                    toggleLoading(false);
-                    showToast(res.message, res.success ? "fa-circle-check" : "fa-circle-xmark");
-                    if (res.success) {
-                        loadCaseList();
-                        document.getElementById('auditor-pane').style.display = 'none';
-                    }
-                })
-                .withFailureHandler(function(err) {
-                    toggleLoading(false);
-                    showToast("網路錯誤，操作失敗！", "fa-triangle-exclamation");
-                })
-                .adminReviewFinal(ADMIN_TOKEN, selectedCase.id, false);
-        }
-    });
+    const btnBpRejectFinal = document.getElementById('btn-bp-reject-final');
+    if (btnBpRejectFinal) {
+        btnBpRejectFinal.addEventListener('click', () => openRejectModal('final'));
+    }
+    document.getElementById('btn-bp-patch-final').addEventListener('click', () => openPatchModal('final'));
 
     document.getElementById('btn-bp-update-settings').addEventListener('click', () => {
         const amt = document.getElementById('bp-approved-amount-input').value.trim();
@@ -334,6 +290,79 @@ document.addEventListener("DOMContentLoaded", () => {
     
 
 
+
+    // Bind Patch and Reject modals confirm actions
+    const patchConfirmBtn = document.getElementById('btn-submit-patch-confirm');
+    if (patchConfirmBtn) {
+        patchConfirmBtn.addEventListener('click', () => {
+            const reason = document.getElementById('patch-reason-input').value.trim();
+            const deadline = document.getElementById('patch-deadline-input').value;
+            
+            if (!reason) {
+                showToast("請填寫補件說明內容！", "fa-triangle-exclamation");
+                return;
+            }
+            if (!deadline) {
+                showToast("請選擇補件期限截止日！", "fa-triangle-exclamation");
+                return;
+            }
+            
+            toggleLoading(true, "正在送出補件要求...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    if (res.success) {
+                        document.getElementById('modal-admin-patch').classList.remove('show');
+                        showToast(res.message, "fa-circle-check");
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    } else {
+                        showToast(res.message, "fa-circle-xmark");
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("系統連線失敗！", "fa-triangle-exclamation");
+                })
+                .adminRequestPatch(ADMIN_TOKEN, activePatchAppId, activePatchType, reason, deadline);
+        });
+    }
+
+    const rejectConfirmBtn = document.getElementById('btn-submit-reject-confirm');
+    if (rejectConfirmBtn) {
+        rejectConfirmBtn.addEventListener('click', () => {
+            const reason = document.getElementById('reject-reason-input').value.trim();
+            const suggest = document.getElementById('reject-suggest-input').value.trim();
+            
+            if (!reason) {
+                showToast("請填寫未通過主因說明！", "fa-triangle-exclamation");
+                return;
+            }
+            if (!suggest) {
+                showToast("請填寫後續建議說明！", "fa-triangle-exclamation");
+                return;
+            }
+            
+            toggleLoading(true, "正在送出審核未通過結果...");
+            google.script.run
+                .withSuccessHandler(function(res) {
+                    toggleLoading(false);
+                    if (res.success) {
+                        document.getElementById('modal-admin-reject').classList.remove('show');
+                        showToast(res.message, "fa-circle-check");
+                        loadCaseList();
+                        document.getElementById('auditor-pane').style.display = 'none';
+                    } else {
+                        showToast(res.message, "fa-circle-xmark");
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    toggleLoading(false);
+                    showToast("系統連線失敗！", "fa-triangle-exclamation");
+                })
+                .adminRejectCase(ADMIN_TOKEN, activeRejectAppId, activeRejectType, reason, suggest);
+        });
+    }
 
     // Perform initial session verification
     verifySessionOnLoad();
@@ -842,13 +871,18 @@ function renderCaseList() {
         // Format status badge
         let statusBadge = '<span class="badge pending">待審核</span>';
         if (c.status === 'approved') statusBadge = '<span class="badge approved">已核准</span>';
-        if (c.status === 'rejected') statusBadge = '<span class="badge rejected">已拒絕</span>';
+        if (c.status === 'rejected') statusBadge = '<span class="badge rejected">審核未通過</span>';
         if (c.status === 'destroyed') statusBadge = '<span class="badge destroyed">已銷毀結案</span>';
+        if (c.status === 'patching') statusBadge = '<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">待補件</span>';
         
         // Blueprint state status badge
         if (c.type === 'blueprint') {
             if (c.status === 'pending') {
                 statusBadge = '<span class="badge pending">提案待審核</span>';
+            } else if (c.status === 'patching') {
+                statusBadge = '<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">提案待補件</span>';
+            } else if (c.status === 'rejected') {
+                statusBadge = '<span class="badge rejected">提案未通過</span>';
             } else if (c.status === 'approved') {
                 const phase = c.phase || 1;
                 if (phase === 1) {
@@ -856,16 +890,20 @@ function renderCaseList() {
                 } else if (phase === 2) {
                     if (c.midterm_status === 'pending') {
                         statusBadge = '<span class="badge pending">期中待審查</span>';
+                    } else if (c.midterm_status === 'patching') {
+                        statusBadge = '<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">期中待補件</span>';
                     } else if (c.midterm_status === 'rejected') {
-                        statusBadge = '<span class="badge rejected">期中已退回</span>';
+                        statusBadge = '<span class="badge rejected">期中未通過</span>';
                     } else {
                         statusBadge = '<span class="badge approved" style="background: rgba(59,130,246,0.2); color: #3b82f6; border-color: #3b82f6;">期中執行中</span>';
                     }
                 } else if (phase === 3) {
                     if (c.final_status === 'pending') {
                         statusBadge = '<span class="badge pending">期末待審查</span>';
+                    } else if (c.final_status === 'patching') {
+                        statusBadge = '<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">期末待補件</span>';
                     } else if (c.final_status === 'rejected') {
-                        statusBadge = '<span class="badge rejected">期末已退回</span>';
+                        statusBadge = '<span class="badge rejected">期末未通過</span>';
                     } else {
                         statusBadge = '<span class="badge approved" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">期末執行中</span>';
                     }
@@ -1024,7 +1062,15 @@ function selectCase(c) {
 
 
 
-    document.getElementById('audit-amount').innerText = 'NT$ ' + ((c.amount || 0).toLocaleString());
+    if (c.type === 'blueprint') {
+        if (c.status === 'pending' || c.status === 'patching') {
+            document.getElementById('audit-amount').innerText = '待核定';
+        } else {
+            document.getElementById('audit-amount').innerText = 'NT$ ' + (parseFloat(c.approved_amount || "0").toLocaleString());
+        }
+    } else {
+        document.getElementById('audit-amount').innerText = 'NT$ ' + ((c.amount || 0).toLocaleString());
+    }
 
 
 
@@ -1238,7 +1284,7 @@ function selectCase(c) {
 
 
 
-    if (c.status === 'pending') {
+    if (c.status === 'pending' || c.status === 'patching') {
 
 
 
@@ -2418,14 +2464,28 @@ function renderBlueprintAudit(c) {
     const finalStatus = c.final_status || '';
     
     // Proposal Settings Box (always visible unless destroyed)
-    if (c.status === 'pending' || phase1Status === 'rejected') {
+    if (c.status === 'pending' || c.status === 'patching' || phase1Status === 'rejected') {
         proposalBox.style.display = 'block';
         document.getElementById('bp-proposal-actions-pending').style.display = 'flex';
         document.getElementById('bp-proposal-actions-approved').style.display = 'none';
         document.getElementById('bp-approved-amount-input').value = '';
         document.getElementById('bp-midterm-deadline-input').value = '';
         document.getElementById('bp-final-deadline-input').value = '';
+        
+        // Show indicator if patching
+        if (c.status === 'patching') {
+            document.getElementById('bp-proposal-actions-pending').insertAdjacentHTML('beforebegin', `
+                <div id="bp-proposal-patch-indicator" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 0.85rem; color: #ffc107;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 限期補件審定中。已通知學員於限期內重新提交。
+                </div>
+            `);
+        } else {
+            const indicator = document.getElementById('bp-proposal-patch-indicator');
+            if (indicator) indicator.remove();
+        }
     } else if (c.status === 'approved') {
+        const indicator = document.getElementById('bp-proposal-patch-indicator');
+        if (indicator) indicator.remove();
         proposalBox.style.display = 'block';
         document.getElementById('bp-proposal-actions-pending').style.display = 'none';
         document.getElementById('bp-proposal-actions-approved').style.display = 'flex';
@@ -2453,6 +2513,8 @@ function renderBlueprintAudit(c) {
             s1Container.innerHTML = `<button class="btn btn-approve" style="padding: 4px 8px; font-size: 0.75rem;" onclick="disburseStage('${c.id}', 1)">確認首款撥發 (30%)</button>`;
         } else if (phase1Status === 'paid') {
             s1Container.innerHTML = `<span class="badge approved">已撥發首款</span>`;
+        } else if (phase1Status === 'patching') {
+            s1Container.innerHTML = `<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">限期補件中</span>`;
         } else {
             s1Container.innerHTML = `<span class="badge pending">未核准</span>`;
         }
@@ -2465,6 +2527,8 @@ function renderBlueprintAudit(c) {
             s2Container.innerHTML = `<span class="badge approved">已撥發中期款</span>`;
         } else if (midtermStatus === 'pending') {
             s2Container.innerHTML = `<span class="badge pending">待審查</span>`;
+        } else if (midtermStatus === 'patching') {
+            s2Container.innerHTML = `<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">限期補件中</span>`;
         } else if (midtermStatus === 'rejected') {
             s2Container.innerHTML = `<span class="badge rejected">已退回</span>`;
         } else {
@@ -2479,21 +2543,23 @@ function renderBlueprintAudit(c) {
             s3Container.innerHTML = `<span class="badge approved">已結案</span>`;
         } else if (finalStatus === 'pending') {
             s3Container.innerHTML = `<span class="badge pending">待審查</span>`;
+        } else if (finalStatus === 'patching') {
+            s3Container.innerHTML = `<span class="badge pending" style="background: rgba(255,193,7,0.2); color: #ffc107; border-color: #ffc107;">限期補件中</span>`;
         } else if (finalStatus === 'rejected') {
             s3Container.innerHTML = `<span class="badge rejected">已退回</span>`;
         } else {
             s3Container.innerHTML = `<span class="badge pending" style="opacity: 0.5;">未達進度</span>`;
         }
         
-        // Show midterm report review box if pending
-        if (midtermStatus === 'pending') {
+        // Show midterm report review box if pending/patching
+        if (midtermStatus === 'pending' || midtermStatus === 'patching') {
             midtermBox.style.display = 'block';
             document.getElementById('bp-midterm-file-link').href = c.midterm_file || '#';
             document.getElementById('bp-midterm-overtime-badge').style.display = c.midterm_overtime ? 'inline-block' : 'none';
         }
         
-        // Show final report review box if pending
-        if (finalStatus === 'pending') {
+        // Show final report review box if pending/patching
+        if (finalStatus === 'pending' || finalStatus === 'patching') {
             finalBox.style.display = 'block';
             document.getElementById('bp-final-file-link').href = c.final_file || '#';
             document.getElementById('bp-final-overtime-badge').style.display = c.final_overtime ? 'inline-block' : 'none';
@@ -2529,3 +2595,52 @@ window.disburseStage = function(appId, stageNum) {
             .adminDisburseStage(ADMIN_TOKEN, appId, stageNum);
     }
 };
+
+// Global variables and helpers for Patch & Reject Modals
+let activePatchAppId = '';
+let activePatchType = '';
+let activeRejectAppId = '';
+let activeRejectType = '';
+
+window.openPatchModal = function(patchType) {
+    if (!selectedCase) return;
+    activePatchAppId = selectedCase.id;
+    activePatchType = patchType;
+    
+    document.getElementById('patch-reason-input').value = '';
+    document.getElementById('patch-deadline-input').value = '';
+    
+    // Auto fill a default deadline (7 days from now)
+    const today = new Date();
+    today.setDate(today.getDate() + 7);
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('patch-deadline-input').value = `${yyyy}-${mm}-${dd}`;
+    
+    document.getElementById('modal-admin-patch').classList.add('show');
+};
+
+window.openRejectModal = function(rejectType) {
+    if (!selectedCase) return;
+    activeRejectAppId = selectedCase.id;
+    activeRejectType = rejectType;
+    
+    document.getElementById('reject-reason-input').value = '';
+    document.getElementById('reject-suggest-input').value = '';
+    
+    document.getElementById('modal-admin-reject').classList.add('show');
+};
+
+function toggleLoading(show, text = "資料傳輸中...") {
+    const loader = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    if (loader) {
+        if (show) {
+            if (loadingText) loadingText.innerText = text;
+            loader.classList.add('show');
+        } else {
+            loader.classList.remove('show');
+        }
+    }
+}

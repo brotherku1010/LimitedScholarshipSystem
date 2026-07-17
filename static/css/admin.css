@@ -945,3 +945,43 @@ body {
         transform: translateY(-15px) rotate(2deg);
     }
 }
+
+/* ==========================================
+   🌀 Secure Loading Overlay (全屏加載遮罩)
+   ========================================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(3, 7, 18, 0.85);
+    z-index: 20000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    backdrop-filter: blur(10px);
+}
+.loading-overlay.show {
+    display: flex;
+}
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(0, 187, 249, 0.1);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: rotate 1s linear infinite;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+.loading-overlay p {
+    font-size: 0.95rem;
+    color: #3b82f6;
+    letter-spacing: 1px;
+}
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

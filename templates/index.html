@@ -348,6 +348,9 @@
                         <button class="btn btn-secondary btn-full" id="btn-apply-progress-demo">
                             <i class="fa-solid fa-arrow-up-right-dots"></i> 立即送出成績進步獎申請
                         </button>
+                        <div id="progress-pending-notice" class="glass-warning" style="display: none; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255, 159, 28, 0.3); background: rgba(255, 159, 28, 0.05); color: #ff9f1c; font-weight: bold; width: 100%; margin-top: 10px;">
+                            <i class="fa-solid fa-hourglass-half"></i> 您已有一件成績進步獎申請案正在審核中，請待審核通過或被退回後，再進行下一次申請。
+                        </div>
                     </div>
                 </div>
             </section>
@@ -362,7 +365,7 @@
                     <span class="status-badge hidden-badge"><i class="fa-solid fa-sparkles"></i> 隱藏大獎</span>
                 </div>
 
-                <p class="program-desc">提交個人學習、購書、研究或競賽的「未來企劃書」，通過後分階段給予最高 NT$ 30,000 的圓夢資金支援！</p>
+                <p class="program-desc" id="blueprint-card-desc">提交個人學習、購書、研究或競賽的「未來企劃書」，通過後分階段給予最高 NT$ 30,000 的圓夢資金支援！</p>
 
                 <!-- Plan Contents Guidelines Block -->
                 <div class="blueprint-guidelines"
@@ -414,10 +417,10 @@
                     </h3>
                     <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 12px;">在撰寫與上傳您的報告前，建議先下載官方規範範本檔案進行編輯：</p>
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                        <a href="https://example.com/blueprint_template.docx" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6;" target="_blank">
+                        <a href="https://docs.google.com/document/d/1Yy_qwdvWwdM6W4chKDuZnP0tdC7UHvR5/export?format=docx&openExternalBrowser=1" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6;" target="_blank">
                             <i class="fa-solid fa-file-word"></i> 企劃書範本 (Word 檔)
                         </a>
-                        <a href="https://example.com/blueprint_template.pdf" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" target="_blank">
+                        <a href="https://drive.google.com/uc?export=download&id=1Kw3AMdIpbVG195r_KKaCx2SrLVJv5WUa&openExternalBrowser=1" class="btn btn-secondary" style="padding: 6px 15px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #ef4444;" target="_blank">
                             <i class="fa-solid fa-file-pdf"></i> 企劃書範本 (PDF 檔)
                         </a>
                     </div>
@@ -906,12 +909,7 @@
                             placeholder="例如: 2026年 7月至 10月">
                     </div>
 
-                    <div class="form-group">
-                        <label class="required-label">申請學年度學期</label>
-                        <select name="academic_year" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.95rem; height: 44px;" required>
-                            <!-- Dynamically populated from 112-1 to latest eligible semester -->
-                        </select>
-                    </div>
+
 
                     <div class="form-row-2">
                         <div class="form-group">

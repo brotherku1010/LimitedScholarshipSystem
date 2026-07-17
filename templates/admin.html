@@ -104,6 +104,9 @@
                 <h2>申請案件審理名冊</h2>
             </div>
             <div class="toolbar-right" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="btn-refresh-data" style="background: rgba(59,130,246,0.15); border: 1px solid #3b82f6; color: #3b82f6; padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='#3b82f6'; this.style.color='#000';" onmouseout="this.style.background='rgba(59,130,246,0.15)'; this.style.color='#3b82f6';">
+                    <i class="fa-solid fa-arrows-rotate"></i> 重新整理
+                </button>
                 <button class="btn btn-secondary" id="btn-open-settings" style="background: rgba(255,209,102,0.15); border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: var(--transition-smooth);" onmouseover="this.style.background='var(--gold)'; this.style.color='#000';" onmouseout="this.style.background='rgba(255,209,102,0.15)'; this.style.color='var(--gold)';">
                     <i class="fa-solid fa-gears"></i> 獎金設定
                 </button>
@@ -250,8 +253,11 @@
                                         <button class="btn btn-approve btn-full" id="btn-bp-approve-proposal" style="padding: 8px 12px;">
                                             <i class="fa-solid fa-circle-check"></i> 核准提案並核定首款
                                         </button>
-                                        <button class="btn btn-reject" id="btn-bp-reject-proposal" style="padding: 8px 12px;">
-                                            <i class="fa-solid fa-circle-xmark"></i> 拒絕
+                                        <button class="btn btn-reject" id="btn-bp-reject-proposal" style="padding: 8px 12px; background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444;">
+                                            <i class="fa-solid fa-circle-xmark"></i> 審核未通過
+                                        </button>
+                                        <button class="btn btn-patch" id="btn-bp-patch-proposal" style="padding: 8px 12px; background: rgba(255, 193, 7, 0.2); border-color: #ffc107; color: #ffc107;">
+                                            <i class="fa-solid fa-file-signature"></i> 限期補件
                                         </button>
                                     </div>
                                     <div style="display: none; gap: 10px;" id="bp-proposal-actions-approved">
@@ -274,8 +280,8 @@
                                         <button class="btn btn-approve btn-full" id="btn-bp-approve-midterm" style="padding: 6px 12px; font-size: 0.85rem;">
                                             <i class="fa-solid fa-check"></i> 核准期中報告
                                         </button>
-                                        <button class="btn btn-reject" id="btn-bp-reject-midterm" style="padding: 6px 12px; font-size: 0.85rem;">
-                                            <i class="fa-solid fa-xmark"></i> 退回
+                                        <button class="btn btn-patch" id="btn-bp-patch-midterm" style="padding: 6px 12px; font-size: 0.85rem; background: rgba(255, 193, 7, 0.2); border-color: #ffc107; color: #ffc107;">
+                                            <i class="fa-solid fa-file-signature"></i> 限期補件
                                         </button>
                                     </div>
                                 </div>
@@ -293,8 +299,8 @@
                                         <button class="btn btn-approve btn-full" id="btn-bp-approve-final" style="padding: 6px 12px; font-size: 0.85rem;">
                                             <i class="fa-solid fa-check"></i> 核准期末報告
                                         </button>
-                                        <button class="btn btn-reject" id="btn-bp-reject-final" style="padding: 6px 12px; font-size: 0.85rem;">
-                                            <i class="fa-solid fa-xmark"></i> 退回
+                                        <button class="btn btn-patch" id="btn-bp-patch-final" style="padding: 6px 12px; font-size: 0.85rem; background: rgba(255, 193, 7, 0.2); border-color: #ffc107; color: #ffc107;">
+                                            <i class="fa-solid fa-file-signature"></i> 限期補件
                                         </button>
                                     </div>
                                 </div>
@@ -345,8 +351,8 @@
                                     <button class="btn btn-approve" id="btn-approve-case">
                                         <i class="fa-solid fa-check"></i> 核准申請
                                     </button>
-                                    <button class="btn btn-reject" id="btn-reject-case">
-                                        <i class="fa-solid fa-xmark"></i> 拒絕
+                                    <button class="btn btn-reject" id="btn-reject-case" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444;">
+                                        <i class="fa-solid fa-circle-xmark"></i> 審核未通過
                                     </button>
                                 </div>
                                 
@@ -423,6 +429,64 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-full" onclick="document.getElementById('modal-destroy-log').classList.remove('show')">確認結案</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p id="loading-text">資料傳輸中...</p>
+    </div>
+
+    <!-- Modal: Request Patch (限期補件) -->
+    <div class="modal" id="modal-admin-patch">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-signature" style="color: #ffc107;"></i> 限期補件審定要求</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-admin-patch').classList.remove('show')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 0.9rem; color: #ffc107; display: block; margin-bottom: 8px;">補件說明內容 (請具體列出學生需要修正或重新上傳之文件)</label>
+                    <textarea id="patch-reason-input" rows="4" placeholder="例如：您上傳的學期成績單電子檔解析度不足、無法辨識平均GPA，請重新上傳清晰掃描檔或照片。" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.9rem; color: var(--text-secondary); display: block; margin-bottom: 8px;">補件期限截止日 (請指定學生可補件之最後期限)</label>
+                    <input type="date" id="patch-deadline-input" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.9rem;">
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="document.getElementById('modal-admin-patch').classList.remove('show')">取消</button>
+                <button class="btn btn-approve" id="btn-submit-patch-confirm" style="flex: 1.5; background: #ffc107; border-color: #ffc107; color: #000; font-weight: bold;">
+                    <i class="fa-solid fa-paper-plane"></i> 送出補件要求
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Request Reject (審核未通過) -->
+    <div class="modal" id="modal-admin-reject">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-circle-xmark" style="color: var(--neon-red);"></i> 申請案審核未通過</h2>
+                <button class="modal-close" onclick="document.getElementById('modal-admin-reject').classList.remove('show')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="font-size: 0.9rem; color: var(--neon-red); display: block; margin-bottom: 8px;">未通過主因說明 (讓學生了解未通過考核之原因)</label>
+                    <textarea id="reject-reason-input" rows="3" placeholder="例如：您的本學期平均成績（GPA）未達當初設定之挑戰防線標準。" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 0.9rem; color: var(--text-secondary); display: block; margin-bottom: 8px;">後續建議說明 (提供學生未來申請或調整之建議)</label>
+                    <textarea id="reject-suggest-input" rows="3" placeholder="例如：請保持學習熱忱，在大二解鎖「學期進步獎」時可以再次提出申請！" style="width: 100%; background: rgba(31, 41, 55, 0.7); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 10px; color: #fff; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="document.getElementById('modal-admin-reject').classList.remove('show')">取消</button>
+                <button class="btn btn-reject" id="btn-submit-reject-confirm" style="flex: 1.5;">
+                    <i class="fa-solid fa-circle-xmark"></i> 確認審核未通過
+                </button>
             </div>
         </div>
     </div>
@@ -522,6 +586,11 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             loadCaseList();
+            
+            document.getElementById('btn-refresh-data').addEventListener('click', () => {
+                loadCaseList();
+                showToast("已重新整理名冊資料！", "fa-circle-check");
+            });
             
             // Register panel button event handlers
             document.getElementById('btn-approve-case').addEventListener('click', approveCase);

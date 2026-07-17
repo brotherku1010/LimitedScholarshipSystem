@@ -28,6 +28,15 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
   }
   
+  if (action === 'portal' || action === 'home') {
+    const template = HtmlService.createTemplateFromFile('portal');
+    template.gasUrl = ScriptApp.getService().getUrl();
+    return template.evaluate()
+        .setTitle('古哥挑戰獎學金')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   if (action === 'admin') {
     // Serve admin console skeleton directly (PII authentication managed asynchronously by client token)
     return HtmlService.createHtmlOutputFromFile('admin')
@@ -191,6 +200,11 @@ function getSafeSettings(ss) {
   };
 }
 
+function getPublicSettings() {
+  const ss = getDbSpreadsheet();
+  return getSafeSettings(ss);
+}
+
 // --- LINE Push Notification Service ---
 function sendLinePushNotification(lineUserId, messageText) {
   const ss = getDbSpreadsheet();
@@ -335,10 +349,10 @@ function studentLiffLogin(lineUid) {
         try {
           const detailsObj = JSON.parse(appData[i][7]);
           const targetVal = parseFloat(detailsObj.target);
-          if (status === 'approved') {
+          if (status === 'approved' || status === 'paid' || status === 'destroyed') {
             unlockedChallenges.push(targetVal);
             approvedAttempts++;
-          } else if (status === 'pending') {
+          } else if (status === 'pending' || status === 'patching') {
             pendingChallenges.push(targetVal);
           }
         } catch (e) {}
@@ -703,24 +717,42 @@ function submitChallenge(payload) {
     fileUrl = saveBase64File(folderId, payload.file_base64, finalFilename);
   }
   
-  // Save application record
+  // Save application record or update patching one
   const appId = "APP-" + Utilities.getUuid().substring(0, 8).toUpperCase();
   const details = JSON.stringify({ target: target, gpa: gpa });
   const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
   
-  appSheet.appendRow([
-    appId,
-    'challenge',
-    'pending',
-    studentUid,
-    payload.name, // Real name in PII
-    assignedAmount,
-    academicYear,
-    details,
-    fileUrl,
-    "", // No FileLink2 for challenge
-    createdAt
-  ].map(safeWriteVal));
+  let existingRowIdx = -1;
+  for (let j = 1; j < appRows.length; j++) {
+    if (appRows[j][3] === studentUid && appRows[j][1] === 'challenge' && appRows[j][6] === academicYear && appRows[j][2] === 'patching') {
+      existingRowIdx = j + 1;
+      break;
+    }
+  }
+  
+  if (existingRowIdx !== -1) {
+    appSheet.getRange(existingRowIdx, 3).setValue('pending');
+    appSheet.getRange(existingRowIdx, 6).setValue(safeWriteVal(assignedAmount));
+    appSheet.getRange(existingRowIdx, 8).setValue(safeWriteVal(details));
+    if (fileUrl) {
+      appSheet.getRange(existingRowIdx, 9).setValue(safeWriteVal(fileUrl));
+    }
+    appSheet.getRange(existingRowIdx, 11).setValue(safeWriteVal(createdAt));
+  } else {
+    appSheet.appendRow([
+      appId,
+      'challenge',
+      'pending',
+      studentUid,
+      payload.name, // Real name in PII
+      assignedAmount,
+      academicYear,
+      details,
+      fileUrl,
+      "", // No FileLink2 for challenge
+      createdAt
+    ].map(safeWriteVal));
+  }
   
   return {
     success: true,
@@ -836,24 +868,63 @@ function submitProgress(payload) {
   });
   const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
   
-  appSheet.appendRow([
-    appId,
-    'progress',
-    'pending',
-    studentUid,
-    payload.name, // Real name PII
-    totalAmount,
-    academicYear,
-    details,
-    fileUrl1,
-    fileUrl2,
-    createdAt
-  ].map(safeWriteVal));
+  let existingRowIdx = -1;
+  for (let i = 1; i < appRows.length; i++) {
+    if (appRows[i][3] === studentUid && appRows[i][1] === 'progress' && appRows[i][6] === academicYear && appRows[i][2] === 'patching') {
+      existingRowIdx = i + 1;
+      break;
+    }
+  }
+  
+  if (existingRowIdx !== -1) {
+    appSheet.getRange(existingRowIdx, 3).setValue('pending');
+    appSheet.getRange(existingRowIdx, 6).setValue(safeWriteVal(totalAmount));
+    appSheet.getRange(existingRowIdx, 8).setValue(safeWriteVal(details));
+    if (fileUrl1) appSheet.getRange(existingRowIdx, 9).setValue(safeWriteVal(fileUrl1));
+    if (fileUrl2) appSheet.getRange(existingRowIdx, 10).setValue(safeWriteVal(fileUrl2));
+    appSheet.getRange(existingRowIdx, 11).setValue(safeWriteVal(createdAt));
+  } else {
+    appSheet.appendRow([
+      appId,
+      'progress',
+      'pending',
+      studentUid,
+      payload.name, // Real name PII
+      totalAmount,
+      academicYear,
+      details,
+      fileUrl1,
+      fileUrl2,
+      createdAt
+    ].map(safeWriteVal));
+  }
   
   return {
     success: true,
     message: `您的學期進步獎申請已成功送出！試算金額為 NT$ ${totalAmount.toLocaleString()} 元，審核中。`
   };
+}
+
+// Helper to determine the current active school semester (e.g. 114-2)
+function getCurrentActiveSemester() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const rocYear = year - 1911;
+  
+  const currentVal = month * 100 + day;
+  let schoolYear = rocYear;
+  if (currentVal < 801) {
+    schoolYear = rocYear - 1;
+  }
+  
+  let term = 1;
+  if (currentVal >= 223 && currentVal < 801) {
+    term = 2;
+  }
+  
+  return `${schoolYear}-${term}`;
 }
 
 // 5. Scheme 3: Submit Future Blueprint Project
@@ -866,7 +937,7 @@ function submitBlueprint(payload) {
   const studentBirthday = payload.student_birthday;
   const projectName = payload.project_name;
   const projectMonth = payload.project_month;
-  const academicYear = payload.academic_year || "未填學年度";
+  const academicYear = getCurrentActiveSemester();
   
   // Verify student
   const studentRows = findRows(studentSheet, 2, studentName);
@@ -911,19 +982,38 @@ function submitBlueprint(payload) {
   });
   const createdAt = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm:ss");
   
-  appSheet.appendRow([
-    appId,
-    'blueprint',
-    'pending',
-    studentUid,
-    payload.name, // Real name PII
-    blueprintAmount,
-    academicYear,
-    details,
-    fileUrl,
-    "", // No FileLink2 for blueprint
-    createdAt
-  ].map(safeWriteVal));
+  let existingRowIdx = -1;
+  const appRows = getSafeValues(appSheet);
+  for (let j = 1; j < appRows.length; j++) {
+    if (appRows[j][3] === studentUid && appRows[j][1] === 'blueprint' && appRows[j][6] === academicYear && appRows[j][2] === 'patching') {
+      existingRowIdx = j + 1;
+      break;
+    }
+  }
+  
+  if (existingRowIdx !== -1) {
+    appSheet.getRange(existingRowIdx, 3).setValue('pending');
+    appSheet.getRange(existingRowIdx, 6).setValue(""); // Leave amount blank initially
+    appSheet.getRange(existingRowIdx, 8).setValue(safeWriteVal(details));
+    if (fileUrl) {
+      appSheet.getRange(existingRowIdx, 9).setValue(safeWriteVal(fileUrl));
+    }
+    appSheet.getRange(existingRowIdx, 11).setValue(safeWriteVal(createdAt));
+  } else {
+    appSheet.appendRow([
+      appId,
+      'blueprint',
+      'pending',
+      studentUid,
+      payload.name, // Real name PII
+      "", // Leave amount blank initially
+      academicYear,
+      details,
+      fileUrl,
+      "", // No FileLink2 for blueprint
+      createdAt
+    ].map(safeWriteVal));
+  }
   
   return {
     success: true,
@@ -945,11 +1035,24 @@ function clientVerifyAdminToken(token) {
   return { success: verifyAdminToken(token) };
 }
 
-// 1. Admin Login
 function adminLogin(password) {
   const ss = getDbSpreadsheet();
   const dict = getSettingsDict(ss);
-  const correctPassword = dict['admin_password'] || 'guge_admin_secret_999';
+  let correctPassword = dict['admin_password'] || 'Ku870916';
+  
+  if (correctPassword === 'guge_admin_secret_999') {
+    try {
+      const settingsSheet = ss.getSheetByName('settings');
+      const settingsRows = getSafeValues(settingsSheet);
+      for (let i = 1; i < settingsRows.length; i++) {
+        if (settingsRows[i][0] === 'admin_password') {
+          settingsSheet.getRange(i + 1, 2).setValue(safeWriteVal('Ku870916'));
+          break;
+        }
+      }
+    } catch(e) {}
+    correctPassword = 'Ku870916';
+  }
   
   if (password !== correctPassword) {
     return { success: false, message: '密碼錯誤，拒絕登入後台管理端！' };
@@ -1216,7 +1319,7 @@ function adminApproveCase(token, appId) {
 }
 
 // 7. Admin Reject Case
-function adminRejectCase(token, appId) {
+function adminRejectCase(token, appId, rejectType, reason, suggest) {
   if (!verifyAdminToken(token)) {
     return { success: false, message: '未授權的操作，請先登入管理端！' };
   }
@@ -1224,20 +1327,109 @@ function adminRejectCase(token, appId) {
   const appSheet = ss.getSheetByName('applications');
   const rows = getSafeValues(appSheet);
   
+  rejectType = rejectType || 'main';
+  reason = reason || '無說明';
+  suggest = suggest || '無建議';
+  
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] === appId) {
-      appSheet.getRange(i + 1, 3).setValue(safeWriteVal('rejected')); // Set status to rejected
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      const typeText = rows[i][1] === 'challenge' ? '成績挑戰' : rows[i][1] === 'progress' ? '學期進步獎' : '未來藍圖計畫';
+      let msg = "";
+      
+      if (rejectType === 'main') {
+        appSheet.getRange(i + 1, 3).setValue(safeWriteVal('rejected')); // Set status to rejected
+        details.reject_reason = reason;
+        details.reject_suggest = suggest;
+        msg = `🔔 通知：您的【${typeText}】申請案審核結果為「審核未通過」。\n* 未通過原因：${reason}\n* 後續建議：${suggest}`;
+      } else if (rejectType === 'midterm') {
+        details.midterm_status = 'rejected';
+        details.midterm_reject_reason = reason;
+        details.midterm_reject_suggest = suggest;
+        details.midterm_file = "";
+        details.midterm_submitted_at = "";
+        msg = `🔔 通知：您的【未來藍圖計畫】期中報告審核結果為「審核未通過（退回）」。\n* 未通過原因：${reason}\n* 後續建議：${suggest}\n請點選首頁重新上傳！`;
+      } else if (rejectType === 'final') {
+        details.final_status = 'rejected';
+        details.final_reject_reason = reason;
+        details.final_reject_suggest = suggest;
+        details.final_file = "";
+        details.final_submitted_at = "";
+        msg = `🔔 通知：您的【未來藍圖計畫】期末報告審核結果為「審核未通過（退回）」。\n* 未通過原因：${reason}\n* 後續建議：${suggest}\n請點選首頁重新上傳！`;
+      }
+      
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
       
       // Get student's LineUID and send notification
       const studentUid = rows[i][3];
-      const typeText = rows[i][1] === 'challenge' ? '成績挑戰' : rows[i][1] === 'progress' ? '學期進步獎' : '未來藍圖計畫';
       const lineUid = getStudentLineUid(ss, studentUid);
       if (lineUid) {
-        const msg = `🔔 通知：您的【${typeText}】申請案已被審核「退回」。\n請登入系統檢視數據是否填寫錯誤，或確認重新上傳正確之證明文件。`;
         sendLinePushNotification(lineUid, msg);
       }
       
-      return { success: true, message: '此筆申請案件已被拒絕。' };
+      return { success: true, message: '此筆申請案件已審定「未通過」。' };
+    }
+  }
+  
+  return { success: false, message: '找不到該筆申請案！' };
+}
+
+// 8. Admin request patch (限期補件)
+function adminRequestPatch(token, appId, patchType, reason, deadline) {
+  if (!verifyAdminToken(token)) {
+    return { success: false, message: '未授權的操作，請先登入管理端！' };
+  }
+  const ss = getDbSpreadsheet();
+  const appSheet = ss.getSheetByName('applications');
+  const rows = getSafeValues(appSheet);
+  
+  patchType = patchType || 'main';
+  reason = reason || '無說明';
+  deadline = deadline || '無期限';
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === appId) {
+      const detailsStr = rows[i][7];
+      let details = {};
+      try {
+        if (detailsStr) details = JSON.parse(detailsStr);
+      } catch(e) {}
+      
+      const typeText = rows[i][1] === 'challenge' ? '成績挑戰' : rows[i][1] === 'progress' ? '學期進步獎' : '未來藍圖計畫';
+      let msg = "";
+      
+      if (patchType === 'main') {
+        appSheet.getRange(i + 1, 3).setValue(safeWriteVal('patching')); // Set status to patching
+        details.patch_reason = reason;
+        details.patch_deadline = deadline;
+        msg = `🔔 補件通知：您的【${typeText}】申請案需要補件。\n* 補件說明：${reason}\n* 截止日期：${deadline}\n請登入系統於限期內完成補件重新送出！`;
+      } else if (patchType === 'midterm') {
+        details.midterm_status = 'patching';
+        details.midterm_patch_reason = reason;
+        details.midterm_patch_deadline = deadline;
+        msg = `🔔 補件通知：您的【未來藍圖計畫】期中進步報告需要補件。\n* 補件說明：${reason}\n* 截止日期：${deadline}\n請登入系統於限期內完成重新提交！`;
+      } else if (patchType === 'final') {
+        details.final_status = 'patching';
+        details.final_patch_reason = reason;
+        details.final_patch_deadline = deadline;
+        msg = `🔔 補件通知：您的【未來藍圖計畫】期末成果報告需要補件。\n* 補件說明：${reason}\n* 截止日期：${deadline}\n請登入系統於限期內完成重新提交！`;
+      }
+      
+      appSheet.getRange(i + 1, 8).setValue(safeWriteVal(JSON.stringify(details)));
+      
+      // Get student's LineUID and send notification
+      const studentUid = rows[i][3];
+      const lineUid = getStudentLineUid(ss, studentUid);
+      if (lineUid) {
+        sendLinePushNotification(lineUid, msg);
+      }
+      
+      return { success: true, message: '已成功向學生送出補件要求！' };
     }
   }
   
@@ -1319,6 +1511,7 @@ function adminDestroyCase(token, appId) {
   appSheet.getRange(targetRowIndex, 10).setValue(''); // wipe filelink2
   
   // Clear bank details in students sheet profile (GDPR Shred)
+  const studentUid = appRow[3];
   const studentSheet = ss.getSheetByName('students');
   const studentRows = findRows(studentSheet, 1, studentUid); // Col 1 is StudentUID
   if (studentRows.length > 0) {
@@ -1328,7 +1521,6 @@ function adminDestroyCase(token, appId) {
   }
   
   // Get student's LineUID and send notification
-  const studentUid = appRow[3];
   const lineUid = getStudentLineUid(ss, studentUid);
   if (lineUid) {
     const msg = `🔒 隱私安全通知：您的【古哥挑戰獎學金】申請已完成撥款結案。\n依個資防護承諾，您的真實姓名、收款帳戶與成績單圖檔均已從資料庫與雲端硬碟中【徹底物理銷毀】，系統將不再留存任何敏感個資。祝您學業順利！`;
@@ -1423,7 +1615,7 @@ function adminExportApproved(token) {
       if (amount <= 0) continue;
       
       // Escape CSV values
-      const line = `"${bankCode}","${bankAccount}",${amount},"${name}-古哥挑戰獎學金"`;
+      const line = `"'${bankCode}","'${bankAccount}",${amount},"${name}-古哥挑戰獎學金"`;
       csvLines.push(line);
     }
   }
