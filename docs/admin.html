@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古哥挑戰獎學金 - 後台管理控制台</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="古哥後台">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Link Manifest -->
+    <link rel="manifest" href="manifest-admin.json">
+
+    <!-- FontAwesome for Premium Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Outfit & Noto Sans TC font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-glass: rgba(30, 41, 59, 0.7);
+            --neon-blue: #00bbf9;
+            --neon-blue-glow: rgba(0, 187, 249, 0.3);
+            --gold: #f59e0b;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            color: #fff;
+        }
+
+        /* Shift the iframe up by 37px to hide the Google warning header banner! */
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: -37px; /* Offset the exact height of the GAS banner */
+            left: 0;
+            width: 100%;
+            height: calc(100% + 37px); /* Compensate the offset height */
+            border: none;
+        }
+
+        /* Installation Prompt or Setup Screen */
+        .setup-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+        }
+
+        .setup-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .setup-icon {
+            font-size: 4rem;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px var(--neon-blue-glow));
+            animation: pulse 2s infinite alternate;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #fff 30%, var(--neon-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0 0 25px 0;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--neon-blue-glow)); }
+            100% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(0, 187, 249, 0.6)); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Iframe Wrapper for Google Apps Script Web App -->
+    <div class="iframe-wrapper" id="app-wrapper" style="display: none;">
+        <iframe id="gas-iframe" src="" allow="camera; microphone; geolocation;"></iframe>
+    </div>
+
+    <!-- 2. Fallback Setup Screen (Only shown when configured URL is invalid) -->
+    <div class="setup-container" id="setup-guide">
+        <div class="setup-card">
+            <div class="setup-icon">
+                <i class="fa-solid fa-gears"></i>
+            </div>
+            <h1>後台管理系統載入中...</h1>
+            <p>系統正在連接後台審查伺服器，請稍候。若長時間無反應，請確認設定。</p>
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker for PWA installation
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw-admin.js')
+                    .then(reg => console.log('Service Worker registered successfully', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            });
+        }
+
+        // ==========================================
+        // ⚙️ 設定區：GAS 網頁應用程式網址
+        // ==========================================
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyFaYuaKf_P816lNT2xwmqN2N6fuzILWjr9n1JwtziFygk54Ktx5Sd_jAfCwSzQ4pAW/exec"; 
+
+        // 讀取當前 URL 的查詢參數
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 後台頁面預設將 action 導向至 admin
+        if (!urlParams.has('action') && !urlParams.has('page')) {
+            urlParams.set('action', 'admin');
+        }
+
+        let gasUrl = urlParams.get('gas') || DEFAULT_GAS_URL;
+        const currentCleanUrl = window.location.origin + window.location.pathname;
+
+        // 檢查網址並載入
+        if (gasUrl && gasUrl.trim() !== "" && gasUrl.startsWith("https://")) {
+            const targetParams = new URLSearchParams();
+            urlParams.forEach((value, key) => {
+                if (key !== 'gas') {
+                    targetParams.append(key, value);
+                }
+            });
+            
+            // 附加 parent_url 參數，用於 redirect_uri 信任驗證
+            targetParams.append('parent_url', currentCleanUrl);
+            
+            const queryString = targetParams.toString();
+            const delimiter = gasUrl.includes('?') ? '&' : '?';
+            const finalSrc = queryString ? (gasUrl + delimiter + queryString) : gasUrl;
+            
+            // 載入 Iframe
+            document.getElementById('app-wrapper').style.display = 'block';
+            document.getElementById('setup-guide').style.display = 'none';
+            document.getElementById('gas-iframe').src = finalSrc;
+        } else {
+            document.getElementById('app-wrapper').style.display = 'none';
+            document.getElementById('setup-guide').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
